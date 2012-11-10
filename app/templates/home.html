@@ -1,0 +1,104 @@
+{% extends 'base.html' %}
+
+{% block style %}
+{% endblock %}
+
+{% block app %}
+<div id='projectionable'>
+  {% include 'header.html' %}
+  
+  <div id='content' class='clearfix'>
+    <div class='section clearfix'>
+      <div class="value-prop">
+        <h1>Fast Client Approval</h1>
+        <ul>
+          <li>Create full estimates of time and costs in minutes</li>
+          <li>Invite clients to start approving right away</li>
+          <li>Start making money</li>
+        </ul>
+      </div>
+      
+      {% if not valid_session %}
+      <div class='proj-form-wrapper clearfix trial-form landing-page'>
+        <div class="proj-form">
+          <div class='proj-form-head'>
+            <h2>Sign up for free</h2>
+          </div>
+          <div class='proj-form-body'>
+            <div class="alert"><strong></strong><span></span></div>
+            <input type="text" id='email' placeholder="Email address" />
+            <input type="password" id='password1' placeholder="Password" />
+            <input type="password" id='password2' placeholder="Verify Password" />
+            <div class="button-row clearfix">
+              <a href='#' class="btn btn-primary signup-button" data-loading-text="Loading..." autocomplete='off'>Sign Up</a>
+            </div>
+          </div>
+        </div>
+      </div>
+      {% endif %}
+    </div>
+    
+    <a name='estimate'></a>
+    <div class='clearfix section'>
+      
+      <a href='/static/img/screens/estimate.png' target='_blank'>
+        <img src='/static/img/screens/estimate.png' />
+      </a>
+      
+      <div class='value-prop'>
+        <h2>Estimates of Time and Costs</h2>
+        <ul>
+          <li>Set your hourly rate per project</li>
+          <li>Views and user stories save as you type them</li>
+          <li>Estimate hours and see running totals as you go</li>
+        </ul>
+      </div>
+      
+    </div>
+    
+    <a name='collaborate'></a>
+    <div class='clearfix section'>
+      
+      <div class='value-prop'>
+        <h2>Collaboration</h2>
+        <ul>
+          <li>Collaborate with others with just an email address</li>
+          <li>Invite coworkers to help specify projects for free</li>
+          <li>Invite clients to approve views and stories for $38.99 per project</li>
+        </ul>
+      </div>
+      
+      <a href='/static/img/screens/collaborate.png' target='_blank'>
+        <img src='/static/img/screens/collaborate.png' />
+      </a>
+      
+    </div>
+    
+    <a name='approval'></a>
+    <div class='clearfix section'>
+      
+      <a href='/static/img/screens/approval.png' target='_blank'>
+        <img src='/static/img/screens/approval.png' />
+      </a>
+      
+      <div class='value-prop'>
+        <h2>Client Approval</h2>
+        <ul>
+          <li>Clients can approve, reject, and request additional views and stories</li>
+          <li>Estimate hours and approve or reject client requests</li>
+          <li>When everything is ready, clients can start the project</li>
+        </ul>
+      </div>
+      
+    </div>
+    
+  </div>
+  
+  {% include 'footer.html' %}
+</div>
+
+{% endblock %}
+
+{% block js %}
+    <script type='text/javascript' src='{{ static_url }}js/home.js'></script>
+{% endblock %}

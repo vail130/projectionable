@@ -1,0 +1,22 @@
+{% extends 'base.html' %}
+
+{% block style %}
+    <link type='text/less' rel='stylesheet' href='{{ static_url }}css/work.less' />
+    <link type='text/less' rel='stylesheet' href='{{ static_url }}css/settings.less' />
+{% endblock %}
+
+{% block app %}
+<div id="projectionable" class='clearfix'></div>
+{% endblock %}
+
+{% block js %}
+  <script type='text/javascript'>
+    {% if valid_session %}
+      window.sessionID = parseInt('{{ user_id }}');
+    {% else %}
+      window.sessionID = null;
+    {% endif %}
+  </script>
+  <script type='text/javascript' src='{{ static_url }}js/projectionable.js'></script>
+{% endblock %}
+
