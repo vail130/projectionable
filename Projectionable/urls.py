@@ -30,6 +30,9 @@ urlpatterns = patterns('',
     
     url(r'^api/accounts/?(?:\?.*)?$', AccountManager.as_view(), name='accountmanager'),
     url(r'^api/accounts(?:/(?P<account_id>[0-9]+)/?)?(?:\?.*)?$', AccountEditor.as_view(), name='accounteditor'),
+    
+    #url(r'^api/payments/?(?:\?.*)?$', PaymentManager.as_view(), name='paymentmanager'),
+    #url(r'^api/payments(?:/(?P<payment_id>[0-9]+)/?)?(?:\?.*)?$', PaymentEditor.as_view(), name='paymenteditor'),
 )
 
 urlpatterns += patterns('',

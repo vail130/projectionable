@@ -17,10 +17,10 @@ SITE_NAME = 'Projectionable'
 
 MANAGERS = ADMINS
 
-ENVIRONMENT = 'local'
+ENVIRONMENT = 'heroku'
 
 if ENVIRONMENT == 'heroku':
-    BASE_URL = 'http://'
+    BASE_URL = 'http://projectionable.herokuapp.com/'
     BIN_PATH = '/app/bin/'
     PIPELINE_CSS_COMPRESSOR = None
     PIPELINE_JS_COMPRESSOR = 'pipeline.compressors.yui.YUICompressor'
@@ -31,11 +31,35 @@ if ENVIRONMENT == 'heroku':
     DATABASES = {
         'default': {
             'ENGINE':   'postgresql_psycopg2',
-            'NAME':     '',
-            'USER':     '',
-            'PASSWORD': '',
-            'HOST':     '',
-            'PORT':     '',
+            'NAME':     'dbg0ajdn9fb6na',
+            'USER':     'prxovxmcytbmnl',
+            'PASSWORD': 'Ic9ZszEKA12FrUZ0ysxQep9qVT',
+            'HOST':     'ec2-54-243-228-52.compute-1.amazonaws.com',
+            'PORT':     '5542',
+        }
+    }
+elif ENVIRONMENT == 'appfog':
+    BASE_URL = 'http://projectionable.aws.us.cm'
+    BIN_PATH = '/app/bin/'
+    PIPELINE_CSS_COMPRESSOR = None
+    PIPELINE_JS_COMPRESSOR = 'pipeline.compressors.yui.YUICompressor'
+    TEMPLATE_DIRS = (
+        '/app/client/templates'
+    )
+    
+    import json
+    
+    ENV_DB_DATA = json.loads(os.getenv("VCAP_SERVICES"))
+    CREDENTIALS = ENV_DB_DATA['postgresql-9.1'][0]['credentials']
+    
+    DATABASES = {
+        'default': {
+            'ENGINE':   'postgresql_psycopg2',
+            'NAME':     CREDENTIALS['name'],
+            'USER':     CREDENTIALS['user'],
+            'PASSWORD': CREDENTIALS['password'],
+            'HOST':     CREDENTIALS['host'],
+            'PORT':     CREDENTIALS['port'],
         }
     }
 else:

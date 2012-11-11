@@ -10,6 +10,7 @@ class Project(models.Model):
   title = models.CharField(max_length=100)
   rate = models.PositiveIntegerField()
   status = models.CharField(max_length=20)
+  client_enabled = models.BooleanField()
   date_updated = models.DateTimeField(auto_now=True)
   date_created = models.DateTimeField(auto_now_add=True)
   
@@ -19,6 +20,7 @@ class Project(models.Model):
     'title': ('string', (0, 100)),
     'rate': ('integer', (0, None)),
     'status': lambda x: x in Project.statuses,
+    'client_enabled': 'boolean'
   }
   
   @classmethod
@@ -28,6 +30,7 @@ class Project(models.Model):
       account=account,
       title=schema['title'],
       rate=schema['rate'],
+      client_enabled=False,
       status=cls.statuses[0],
     )
     project.save()
@@ -41,6 +44,7 @@ class Project(models.Model):
       'title': '',
       "status": '',
       'rate': 0,
+      'client_enabled': False,
     }
   
   def record_to_dictionary(self, account=None, children=True):
@@ -68,6 +72,7 @@ class Project(models.Model):
       "title": self.title,
       "rate": self.rate,
       "status": self.status,
+      "client_enabled": self.client_enabled,
       "hours": hours,
       "hours_worked": hours_worked,
       "date_updated": self.date_updated,
@@ -110,7 +115,13 @@ class Project(models.Model):
         if 'title' in schema:
           self.title = schema['title']
           changed = True
-          
+        
+        ###
+        if 'client_enabled' in schema and self.client_enabled is False and schema['client_enabled'] is True:
+          self.client_enabled = True
+          changed = True
+        ###
+        
         if 'rate' in schema:
           self.rate = schema['rate']
           changed = True
@@ -270,6 +281,11 @@ class RequirementGroup(models.Model):
         self.title = schema['title']
         changed = True
     
+    # If index is in schema AND different
+    if 'index' in schema and self.index != schema['index']:
+      self.index = schema['index']
+      changed = True
+    
     # If status is in schema AND different
     if 'status' in schema and self.status != schema['status']:
       proceed = False
@@ -413,6 +429,11 @@ class Requirement(models.Model):
     changed = False
     hours_updated = False
     
+    # If index is in schema AND different
+    if 'index' in schema and self.index != schema['index']:
+      self.index = schema['index']
+      changed = True
+    
     # If title is in schema AND different
     if 'title' in schema and self.title != schema['title']:
       # If coworker/owner is updating pending OR client is updated requested
@@ -542,6 +563,8 @@ class Permission(models.Model):
     
     self.delete()
     return True
+
+
 
 
 

@@ -950,7 +950,7 @@ class RequirementEditor(View):
 
 class PermissionManager(View):
   """
-  Handles HTTP requests to endpoint URL/api/comments/ with optional querystring
+  Handles HTTP requests to endpoint URL/api/permissions/ with optional querystring
   Allow: GET, POST
   """
   def put(self, request):
@@ -1126,6 +1126,310 @@ class PermissionManager(View):
 class PermissionEditor(View):
   """
   Handles HTTP requests to endpoint URL/api/permissions/:permission_id/ with optional querystring
+  Allow: GET, DELETE
+  """
+  def post(self, request, permission_id):
+    #################
+    # Setup
+    #################
+
+    headers = {
+      "Content-Type": "application/json",
+      "Allow": "GET, PUT, DELETE",
+    }
+
+    #################
+    # Validation
+    #################
+
+    try:
+      request.session["_auth_user_id"]
+    except KeyError:
+      return Response(status=status.HTTP_401_UNAUTHORIZED)
+
+    errors = {"header_request_method": "This endpoint only supports GET, PUT, and DELETE requests."}
+    return Response(content=errors, headers=headers, status=status.HTTP_405_METHOD_NOT_ALLOWED)
+
+  def delete(self, request, permission_id):
+    #################
+    # Setup
+    #################
+
+    headers = {
+      "Content-Type": "application/json",
+      "Allow": "GET, PUT, DELETE",
+    }
+
+    #################
+    # Validation
+    #################
+
+    try:
+      account_id = int(request.session["_auth_user_id"])
+    except KeyError:
+      return Response(status=status.HTTP_401_UNAUTHORIZED)
+
+    try:
+      account = Account.objects.get(user_id=account_id)
+    except Account.DoesNotExist:
+      errors = {"account_id": "Invalid account ID."}
+      return Response(content=errors, headers=headers, status=status.HTTP_404_NOT_FOUND)
+
+    try:
+      permission = Permission.objects.get(id=int(permission_id))
+    except Permission.DoesNotExist:
+      errors = {"permission_id": "Invalid permission ID."}
+      return Response(content=errors, headers=headers, status=status.HTTP_404_NOT_FOUND)
+
+    # Only admins can delete permissions
+    if permission.project.account.id is not account_id:
+      errors = {"permission": "Invalid permissions."}
+      return Response(content=errors, headers=headers, status=status.HTTP_400_BAD_REQUEST)
+
+    #################
+    # Operation
+    #################
+
+    result = permission.delete_record(account)
+    if isinstance(result, dict):
+      return Response(content=result, headers=headers, status=status.HTTP_400_BAD_REQUEST)
+    
+    return Response(content={}, headers=headers, status=status.HTTP_200_OK)
+
+  def get(self, request, permission_id):
+    #################
+    # Setup
+    #################
+
+    headers = {
+      "Content-Type": "application/json",
+      "Allow": "GET, PUT, DELETE",
+    }
+
+    query_dict = dict([(k,v) for k,v in request.GET.iteritems()])
+
+    #################
+    # Validation
+    #################
+
+    try:
+      account_id = int(request.session["_auth_user_id"])
+    except KeyError:
+      return Response(status=status.HTTP_401_UNAUTHORIZED)
+
+    try:
+      account = Account.objects.get(user_id=account_id)
+    except Account.DoesNotExist:
+      errors = {"account_id": "Invalid account ID."}
+      return Response(content=errors, headers=headers, status=status.HTTP_404_NOT_FOUND)
+
+    try:
+      permission = Permission.objects.get(id=int(permission_id))
+    except Permission.DoesNotExist:
+      errors = {"permission_id": "Invalid permission ID."}
+      return Response(content=errors, headers=headers, status=status.HTTP_404_NOT_FOUND)
+
+    if permission.project.account.id is not account_id:
+      errors = {"permission": "Invalid permissions."}
+      return Response(content=errors, headers=headers, status=status.HTTP_400_BAD_REQUEST)
+
+    #################
+    # Operation
+    #################
+
+    return Response(content=permission.record_to_dictionary(), headers=headers, status=status.HTTP_200_OK)
+
+  def put(self, request, permission_id):
+    #################
+    # Setup
+    #################
+
+    headers = {
+      "Content-Type": "application/json",
+      "Allow": "GET, DELETE",
+    }
+
+    #################
+    # Validation
+    #################
+
+    try:
+      account_id = int(request.session["_auth_user_id"])
+    except KeyError:
+      return Response(status=status.HTTP_401_UNAUTHORIZED)
+
+    try:
+      account = Account.objects.get(user_id=account_id)
+    except Account.DoesNotExist:
+      errors = {"account_id": "Invalid account ID."}
+      return Response(content=errors, headers=headers, status=status.HTTP_404_NOT_FOUND)
+
+    try:
+      permission = Permission.objects.get(id=int(permission_id))
+    except Permission.DoesNotExist:
+      errors = {"permission_id": "Invalid permission ID."}
+      return Response(content=errors, headers=headers, status=status.HTTP_404_NOT_FOUND)
+
+    if permission.project.account.id is not account_id:
+      errors = {"permission": "Invalid permissions."}
+      return Response(content=errors, headers=headers, status=status.HTTP_400_BAD_REQUEST)
+    
+    result = permission.update_record(account, self.CONTENT)
+    if isinstance(result, dict):
+      return Response(content=result, headers=headers, status=status.HTTP_400_BAD_REQUEST)
+    
+    return Response(content=result, headers=headers, status=status.HTTP_200_OK)
+
+
+class PaymentManager(View):
+  """
+  Handles HTTP requests to endpoint URL/api/payments/ with optional querystring
+  Allow: GET, POST
+  """
+  def put(self, request):
+    #################
+    # Setup
+    #################
+
+    headers = {
+      "Content-Type": "application/json",
+      "Allow": "GET, POST",
+    }
+
+    #################
+    # Validation
+    #################
+
+    try:
+      request.session["_auth_user_id"]
+    except KeyError:
+      return Response(status=status.HTTP_401_UNAUTHORIZED)
+
+    errors = {"header_request_method": "This endpoint only supports GET and POST requests."}
+    return Response(content=errors, headers=headers, status=status.HTTP_405_METHOD_NOT_ALLOWED)
+
+  def delete(self, request):
+    #################
+    # Setup
+    #################
+
+    headers = {
+      "Content-Type": "application/json",
+      "Allow": "GET, POST",
+    }
+
+    #################
+    # Validation
+    #################
+
+    try:
+      request.session["_auth_user_id"]
+    except KeyError:
+      return Response(status=status.HTTP_401_UNAUTHORIZED)
+
+    errors = {"header_request_method": "This endpoint only supports GET and POST requests."}
+    return Response(content=errors, headers=headers, status=status.HTTP_405_METHOD_NOT_ALLOWED)
+
+  def get(self, request):
+    #################
+    # Setup
+    #################
+
+    headers = {
+      "Content-Type": "application/json",
+      "Allow": "GET, POST",
+    }
+
+    query_dict = dict([(k,v) for k,v in request.GET.iteritems()])
+
+    #################
+    # Validation
+    #################
+
+    try:
+      account_id = int(request.session["_auth_user_id"])
+    except KeyError:
+      return Response(status=status.HTTP_401_UNAUTHORIZED)
+
+    try:
+      account = Account.objects.get(user_id=account_id)
+    except Account.DoesNotExist:
+      errors = {"account_id": "Invalid account ID."}
+      return Response(content=errors, headers=headers, status=status.HTTP_404_NOT_FOUND)
+
+    # No content-type to check, because there's no payload
+
+    #################
+    # Operation
+    #################
+      
+    try:
+      payments = Payment.objects.filter(account=account)
+    except Payment.DoesNotExist:
+      payments = []
+
+    payment_list = [payment.record_to_dictionary() for payment in payments]
+
+    return Response(content=payment_list, headers=headers, status=status.HTTP_200_OK)
+
+  def post(self, request):
+    #################
+    # Setup
+    #################
+
+    headers = {
+      "Content-Type": "application/json",
+      "Allow": "GET, POST",
+    }
+
+    #################
+    # Validation
+    #################
+
+    try:
+      account_id = int(request.session["_auth_user_id"])
+    except KeyError:
+      return Response(status=status.HTTP_401_UNAUTHORIZED)
+
+    try:
+      account = Account.objects.get(user_id=account_id)
+    except Account.DoesNotExist:
+      errors = {"account_id": "Invalid account ID."}
+      return Response(content=errors, headers=headers, status=status.HTTP_404_NOT_FOUND)
+
+    # Check content-type header
+    if not self.content_type.startswith('application/json'):
+      errors = {"header_content_type": "Content-Type must be 'application/json'. Your Content-Type is " + str(self.content_type)}
+      return Response(content=errors, headers=headers, status=status.HTTP_400_BAD_REQUEST)
+
+    #################
+    # Operation
+    #################
+    
+    try:
+      payment_type = str(self.CONTENT["type"])
+    except KeyError:
+      errors = {"type": "Missing payment type."}
+      return Response(content=errors, headers=headers, status=status.HTTP_404_NOT_FOUND)
+    
+    try:
+      project_id = int(self.CONTENT["project_id"])
+    except KeyError:
+      errors = {"project_id": "Missing project ID."}
+      return Response(content=errors, headers=headers, status=status.HTTP_404_NOT_FOUND)
+    
+    # Must be project owner to create a payment
+    try:
+      project = Project.objects.get(id=project_id, account=account)
+    except Project.DoesNotExist:
+      errors = {"project_id": "Invalid project ID."}
+      return Response(content=errors, headers=headers, status=status.HTTP_404_NOT_FOUND)
+    
+    return Response(content={'endpoint': 'Endpoint not yet support.'}, headers=headers, status=status.HTTP_200_OK)
+
+class PaymentEditor(View):
+  """
+  Handles HTTP requests to endpoint URL/api/payments/:payment_id/ with optional querystring
   Allow: GET, DELETE
   """
   def post(self, request, permission_id):
