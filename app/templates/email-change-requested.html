@@ -1,0 +1,18 @@
+{% extends 'base_email.html' %}
+
+{% block body %}
+  <p>We just received your request to change your email address. Please click on
+    the link below to verify this email address.</p>
+  <p>
+    <a href='{{url}}verify_email/?account_id={{account_id}}&code={{code}}'
+      target='_blank' style='color:#222;font-weight:bold;'>
+        {{url}}verify_email/?account_id={{account_id}}&code={{code}}
+    </a>
+  </p>
+  <p>If you're receiving this email in error, then don't worry: you can just ignore it and we won't
+    bother you again.</p>
+{% endblock %}
+
+{% block footer %}
+  
+{% endblock %}

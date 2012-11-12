@@ -28,6 +28,13 @@ if ENVIRONMENT == 'heroku':
         '/app/app/templates'
     )
     
+    SMTP = {
+      'host': 'smtp.sendgrid.net',
+      'username': 'app9141142@heroku.com',
+      'password': 'superduper21',
+      'port': 587,
+    }
+    
     DATABASES = {
         'default': {
             'ENGINE':   'postgresql_psycopg2',
@@ -81,12 +88,6 @@ else:
             'PORT': '',                      # Set to empty string for default. Not used with sqlite3.
         }
     }
-    
-MAIL = {
-    "send_address": "",
-    "host": "",
-    "port": 21,
-}
 
 # Local time zone for this installation. Choices can be found here:
 # http://en.wikipedia.org/wiki/List_of_tz_zones_by_name

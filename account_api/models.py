@@ -4,6 +4,7 @@ from utilities import *
 from django.contrib.auth import authenticate
 from django.conf import settings
 import re, uuid
+from django.template.loader import render_to_string
 
 class Account(models.Model):
   user = models.OneToOneField(User)
@@ -282,134 +283,11 @@ class AccountEmail(models.Model):
 
   ###
   #
-  enabled = False
+  enabled = True
   #
   ###
   
   statuses = ['pending', 'sent', 'opened']
-
-  copy = {
-    'account-created': {
-      "html": """
-        <p>Welcome to """ + settings.SITE_NAME + """.</p>
-        <p>We just received your registration information. All you need to do now is click on
-          the link below to verify this email address.</p>
-        <p>
-          <a href='{{url}}verify_email/?account_id={{account_id}}&code={{code}}'
-            target='_blank' style='background-color:white;color:black;font-weight:bold;'>
-              {{url}}verify_email/?account_id={{account_id}}&code={{code}}
-          </a>
-        </p>
-        <p>If you're receiving this email in error, then don't worry: you can just ignore it and we won't
-          bother you again.</p>
-      """,
-      "text": ""\
-        + "Welcome to " + settings.SITE_NAME + "."\
-        + "\n\n"\
-        + "We just received your registration information. All you need to do now is follow "\
-        + "the link below to verify this email address."\
-        + "\n\n"\
-        + "{{url}}verify_email/?account_id={{account_id}}&code={{code}}"\
-        + "\n\n"\
-        + "If you're receiving this email in error, then don't worry: "\
-        + "you can just ignore it and we won't bother you again."
-    },
-    "invitation-account-created": {
-      "html": """
-        <p>Welcome to """ + settings.SITE_NAME + """.</p>
-        <p>You've been invited by another user to see their project. All you
-          need to do now is click on the link below to verify this email address, and then
-          set a password for your account.</p>
-        <p>
-          <a href='{{url}}verify_invitation/?account_id={{account_id}}&code={{code}}'
-            target='_blank' style='background-color:white;color:black;font-weight:bold;'>
-              {{url}}verify_invitation/?account_id={{account_id}}&code={{code}}
-          </a>
-        </p>
-        <p>If you're receiving this email in error, then don't worry: you can just ignore it and we won't
-          bother you again.</p>
-      """,
-      "text": ""\
-        + "Welcome to " + settings.SITE_NAME + "."\
-        + "\n\n"\
-        + "You've been invited by another user to see their project. All you"\
-        + "need to do now is click on the link below to verify this email address, and then"\
-        + "set a password for your account."\
-        + "\n\n"\
-        + "{{url}}verify_invitation/?account_id={{account_id}}&code={{code}}"\
-        + "\n\n"\
-        + "If you're receiving this email in error, then don't worry: "\
-        + "you can just ignore it and we won't bother you again."
-    },
-    'email-change-requested': {
-      "html": """
-          <p>We just received your request to change your email address. Please click on
-            the link below to verify this email address.</p>
-          <p>
-            <a href='{{url}}verify_email/?account_id={{account_id}}&code={{code}}'
-              target='_blank' style='background-color:white;color:black;font-weight:bold;'>
-                {{url}}verify_email/?account_id={{account_id}}&code={{code}}
-            </a>
-          </p>
-          <p>If you're receiving this email in error, then don't worry: you can just ignore it and we won't
-            bother you again.</p>
-          """,
-      "text": ""\
-          + "We just received your request to change your email address. Please click on "\
-          + "the link below to verify this email address."\
-          + "\n\n"\
-          + "{{url}}verify_email/?account_id={{account_id}}&code={{code}}"\
-          + "\n\n"\
-          + "If you're receiving this email in error, then don't worry: "\
-      + "you can just ignore it and we won't bother you again."
-    },
-    'password-reset-requested': {
-      "html": """
-          <p>We just received your request to reset your password. Please click on
-            the link below to set a new password for your account.</p>
-          <p>
-            <a href='{{url}}reset_password/?account_id={{account_id}}&code={{code}}'
-              target='_blank' style='background-color:white;color:black;font-weight:bold;'>
-                {{url}}reset_password/?account_id={{account_id}}&code={{code}}
-            </a>
-          </p>
-          <p>If you're receiving this email in error, then don't worry: you can just ignore it and we won't
-            bother you again.</p>
-          """,
-      "text": ""\
-          + "We just received your request to change your email address. Please click on "\
-          + "the link below to verify this email address."\
-          + "\n\n"\
-          + "{{url}}reset_password/?account_id={{account_id}}&code={{code}}"\
-          + "\n\n"\
-          + "If you're receiving this email in error, then don't worry: "\
-      + "you can just ignore it and we won't bother you again."
-    },
-    'email-verified': {
-      "html": """
-          <p>Your email address is verified. Here are some tips for getting started:</p>
-          <ul>
-            <li></li>
-          </ul>
-          """,
-      "text": ""\
-          + "Your email address is verified. Here are some tips for getting started:"\
-          + "\n\n"
-          + "- "
-    },
-    'invitation-verified': {
-      "html": """
-          <p>Your email address is verified. Here are some tips for getting started:</p>
-          <ul>
-            <li></li>
-          </ul>
-          """,
-      "text": ""\
-          + "Your email address is verified. Here are some tips for getting started:"\
-          + "\n\n"
-          + "- "
-    },
-  }
 
   @classmethod
   def create_and_send(cls, account, action, request=None):
@@ -420,164 +298,37 @@ class AccountEmail(models.Model):
 
   @classmethod
   def create_email(cls, account, action, request=None):
-    sender = settings.MAIL['send_address']
+    sender = settings.SMTP['username']
 
     if action == 'account-created' and request is not None:
       recipient = account.email
       subject = "Verify your email address"
-      html_copy = cls.copy['account-created']['html'].format(
-        code=request.code,
-        account_id=account.id
-      )
-      text_copy = cls.copy['account-created']['text'].format(
-        code=request.code,
-        account_id=account.id
-      )
 
     elif action == 'invitation-account-created' and request is not None:
       recipient = account.email
       subject = "Invitation to share a project"
-      html_copy = cls.copy['invitation-account-created']['html'].format(
-        code=request.code,
-        account_id=account.id
-      )
-      text_copy = cls.copy['invitation-account-created']['text'].format(
-        code=request.code,
-        account_id=account.id
-      )
-
-    elif action == 'email-verified':
-      recipient = account.email
-      subject = "Your email address has been verified"
-      html_copy = cls.copy['email-verified']['html']
-      text_copy = cls.copy['email-verified']['text']
-
-    elif action == 'invitation-verified':
-      recipient = account.email
-      subject = "Your invitation has been verified"
-      html_copy = cls.copy['invitation-verified']['html']
-      text_copy = cls.copy['invitation-verified']['text']
 
     elif action == 'email-change-requested':
       recipient = account.email
       subject = "Verify your updated email address"
-      html_copy = cls.copy['email-change-requested']['html'].format(
-        code=request.code,
-        account_id=account.id
-      )
-      text_copy = cls.copy['email-change-requested']['text'].format(
-        code=request.code,
-        account_id=account.id
-      )
 
     elif action == 'password-reset-requested':
       recipient = account.email
       subject = "Reset your password"
-      html_copy = cls.copy['password-reset-requested']['html'].format(
-        code=request.code,
-        account_id=account.id
-      )
-      text_copy = cls.copy['password-reset-requested']['text'].format(
-        code=request.code,
-        account_id=account.id
-      )
 
     else:
       return False
-
-    html = """
-      <table border='0' cellpadding='20' cellspacing='0' width='100%' height='100%'
-        style='
-          background-color: #222;
-          height: 100% !important;
-          width: 100% !important;
-        '>
-      <tbody>
-      <tr>
-      <td align='center' valign='top'>
-        <table border='0' cellpadding='0' cellspacing='0' width='550' style='background-color:white;'>
-        <tbody>
-        <tr>
-          <td colspan='1' align='left' valign='top' width='100' style='{{font_family}}'>
-            <a target='_blank' href='{{url}}'
-            style='
-              display: block;
-              float: left;
-              padding: 15px;
-              font-size: 21px;
-              background-color: white;
-              color: #222;
-              text-transform: uppercase;
-              text-decoration: none;
-              line-height: 21px;
-            '>{{name}}</a>
-          </td>
-          <td colspan='1' align='right' valign='top' width='450' style='{{font_family}}'>
-            <a target='_blank' href='{{url}}'
-              style='
-                display: block;
-                float: right;
-                max-width: 400px;
-                margin: 15px 0 0 0;
-                padding: 2px 15px;
-                background-color: #952b2f;
-                color: white;
-                text-align: right;
-                font-size: 21px;
-                text-transform: uppercase;
-                text-decoration: none;
-                cursor: pointer;
-              '>{{subject}}</a>
-          </td>
-        </tr>
-        <tr>
-          <td colspan='2' align='left' valign='top' width='100%'>
-            <table border='0' cellpadding='0' cellspacing='10' width='100%'>
-            <tbody>
-              <tr>
-                <td style='color:#222;{{font_family}}'>{{copy}}</td>
-              </tr>
-            </tbody>
-            </table>
-          </td>
-        </tr>
-        <tr>
-          <td colspan='2' align='left' valign='top' width='100%'>
-            <table border='0' cellpadding='0' cellspacing='10' width='100%' style='margin-top:50px;'>
-            <tbody>
-            <tr>
-              <td style='{{font_family}}color:#aaa;'>
-                <p>This email was produced automatically by
-                  <a target='_blank' style='color:black;' href='{{url}}'>{{name}}</a>.
-                  If you are receiving this email in error, you can go to
-                  <a target='_blank' style='color:black;' href='{{url}}'>{{name}}</a>,
-                  log in and deactivate your account.</p>
-              </td>
-            </tr>
-            </tbody>
-            </table>
-          </td>
-        </tr>
-        </tbody>
-        </table>
-      </td>
-      </tr>
-      </tbody>
-      </table>
-    """.format(**{
+    
+    context = dict(context, **{
       "url": settings.BASE_URL,
-      "name": "Projectionable",
       "subject": subject,
-      "copy": html_copy,
-      "font_family": "font-family: PT Sans Narrow, Arial Narrow, Arial, sans;"
-    }).replace('\n', '')
-
-    text = text_copy\
-         + '\n\n'\
-         + "This email was produced automatically by " + settings.BASE_URL + "."\
-         + '\n\n'\
-         + "If you are receiving this email in error, you can go to " + settings.BASE_URL\
-         + ", log in and deactivate your account."
+      "site_name": settings.SITE_NAME,
+      "code": request.code,
+      "account_id": account.id,
+    })
+    
+    html = render_to_string(action + '.html', context)
+    text = render_to_string(action + '.txt', context)
 
     email = cls(
       account=account,
@@ -615,9 +366,11 @@ class AccountEmail(models.Model):
 
     # Send the message via local SMTP server.
     try:
-      s = smtplib.SMTP(settings.MAIL['host'], settings.MAIL['port'])
+      s = smtplib.SMTP(settings.SMTP['host'], settings.SMTP['port'])
     except smtplib.SMTPConnectError:
       return False
+    
+    s.login(settings.SMTP['username'], settings.SMTP['password'])
 
     # sendmail function takes 3 arguments: sender's address, recipient's address
     # and message to send - here it is sent as one string.
