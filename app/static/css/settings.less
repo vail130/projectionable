@@ -1,0 +1,241 @@
+
+@black: #222;
+
+#settings {
+  
+  .settings {
+    border: 1px solid #a88244;
+    border-top-width: 0;
+    text-align: right;
+    padding: 15px;
+    box-shadow: 0 1px 2px -1px white inset;
+    background-color: #F7E4C6;
+    margin: 0;
+    
+    .settings-wrapper {
+      border-radius: 15px;
+      box-shadow: 0 0 5px 0 black inset, 0 2px 9px -3px black;
+      overflow: hidden;
+      
+      .settings-liner {
+        margin: 1px;
+        border-radius: 14px;
+        background-color: #eacea0;
+        box-shadow: 0 1px 2px -1px white inset;
+        overflow: hidden;
+        
+        .settings-tabs {
+          float: left;
+          width: 200px;
+          margin: 0;
+          list-style: none;
+          background-color: #c4a26c;
+          
+          & > li {
+            display: block;
+            margin: 0;
+              
+            &:first-child > a {
+              border-top-left-radius: 14px;
+            }
+            
+            & > a {
+              display: block;
+              margin: 0;
+              padding: 20px 0;
+              text-align: center;
+              box-shadow: 0 1px 2px -1px white inset;
+              border-bottom: 1px solid #a88244;
+              font-size: 16px;
+              line-height: 16px;
+              text-decoration: none;
+              color: rgba(0, 0, 0, .8);
+              text-shadow: 0 1px 0 #a88244;
+              
+              &:hover {
+                text-decoration: none;
+              }
+              
+              background: #eacea0; /* Old browsers */
+              background: -moz-linear-gradient(top,  #eacea0 0%, #c4a26c 100%); /* FF3.6+ */
+              background: -webkit-gradient(linear, left top, left bottom, color-stop(0%,#eacea0), color-stop(100%,#c4a26c)); /* Chrome,Safari4+ */
+              background: -webkit-linear-gradient(top,  #eacea0 0%,#c4a26c 100%); /* Chrome10+,Safari5.1+ */
+              background: -o-linear-gradient(top,  #eacea0 0%,#c4a26c 100%); /* Opera 11.10+ */
+              background: -ms-linear-gradient(top,  #eacea0 0%,#c4a26c 100%); /* IE10+ */
+              background: linear-gradient(to bottom,  #eacea0 0%,#c4a26c 100%); /* W3C */
+              filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#eacea0', endColorstr='#c4a26c',GradientType=0 ); /* IE6-9 */
+              
+              &:active, &.active, &.active:hover {
+                background: #c4a26c; /* Old browsers */
+                background: -moz-linear-gradient(top,  #c4a26c 0%, #eacea0 100%); /* FF3.6+ */
+                background: -webkit-gradient(linear, left top, left bottom, color-stop(0%,#c4a26c), color-stop(100%,#eacea0)); /* Chrome,Safari4+ */
+                background: -webkit-linear-gradient(top,  #c4a26c 0%,#eacea0 100%); /* Chrome10+,Safari5.1+ */
+                background: -o-linear-gradient(top,  #c4a26c 0%,#eacea0 100%); /* Opera 11.10+ */
+                background: -ms-linear-gradient(top,  #c4a26c 0%,#eacea0 100%); /* IE10+ */
+                background: linear-gradient(to bottom,  #c4a26c 0%,#eacea0 100%); /* W3C */
+                filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#c4a26c', endColorstr='#eacea0',GradientType=0 ); /* IE6-9 */
+                
+                box-shadow: 0px 0px 9px -3px #222 inset;
+                
+                
+              }
+            }
+          }
+        }
+        
+        .settings-content {
+          margin-left: 200px;
+          border-left: 1px solid #a88244;
+          box-shadow: 1px 0 2px -1px white inset;
+          
+          & > div {
+            display: none;
+            min-height: 400px;
+            text-align: left;
+            
+            &.active {
+              display: block;
+            }
+          }
+        }
+      }
+    }
+    
+    .settings-content {
+      
+      .input-label {
+        display: block;
+        text-align: left;
+        margin: 0;
+        font-size: 11px;
+        text-transform: uppercase;
+        color: @black;
+        line-height: 11px;
+      }
+      
+      .edit-block {
+        display: inline-block;
+        position: relative;
+        text-align: left;
+        border: 1px solid #a88244;
+        border-radius: 2px;
+        -webkit-border-radius: 2px;
+        font-size: 14px;
+        line-height: 18px;
+      
+        .edit-input {
+          display: inline-block;
+          float: left;
+          border: none;
+          background: transparent;
+          background-color: rgba(255, 255, 255, .5);
+          outline: 0;
+          box-shadow: none;
+          font-size: inherit;
+          color: @black;
+          padding: 3px 26px 3px 5px;
+          border-radius: 0;
+          margin: 0;
+          width: 242px;
+          font-size: inherit;
+          line-height: inherit;
+          vertical-align: bottom;
+          
+          &:hover {
+            background-color: rgba(255, 255, 255, .65);
+          }
+          
+          &:focus {
+            background: white;
+            border-color: rgba(82, 168, 236, 0.8);
+            outline: 0;
+            outline: thin dotted \9;
+            /* IE6-9 */
+            
+            -webkit-box-shadow: inset 0 1px 1px rgba(0, 0, 0, 0.075), 0 0 8px rgba(82, 168, 236, 0.6);
+            -moz-box-shadow: inset 0 1px 1px rgba(0, 0, 0, 0.075), 0 0 8px rgba(82, 168, 236, 0.6);
+            box-shadow: inset 0 1px 1px rgba(0, 0, 0, 0.075), 0 0 8px rgba(82, 168, 236, 0.6);
+          }
+        }
+          
+        & > span {
+          display: inline-block;
+          width: 257px;
+          font-size: 14px;
+          line-height: 14px;
+          padding: 5px 8px;
+        }
+        
+        .edit-icon {
+          position: absolute;
+          top: 50%;
+          margin-top: -7px;
+          right: 6px;
+          pointer-events: none;
+        }
+        
+        &:disabled, &:readonly {
+          .edit-icon {
+            display: none;
+          }
+        }
+      }
+      
+      .settings-form {
+        padding: 15px;
+        border-top: 1px solid #a88244;
+        box-shadow: 0 1px 2px -1px white inset;
+        
+        &:first-child {
+          border: none;
+          box-shadow: none;
+        }
+        
+        .settings-title-row {
+          height: 35px;
+        }
+        
+        .settings-form-row {
+          height: 50px;
+        }
+        
+        .settings-form-msg {
+          display: inline-block;
+          width: 300px;
+          margin: 0;
+          
+          &.alert-error,
+          &.alert-success {
+            background-color: transparent;
+            border-color: transparent;
+          }
+        }
+        
+        .input-section {
+          float: left;
+          width: 275px;
+          margin-right: 15px;
+          
+          h2 {
+            float: left;
+            font-size: 20px;
+            line-height: 20px;
+            margin: 0;
+          }
+        
+        }
+        
+        .settings-button-wrapper {
+          float: left;
+          width: 60px;
+          margin-top: 12px;
+          
+          &.terminate-wrapper {
+            width: 120px;
+          }
+        }
+      }
+      
+    }
+  }
+}

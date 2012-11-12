@@ -1,0 +1,41 @@
+
+<div class='project-liner clearfix'>
+    
+  <div class='data-wrapper project-data-wrapper title-data-wrapper'>
+    <div class='input-label'>Project Title</div>
+    <h2 class='data-display project-title'>
+      <a href="#" class='title'><%= project.title ? project.title : '[Untitled Project]' %></a>
+    </h2>
+  </div>
+  
+  <div class='data-wrapper project-data-wrapper'>
+    <div class='input-label'>Hourly Rate</div>
+    <% var rate = parseFloat(project.rate); %>
+    <h2 class='data-display project-dollars'>$<%= isNaN(rate) ? '--' : App.formatNumber(rate) %></h2>
+  </div>
+  
+  <div class='data-wrapper project-data-wrapper'>
+    <div class='input-label'>Total Hours</div>
+    <% var hours = parseFloat(project.hours); %>
+    <h2 class='data-display project-hours'><%= isNaN(hours) ? '--' : App.formatNumber(hours) %> hours</h2>
+  </div>
+  
+  <div class='data-wrapper project-data-wrapper'>
+    <div class='input-label'>Total Cost</div>
+    <h2 class='data-display project-dollars'>$<%= isNaN(rate) || isNaN(hours) ? ' --' : App.formatNumber(Math.round(rate * hours)) %></h2>
+  </div>
+  
+  <div class='dropdown options-dropdown pull-right'>
+    <a href='#' class='btn options-button dropdown-toggle' data-toggle='dropdown'>
+      <i class='icon-wrench'></i>
+      <i class='caret'></i>
+    </a>
+    
+    <ul class='dropdown-menu options-menu' role="menu">
+      <li><a href='#' class='edit-link' tabindex="-1">Manage this project</a></li>
+      <li class="divider"></li>
+      <li><a href='#' tabindex="-1" class='delete' data-id='<%= project.id %>'>Delete this project</a></li>
+    </ul>
+  </div>
+  
+</div>

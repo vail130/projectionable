@@ -25,7 +25,7 @@ if ENVIRONMENT == 'heroku':
     PIPELINE_CSS_COMPRESSOR = None
     PIPELINE_JS_COMPRESSOR = 'pipeline.compressors.yui.YUICompressor'
     TEMPLATE_DIRS = (
-        '/app/client/templates'
+        '/app/app/templates'
     )
     
     DATABASES = {
@@ -44,7 +44,7 @@ elif ENVIRONMENT == 'appfog':
     PIPELINE_CSS_COMPRESSOR = None
     PIPELINE_JS_COMPRESSOR = 'pipeline.compressors.yui.YUICompressor'
     TEMPLATE_DIRS = (
-        '/app/client/templates'
+        '/app/app/templates'
     )
     
     import json

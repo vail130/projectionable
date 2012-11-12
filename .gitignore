@@ -1,6 +1,7 @@
 # Project-specific files #
 ##########################
 static/
+!app/static/
 bin/
 include/
 lib/

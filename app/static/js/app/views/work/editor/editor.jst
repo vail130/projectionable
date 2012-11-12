@@ -1,0 +1,69 @@
+
+<div class='project-body-title-row clearfix'>
+  <% var agent = ['owner', 'coworker'].indexOf(project.permission) > -1; %>
+  <% var owner = project.permission === 'owner'; %>
+  <% var coworker = project.permission === 'coworker'; %>
+  <% var client = project.permission === 'client'; %>
+  <% var pending = project.status === 'pending'; %>
+  <% var started = project.status === 'started'; %>
+  
+  <div class='data-wrapper project-data-wrapper title-data-wrapper'>
+    <div class='input-label'>Project Title</div>
+    <% console.log(agent, pending); %>
+    <% if (agent && pending) { %>
+      <div class='edit-block'>
+        <input class='edit-input project-title-input' type='text' placeholder='Project title...' value="<%= project.title %>" />
+        <i class='edit-icon icon-pencil'></i>
+      </div>
+    <% } else { %>
+      <h2 class='data-display'><%= project.title %></h2>
+    <% } %>
+  </div>
+  
+  <div class='data-wrapper project-data-wrapper rate-data-wrapper'>
+    <div class='input-label'>Hourly Rate</div>
+    <h2 class='prefix'>$</h2>
+    <% if (owner && pending) { %>
+      <div class='edit-block'>
+        <input class='edit-input project-rate-input' type='text' placeholder='Hourly rate...' value="<%= project.rate %>" />
+        <i class='edit-icon icon-pencil'></i>
+      </div>
+    <% } else { %>
+      <h2 class='data-display'><%= project.rate %></h2>
+    <% } %>
+  </div>
+  
+  <div class='data-wrapper project-data-wrapper'>
+    <div class='input-label'>Total Hours</div>
+    <% var hours = isNaN(parseFloat(project.hours)) ? 0 : parseFloat(project.hours); %>
+    <h2 class='data-display project-hours'><%= App.formatNumber(hours) %></h2>
+  </div>
+  
+  <div class='data-wrapper project-data-wrapper no-right-margin'>
+    <div class='input-label'>Total Cost</div>
+    <% var dollars = isNaN(parseFloat(project.rate)) ? 0 : hours * parseFloat(project.rate); %>
+    <h2 class='data-display project-dollars'>$<%= App.formatNumber(Math.round(dollars)) %></h2>
+  </div>
+  
+  <div class='label-wrapper'>
+    <% if (client && pending) { %>
+      <a href="#" tabindex='-1' class='btn btn-primary btn-small disabled start-button' title='Start Project'>Start Project</a>
+    <% } else if (pending) { %>
+      <span class='label'>Pending</span>
+    <% } else if (started) { %>
+      <span class='label label-approved'>Started</span>
+    <% } %>
+  </div>
+    
+  <% if (owner) { %>
+    <div class='sharing-button-wrapper'>
+      <a href="#" tabindex='-1' class='btn project-button sharing-button' title='Sharing'>
+        <i class='icon-user'></i>
+      </a>
+    </div>
+  <% } %>
+</div>
+
+<ul class='project-groups'></ul>
+
+<div class='permissions-modal-container'></div>

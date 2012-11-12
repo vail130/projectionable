@@ -1,0 +1,110 @@
+
+<% var saved = group.__proto__.hasOwnProperty('id') %>
+<% var agent = ['owner', 'coworker'].indexOf(project.permission) > -1; %>
+<% var owner = project.permission === 'owner'; %>
+<% var coworker = project.permission === 'coworker'; %>
+<% var client = project.permission === 'client'; %>
+<% var pending = group.status === 'pending'; %>
+<% var approved = group.status === 'approved'; %>
+<% var rejected = group.status === 'rejected'; %>
+<% var requested = group.status === 'requested'; %>
+
+<div class="edit-group-form <%= group.status %>">
+  
+  <div class='edit-group-form-head clearfix'>
+    <div class='group-title-wrapper'>
+      <span class='input-label'>When user navigates to...</span>
+      <% if (!saved || (agent && pending) || (client && requested)) { %>
+        <div class='edit-block group-edit-block'>
+          <input class="edit-input group-title-input" type='text' placeholder='Application view title...' value="<%= group.title %>" />
+          <i class='edit-icon icon-pencil'></i>
+        </div>
+      <% } else { %>
+        <h2 class='data-display'><%= group.title %></h2>
+      <% } %>
+    </div>
+    
+    <div class='data-wrapper group-data-wrapper group-hours-wrapper'>
+      <span class='input-label'>Hours</span>
+      <% var hours = isNaN(parseFloat(group.hours)) ? 0 : parseFloat(group.hours); %>
+      <h2 class='data-display group-hours'><%= App.formatNumber(hours) %></h2>
+    </div>
+    
+    <div class='data-wrapper group-data-wrapper group-dollars-wrapper'>
+      <span class='input-label'>Cost</span>
+      <% var dollars = group.status === 'rejected' || isNaN(parseFloat(project.rate)) ? 0 : parseFloat(project.rate) * hours; %>
+      <h2 class='data-display group-dollars'>$<%= App.formatNumber(Math.round(dollars)) %></h2>
+    </div>
+    
+    <div class="status-wrapper group-status-wrapper <%= saved ? 'active' : '' %>">
+      <% if (!saved) { %>
+        <% if (agent) { %>
+          <div class='label-wrapper'><span class='label'>Waiting for client</span></div>
+        <% } else if (client) { %>
+          <div class='label-wrapper'><span class='label'>Requested</span></div>
+        <% } %>
+      <% } else if (agent) { %>
+        <% if (pending) { %>
+          <div class='label-wrapper'><span class='label'>Waiting for client</span></div>
+        <% } else if (approved || rejected) { %>
+          <div class='label-wrapper'>
+            <span class="label <%= group.status === 'approved' ? 'label-success' : 'label-important' %>"><%= group.status.substr(0, 1).toUpperCase() + group.status.substr(1) %></span>
+          </div>
+        <% } else if (requested) { %>
+          <div class='btn-group'>
+            <a href='#' tabindex='-1' class='btn btn-success status-button group-approve-button'>Approve</a>
+            <a href='#' tabindex='-1' class='btn btn-danger status-button group-reject-button'>Reject All</a>
+          </div>
+        <% } %>
+      <% } else if (client) { %>
+        <% if (pending) { %>
+          <div class='btn-group'>
+            <a href='#' tabindex='-1' class='btn btn-success status-button group-approve-button'>Approve</a>
+            <a href='#' tabindex='-1' class='btn btn-danger status-button group-reject-button'>Reject All</a>
+          </div>
+        <% } else if (approved || rejected) { %>
+          <div class='label-wrapper'>
+            <span class="label <%= group.status === 'approved' ? 'label-success' : 'label-important' %>"><%= group.status.substr(0, 1).toUpperCase() + group.status.substr(1) %></span>
+          </div>
+        <% } else if (requested) { %>
+          <div class='label-wrapper'><span class='label'>Requested</span></div>
+        <% } %>
+      <% } %>
+    </div>
+    
+    <% if ((owner || client) && (approved || rejected)) { %>
+    <div class='dropdown group-dropdown pull-right'>
+      <a href='#' class='btn btn-small' data-toggle='dropdown'>
+        <i class='icon-pencil'></i>
+        <i class='caret'></i>
+      </a>
+      <ul class='dropdown-menu' role='menu'>
+        <% if (owner) { %>
+        <li><a href='#' tabindex='-1' class='owner-revert-group'>Revert to pending</a></li>
+        <li><a href='#' tabindex='-1' class='owner-delete-group'>Delete this feature</a></li>
+        <% } else if (client) { %>
+          <% if (approved) { %>
+          <li><a href='#' tabindex='-1' class='client-reject-group'>Change to rejected</a></li>
+          <% } else if (rejected) { %>
+            <% if (!isNaN(parseFloat(group.hours))) { %>
+            <li><a href='#' tabindex='-1' class='client-approve-group'>Change to approved</a></li>
+            <% } else { %>
+            <li><a href='#' tabindex='-1' class='client-revert-group'>Revert to request</a></li>
+            <% } %>
+          <% } %>
+        <% } %>
+      </ul>
+    </div>
+    <% } %>
+    
+    <% if (!saved || (agent && pending) || (client && requested)) { %>
+    <div class="delete-wrapper group-delete-wrapper <%= saved ? 'active' : '' %>">
+      <a href='#' tabindex='-1' class='btn btn-small btn-danger delete-link group-delete-link'>Delete</a>
+    </div>
+    <% } %>
+  </div>
+  
+  <div class='edit-group-form-body'>
+    <ul class='group-requirements'></ul>
+  </div>
+</div>
