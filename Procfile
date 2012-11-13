@@ -1,1 +1,1 @@
-web: source bin/activate; python manage.py collectstatic --noinput; python manage.py run_gunicorn -b 0.0.0.0:$PORT -w 4; python manage.py syncdb
+web: source bin/activate; python manage.py collectstatic --noinput; python manage.py syncdb; python manage.py run_gunicorn -b 0.0.0.0:$PORT -w 4
