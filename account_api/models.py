@@ -298,8 +298,6 @@ class AccountEmail(models.Model):
 
   @classmethod
   def create_email(cls, account, action, request=None):
-    sender = settings.SMTP['username']
-
     if action == 'account-created' and request is not None:
       recipient = account.email
       subject = "Verify your email address"
@@ -319,13 +317,15 @@ class AccountEmail(models.Model):
     else:
       return False
     
-    context = dict(context, **{
+    sender = settings.EMAIL_HOST_USER
+
+    context = {
       "url": settings.BASE_URL,
       "subject": subject,
       "site_name": settings.SITE_NAME,
       "code": request.code,
       "account_id": account.id,
-    })
+    }
     
     html = render_to_string(action + '.html', context)
     text = render_to_string(action + '.txt', context)
@@ -343,44 +343,21 @@ class AccountEmail(models.Model):
     return email
 
   def send(self):
-    from email.mime.multipart import MIMEMultipart
-    from email.mime.text import MIMEText
-    import smtplib
-    # From: http://stackoverflow.com/questions/882712/sending-html-email-in-python
+    from django.core.mail import EmailMultiAlternatives
 
-    # Create message container - the correct MIME type is multipart/alternative.
-    msg = MIMEMultipart('alternative')
-    msg['Subject'] = self.subject
-    msg['From'] = self.sender
-    msg['To'] = self.recipient
+    subject, from_email, to = self.subject, "Projectionable <" + str(self.sender) + ">", self.recipient
+    text_content = self.text
+    html_content = self.html
+    msg = EmailMultiAlternatives(subject, text_content, from_email, [to])
+    msg.attach_alternative(html_content, "text/html")
 
-    # Record the MIME types of both parts - text/plain and text/html.
-    part1 = MIMEText(self.text, 'plain')
-    part2 = MIMEText(self.html, 'html')
-
-    # Attach parts into message container.
-    # According to RFC 2046, the last part of a multipart message, in this case
-    # the HTML message, is best and preferred.
-    msg.attach(part1)
-    msg.attach(part2)
-
-    # Send the message via local SMTP server.
     try:
-      s = smtplib.SMTP(settings.SMTP['host'], settings.SMTP['port'])
-    except smtplib.SMTPConnectError:
-      return False
-    
-    s.login(settings.SMTP['username'], settings.SMTP['password'])
-
-    # sendmail function takes 3 arguments: sender's address, recipient's address
-    # and message to send - here it is sent as one string.
-    try:
-      s.sendmail(sender, recipient, msg.as_string())
+      msg.send()
     except (smtplib.SMTPRecipientsRefused, smtplib.SMTPHeloError, smtplib.SMTPSenderRefused, smtplib.SMTPDataError):
       pass
     else:
       self.status = 'sent'
       self.save()
-
-    s.quit()
+      
+    return self
 
