@@ -48,6 +48,7 @@ $ ->
           password: password
       success: (json) =>
         displaySuccess 'Logging in...'
+        $formBody.children().not('.alert').hide().filter('input').val('')
         setTimeout (-> window.location.href = 'http://' + window.location.host), 750
       error: (jqXHR) =>
         json = JSON.parse(jqXHR.responseText)
@@ -63,6 +64,8 @@ $ ->
       $formInputs.get(0).focus()
       return
     
+    $forgotPasswordButton.button 'loading'
+    
     $.ajax
       type: 'PUT'
       dataType: 'json'
@@ -73,13 +76,12 @@ $ ->
           email: email
           action: 'request_password_reset'
       success: (json) =>
-        displaySuccess 'Thank you! Please check your email to activate your account.'
-        $formBody.children().not('.alert').hide().filter('input').val('')
+        displaySuccess 'Please check your email to reset your password.'
       error: (jqXHR) =>
         json = JSON.parse(jqXHR.responseText)
         displayError json[_.keys(JSON.parse(jqXHR.responseText))[0]]
         $formInputs.get(0).focus()
-        $signinButton.button 'reset'
+        $forgotPasswordButton.button 'reset'
       
   displayError = (msg) ->
     $alert
