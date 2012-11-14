@@ -253,7 +253,7 @@ class WorkPermissionModal extends Spine.Controller
   hideSharingModal: (event=null) =>
     event.preventDefault() if event isnt null
     $('#stripe-button-container').fadeOut 500
-    @$sharingModal.fadeOut 500, -> @hideStripeButton()
+    @$sharingModal.fadeOut 500, => @hideStripeButton()
       
   showStripeButton: =>
     offset = @$sharingModal.find('.right-half').offset()
