@@ -67,13 +67,11 @@ $ ->
     $alert
       .removeClass('alert-success')
       .find('span').text(msg)
-      .end().find('strong').text('Error')
       .end().addClass('alert-error').show()
   
   displaySuccess = (msg) ->
     $alert
       .removeClass('alert-error')
       .find('span').text(msg)
-      .end().find('strong').text('Success')
       .end().addClass('alert-success').show()
   

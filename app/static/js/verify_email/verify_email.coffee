@@ -41,11 +41,11 @@ $ ->
           code: code
       success: (json) =>
         displaySuccess 'Redirecting to sign in...'
+        $formBody.children().not('.alert').hide().filter('input').val('')
         setTimeout (-> window.location.href = 'http://' + window.location.host + '/signin'), 750
       error: (jqXHR) =>
         json = JSON.parse(jqXHR.responseText)
         displayError json[_.keys(JSON.parse(jqXHR.responseText))[0]]
-      complete: (jqXHR) =>
         $submitButton.button 'reset'
         $formInputs.get(0).focus()
     
@@ -53,14 +53,12 @@ $ ->
     $alert
       .removeClass('alert-success')
       .find('span').text(msg)
-      .end().find('strong').text('Error')
       .end().addClass('alert-error').show()
   
   displaySuccess = (msg) ->
     $alert
       .removeClass('alert-error')
       .find('span').text(msg)
-      .end().find('strong').text('Success')
       .end().addClass('alert-success').show()
       
   if $code.val() isnt ''

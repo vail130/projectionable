@@ -52,25 +52,23 @@ $ ->
           email: email
           password: password1
       success: (json) =>
-        displaySuccess 'Thank you! Please follow the instructions in the email we just sent to you.'
+        displaySuccess 'Thank you! Please check your email to activate your account.'
+        $formBody.children().not('.alert').hide().filter('input').val('')
       error: (jqXHR) =>
         json = JSON.parse(jqXHR.responseText)
         displayError json[_.keys(JSON.parse(jqXHR.responseText))[0]]
-      complete: (jqXHR) =>
-        $signupButton.button 'reset'
         $formInputs.get(0).focus()
+        $signupButton.button 'reset'
     
   displayError = (msg) ->
     $alert
       .removeClass('alert-success')
       .find('span').text(msg)
-      .end().find('strong').text('Error')
       .end().addClass('alert-error').show()
   
   displaySuccess = (msg) ->
     $alert
       .removeClass('alert-error')
       .find('span').text(msg)
-      .end().find('strong').text('Success')
       .end().addClass('alert-success').show()
   

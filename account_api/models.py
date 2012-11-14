@@ -281,18 +281,10 @@ class AccountEmail(models.Model):
   date_updated = models.DateTimeField(auto_now=True)
   date_created = models.DateTimeField(auto_now_add=True)
 
-  ###
-  #
-  enabled = True
-  #
-  ###
-  
-  statuses = ['pending', 'sent', 'opened']
-
   @classmethod
   def create_and_send(cls, account, action, request=None):
     email = cls.create_email(account, action, request=request)
-    if isinstance(email, AccountEmail) and cls.enabled is True:
+    if isinstance(email, AccountEmail):
       email.send()
     return email
 
@@ -304,15 +296,15 @@ class AccountEmail(models.Model):
 
     elif action == 'invitation-account-created' and request is not None:
       recipient = account.email
-      subject = "Invitation to share a project"
+      subject = "Verify your invitation"
 
     elif action == 'email-change-requested':
       recipient = account.email
-      subject = "Verify your updated email address"
+      subject = "Verify your email address"
 
     elif action == 'password-reset-requested':
       recipient = account.email
-      subject = "Reset your password"
+      subject = "Set a new password"
 
     else:
       return False
