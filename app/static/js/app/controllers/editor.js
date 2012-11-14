@@ -424,6 +424,7 @@
     };
 
     WorkPermissionModal.prototype.hideSharingModal = function(event) {
+      var _this = this;
       if (event == null) {
         event = null;
       }
@@ -432,7 +433,7 @@
       }
       $('#stripe-button-container').fadeOut(500);
       return this.$sharingModal.fadeOut(500, function() {
-        return this.hideStripeButton();
+        return _this.hideStripeButton();
       });
     };
 

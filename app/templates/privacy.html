@@ -1,0 +1,30 @@
+{% extends 'base.html' %}
+
+{% block style %}
+{% endblock %}
+
+{% block app %}
+<div id='projectionable'>
+  {% include 'header.html' %}
+  
+  <div id='content' class='clearfix'>
+    
+    <h1>Terms of Service</h1>
+    
+    <p>Welcome to the Projectionable project estimation service (the &#8220;Service&#8221;), a service of
+      Projectionable (&#8220;Projectionable&#8221;, &#8220;we&#8221;, or &#8220;us&#8221;). Please read these Terms of Service carefully,
+      as they contain the legal terms and conditions that govern your use and access of the Service.
+      Projectionable reserves the right to update and change the Terms of Service from time to time
+      by posting an updated version of such Terms of Service at {{ site_url }}terms no later than thirty (30) days prior to the posted effective date of such update. If you continue to use or access the Service after the posted effective date, you hereby agree to the updated Terms of Service. Unless New Relic otherwise indicates, your use of any new features, changes, and enhancements to the current Service, including the release of new features and resources, shall be subject to the Terms of Service.</p>
+
+    <p>BY SIGNING UP FOR AN ACCOUNT OR BY USING THE SERVICE, YOU HEREBY ACKNOWLEDGE THAT YOU HAVE READ, UNDERSTAND, AND AGREE TO BE BOUND BY THESE TERMS OF SERVICE. THE TERM &#8220;YOU&#8221; REFERS TO THE INDIVIDUAL OR CORPORATE END USER THAT IS SPECIFIED IN THE REGISTRATION INFORMATION ASSOCIATED WITH SUCH END USERÕS ACCOUNT FOR THE SERVICE.</p>
+    
+  </div>
+  
+  {% include 'footer.html' %}
+</div>
+{% endblock %}
+
+{% block js %}
+    <script type='text/javascript' src='{{ static_url }}js/verify_invitation.js'></script>
+{% endblock %}

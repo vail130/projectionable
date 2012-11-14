@@ -13,6 +13,9 @@ urlpatterns = patterns('',
     url(r'^reset_password/?(?:\?.*)?$', ResetPassword.as_view(), name='resetpassword'),
     url(r'^verify_invitation/?(?:\?.*)?$', VerifyInvitation.as_view(), name='verifyinvitation'),
     
+    url(r'^terms/?$', Terms.as_view(), name='terms'),
+    #url(r'^privacy/?$', Privacy.as_view(), name='privacy'),
+    
     url(r'^api/permissions/(?P<permission_id>[^/\?]+)/?(?:\?.*)?$', PermissionEditor.as_view(), name='permissioneditor'),
     url(r'^api/permissions/?(?:\?.*)?$', PermissionManager.as_view(), name='permissionmanager'),
     

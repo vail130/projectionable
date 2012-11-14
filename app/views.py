@@ -220,3 +220,54 @@ class VerifyInvitation(View):
         context['account_id'] = account_id
 
         return render_to_response('verify_invitation.html', context, context_instance=RequestContext(request))
+
+class Terms(View):
+    
+    def get(self, request):
+        context = {
+            "site_name": settings.SITE_NAME.lower(),
+            "site_url": settings.BASE_URL,
+            "static_url": settings.STATIC_URL,
+            "title": settings.SITE_NAME,
+            "description": "",
+            "keywords": "",
+            "page": 'terms',
+            "company": "Projectionable",
+        }
+
+        try:
+            request.session["_auth_user_id"]
+        except KeyError:
+            context['valid_session'] = False
+            context['user_id'] = None
+        else:
+            context['valid_session'] = True
+            context['user_id'] = request.session["_auth_user_id"]
+
+        return render_to_response('terms.html', context, context_instance=RequestContext(request))
+
+class Privacy(View):
+    
+    def get(self, request):
+        context = {
+            "site_name": settings.SITE_NAME.lower(),
+            "site_url": settings.BASE_URL,
+            "static_url": settings.STATIC_URL,
+            "title": settings.SITE_NAME,
+            "description": "",
+            "keywords": "",
+            "page": 'privacy',
+            "company": "Projectionable",
+        }
+
+        try:
+            request.session["_auth_user_id"]
+        except KeyError:
+            context['valid_session'] = False
+            context['user_id'] = None
+        else:
+            context['valid_session'] = True
+            context['user_id'] = request.session["_auth_user_id"]
+
+        return render_to_response('privacy.html', context, context_instance=RequestContext(request))
+
