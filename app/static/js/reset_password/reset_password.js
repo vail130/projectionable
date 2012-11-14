@@ -74,10 +74,10 @@
       });
     });
     displayError = function(msg) {
-      return $alert.removeClass('alert-success').find('span').text(msg).end().find('strong').text('Error').end().addClass('alert-error').show();
+      return $alert.removeClass('alert-success').find('span').text(msg).end().addClass('alert-error').show();
     };
     return displaySuccess = function(msg) {
-      return $alert.removeClass('alert-error').find('span').text(msg).end().find('strong').text('Success').end().addClass('alert-success').show();
+      return $alert.removeClass('alert-error').find('span').text(msg).end().addClass('alert-success').show();
     };
   });
 

@@ -52,6 +52,7 @@
         }),
         success: function(json) {
           displaySuccess('Logging in...');
+          $formBody.children().not('.alert').hide().filter('input').val('');
           return setTimeout((function() {
             return window.location.href = 'http://' + window.location.host;
           }), 750);
@@ -75,6 +76,7 @@
         $formInputs.get(0).focus();
         return;
       }
+      $forgotPasswordButton.button('loading');
       return $.ajax({
         type: 'PUT',
         dataType: 'json',
@@ -85,24 +87,22 @@
           action: 'request_password_reset'
         }),
         success: function(json) {
-          return displaySuccess('Thank you! Please follow the instructions in the email we just sent to you.');
+          return displaySuccess('Please check your email to reset your password.');
         },
         error: function(jqXHR) {
           var json;
           json = JSON.parse(jqXHR.responseText);
-          return displayError(json[_.keys(JSON.parse(jqXHR.responseText))[0]]);
-        },
-        complete: function(jqXHR) {
-          $signinButton.button('reset');
-          return $formInputs.get(0).focus();
+          displayError(json[_.keys(JSON.parse(jqXHR.responseText))[0]]);
+          $formInputs.get(0).focus();
+          return $forgotPasswordButton.button('reset');
         }
       });
     });
     displayError = function(msg) {
-      return $alert.removeClass('alert-success').find('span').text(msg).end().find('strong').text('Error').end().addClass('alert-error').show();
+      return $alert.removeClass('alert-success').find('span').text(msg).end().addClass('alert-error').show();
     };
     return displaySuccess = function(msg) {
-      return $alert.removeClass('alert-error').find('span').text(msg).end().find('strong').text('Success').end().addClass('alert-success').show();
+      return $alert.removeClass('alert-error').find('span').text(msg).end().addClass('alert-success').show();
     };
   });
 

@@ -23,7 +23,8 @@ if ENVIRONMENT == 'heroku':
   BASE_URL = 'http://projectionable.herokuapp.com/'
   BIN_PATH = '/app/bin/'
   PIPELINE_CSS_COMPRESSOR = None
-  PIPELINE_JS_COMPRESSOR = 'pipeline.compressors.yui.YUICompressor'
+  PIPELINE_JS_COMPRESSOR = None
+  #PIPELINE_JS_COMPRESSOR = 'pipeline.compressors.yui.YUICompressor'
   TEMPLATE_DIRS = (
     '/app/app/templates'
   )

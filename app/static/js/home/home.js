@@ -55,24 +55,23 @@
           password: password1
         }),
         success: function(json) {
-          return displaySuccess('Thank you! Please follow the instructions in the email we just sent to you.');
+          displaySuccess('Thank you! Please check your email to activate your account.');
+          return $formBody.children().not('.alert').hide().filter('input').val('');
         },
         error: function(jqXHR) {
           var json;
           json = JSON.parse(jqXHR.responseText);
-          return displayError(json[_.keys(JSON.parse(jqXHR.responseText))[0]]);
-        },
-        complete: function(jqXHR) {
-          $signupButton.button('reset');
-          return $formInputs.get(0).focus();
+          displayError(json[_.keys(JSON.parse(jqXHR.responseText))[0]]);
+          $formInputs.get(0).focus();
+          return $signupButton.button('reset');
         }
       });
     });
     displayError = function(msg) {
-      return $alert.removeClass('alert-success').find('span').text(msg).end().find('strong').text('Error').end().addClass('alert-error').show();
+      return $alert.removeClass('alert-success').find('span').text(msg).end().addClass('alert-error').show();
     };
     return displaySuccess = function(msg) {
-      return $alert.removeClass('alert-error').find('span').text(msg).end().find('strong').text('Success').end().addClass('alert-success').show();
+      return $alert.removeClass('alert-error').find('span').text(msg).end().addClass('alert-success').show();
     };
   });
 

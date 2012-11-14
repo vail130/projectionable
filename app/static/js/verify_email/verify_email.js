@@ -16,7 +16,7 @@
         return focused = true;
       }
     });
-    $code.add($password1).add($password2).keypress(function(event) {
+    $code.keypress(function(event) {
       var code;
       code = event.keyCode ? event.keyCode : event.charCode;
       if (code === 13) {
@@ -46,6 +46,7 @@
         }),
         success: function(json) {
           displaySuccess('Redirecting to sign in...');
+          $formBody.children().not('.alert').hide().filter('input').val('');
           return setTimeout((function() {
             return window.location.href = 'http://' + window.location.host + '/signin';
           }), 750);
@@ -53,19 +54,17 @@
         error: function(jqXHR) {
           var json;
           json = JSON.parse(jqXHR.responseText);
-          return displayError(json[_.keys(JSON.parse(jqXHR.responseText))[0]]);
-        },
-        complete: function(jqXHR) {
+          displayError(json[_.keys(JSON.parse(jqXHR.responseText))[0]]);
           $submitButton.button('reset');
           return $formInputs.get(0).focus();
         }
       });
     });
     displayError = function(msg) {
-      return $alert.removeClass('alert-success').find('span').text(msg).end().find('strong').text('Error').end().addClass('alert-error').show();
+      return $alert.removeClass('alert-success').find('span').text(msg).end().addClass('alert-error').show();
     };
     displaySuccess = function(msg) {
-      return $alert.removeClass('alert-error').find('span').text(msg).end().find('strong').text('Success').end().addClass('alert-success').show();
+      return $alert.removeClass('alert-error').find('span').text(msg).end().addClass('alert-success').show();
     };
     if ($code.val() !== '') {
       return $submitButton.trigger('click');
