@@ -2,9 +2,13 @@
 ##########################
 static/
 !app/static/
+
 bin/
 include/
+
 lib/
+!app/static/js/app/lib
+
 .Python
 .komodotools/
 *.komodoproject
