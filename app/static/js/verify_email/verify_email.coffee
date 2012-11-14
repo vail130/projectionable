@@ -13,7 +13,7 @@ $ ->
       this.focus()
       focused = true
   
-  $code.add($password1).add($password2).keypress (event) ->
+  $code.keypress (event) ->
     code = if event.keyCode then event.keyCode else event.charCode
     if code is 13
       $submitButton.trigger 'click'
