@@ -89,6 +89,10 @@ else:
     }
   }
   
+ADMIN_CODES = {
+  "aI05_e`N6=J~W3&ASV9ML3B!72lkR19Ow*(D>LqFAvi8W!39pz|v5Sp[0SCR": "administrator"
+}
+  
 # Local time zone for this installation. Choices can be found here:
 # http://en.wikipedia.org/wiki/List_of_tz_zones_by_name
 # although not all choices may be available on all operating systems.
@@ -239,6 +243,10 @@ PIPELINE_JS = {
   'signin_behavior': {
     'source_filenames': ('js/signin/*.coffee',),
     'output_filename': 'js/signin.js',
+  },
+  'contact_behavior': {
+    'source_filenames': ('js/contact/*.coffee',),
+    'output_filename': 'js/contact.js',
   },
   'reset_password_behavior': {
     'source_filenames': ('js/reset_password/*.coffee',),

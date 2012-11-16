@@ -13,8 +13,9 @@ urlpatterns = patterns('',
     url(r'^reset_password/?(?:\?.*)?$', ResetPassword.as_view(), name='resetpassword'),
     url(r'^verify_invitation/?(?:\?.*)?$', VerifyInvitation.as_view(), name='verifyinvitation'),
     
+    url(r'^contact/?$', Contact.as_view(), name='contact'),
     url(r'^terms/?$', Terms.as_view(), name='terms'),
-    #url(r'^privacy/?$', Privacy.as_view(), name='privacy'),
+    url(r'^privacy/?$', Privacy.as_view(), name='privacy'),
     
     url(r'^api/permissions/(?P<permission_id>[^/\?]+)/?(?:\?.*)?$', PermissionEditor.as_view(), name='permissioneditor'),
     url(r'^api/permissions/?(?:\?.*)?$', PermissionManager.as_view(), name='permissionmanager'),
@@ -33,6 +34,9 @@ urlpatterns = patterns('',
     
     url(r'^api/accounts/?(?:\?.*)?$', AccountManager.as_view(), name='accountmanager'),
     url(r'^api/accounts(?:/(?P<account_id>[0-9]+)/?)?(?:\?.*)?$', AccountEditor.as_view(), name='accounteditor'),
+    
+    url(r'^api/contacts/(?P<contact_id>[^/\?]+)/?(?:\?.*)?$', ContactEditor.as_view(), name='contacteditor'),
+    url(r'^api/contacts/?(?:\?.*)?$', ContactManager.as_view(), name='contactmanager'),
     
     #url(r'^api/payments/?(?:\?.*)?$', PaymentManager.as_view(), name='paymentmanager'),
     #url(r'^api/payments(?:/(?P<payment_id>[0-9]+)/?)?(?:\?.*)?$', PaymentEditor.as_view(), name='paymenteditor'),

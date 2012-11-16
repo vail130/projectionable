@@ -208,11 +208,17 @@ body {
             }
           }
           
-          input {
+          textarea, input {
             border: 1px solid #a88244;
             border-radius: 0;
             width: 95%;
             margin: 5px 0;
+          }
+            
+          textarea {
+            height: 150px;
+            min-width: 95%;
+            max-width: 95%;
           }
           
           .button-row {
@@ -236,6 +242,11 @@ body {
           float: left;
         }
       }
+    }
+    
+    .contact-form {
+      width: 400px;
+      margin: 50px auto;
     }
     
     .verify-invitation-form,

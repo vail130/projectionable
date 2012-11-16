@@ -289,7 +289,17 @@ class AccountManager(View):
         # Operation
         #################
 
-        return Response(content=account.record_to_dictionary(), headers=headers, status=status.HTTP_200_OK)
+        if account.type is 'standard':
+            return Response(content=account.record_to_dictionary(), headers=headers, status=status.HTTP_200_OK)
+          
+        else:
+            try:
+                accounts = Account.objects.all()
+            except Account.DoesNotExist:
+                accounts = []
+            
+            account_list = [acc.record_to_dictionary() for acc in accounts]
+            return Response(content=account_list, headers=headers, status=status.HTTP_200_OK)
 
     def post(self, request):
         #################
@@ -601,4 +611,279 @@ class AccountEditor(View):
             return Response(content=result, headers=headers, status=status.HTTP_400_BAD_REQUEST)
 
         return Response(content=account.record_to_dictionary(), headers=headers, status=status.HTTP_200_OK)
+
+class ContactManager(View):
+    """
+    Handles HTTP requests to endpoint URL/api/contacts/ with optional querystring
+    Allow: PUT, POST
+    """
+    def put(self, request):
+        #################
+        # Setup
+        #################
+
+        headers = {
+            "Content-Type": "application/json",
+            "Allow": "POST",
+        }
+
+        try:
+            request.session["_auth_user_id"]
+        except KeyError:
+            return Response(status=status.HTTP_401_UNAUTHORIZED)
+
+        #################
+        # Validation
+        #################
+
+        errors = {"header_request_method": "This endpoint only supports POST requests."}
+        return Response(content=errors, headers=headers, status=status.HTTP_405_METHOD_NOT_ALLOWED)
+
+    def delete(self, request):
+        #################
+        # Setup
+        #################
+
+        headers = {
+            "Content-Type": "application/json",
+            "Allow": "POST",
+        }
+
+        try:
+            request.session["_auth_user_id"]
+        except KeyError:
+            return Response(status=status.HTTP_401_UNAUTHORIZED)
+
+        #################
+        # Validation
+        #################
+
+        errors = {"header_request_method": "This endpoint only supports POST requests."}
+        return Response(content=errors, headers=headers, status=status.HTTP_405_METHOD_NOT_ALLOWED)
+
+    def get(self, request):
+        #################
+        # Setup
+        #################
+
+        headers = {
+            "Content-Type": "application/json",
+            "Allow": "POST",
+        }
+
+        try:
+            account_id = int(request.session["_auth_user_id"])
+        except KeyError:
+            return Response(status=status.HTTP_401_UNAUTHORIZED)
+
+        try:
+            account = Account.objects.get(user_id=account_id)
+        except Account.DoesNotExist:
+            return Response(status=status.HTTP_401_UNAUTHORIZED)
+          
+        if account.type is not 'administrator':
+            return Response(status=status.HTTP_401_UNAUTHORIZED)
+
+        #################
+        # Operation
+        #################
+        
+        try:
+            contacts = Contact.objects.all()
+        except Contact.DoesNotExist:
+            contacts = []
+
+        contact_list = [contact.record_to_dictionary() for contact in contacts]
+        return Response(content=contact_list, headers=headers, status=status.HTTP_200_OK)
+
+    def post(self, request):
+        #################
+        # Setup
+        #################
+
+        headers = {
+            "Content-Type": "application/json",
+            "Allow": "POST",
+        }
+
+        # Check content-type header
+        if not self.content_type.startswith('application/json'):
+            errors = {"header_content_type": "Content-Type must be 'application/json'. Your Content-Type is " + str(self.content_type)}
+            return Response(content=errors, headers=headers, status=status.HTTP_400_BAD_REQUEST)
+
+        try:
+            account_id = int(request.session["_auth_user_id"])
+        except KeyError:
+            pass
+        else:
+            try:
+                account = Account.objects.get(user_id=account_id)
+            except Account.DoesNotExist:
+                account = None
+
+        contact = Contact.create_record(account, self.CONTENT)
+        if not isinstance(contact, Contact):
+            return Response(content=contact, headers=headers, status=status.HTTP_400_BAD_REQUEST)
+
+        return Response(content=contact.record_to_dictionary(), headers=headers, status=status.HTTP_200_OK)
+
+class ContactEditor(View):
+    """
+    Handles HTTP requests to endpoint URL/api/contacts/:contact_id/ with optional querystring
+    Allow: GET, PUT, DELETE
+    """
+    def post(self, request, contact_id):
+        #################
+        # Setup
+        #################
+
+        headers = {
+            "Content-Type": "application/json",
+            "Allow": "",
+        }
+
+        #################
+        # Validation
+        #################
+
+        try:
+            account_id = int(request.session["_auth_user_id"])
+        except KeyError:
+            return Response(status=status.HTTP_401_UNAUTHORIZED)
+
+        try:
+            account = Account.objects.get(user_id=account_id)
+        except Account.DoesNotExist:
+            return Response(status=status.HTTP_401_UNAUTHORIZED)
+          
+        if account.type is not 'administrator':
+            return Response(status=status.HTTP_401_UNAUTHORIZED)
+
+        errors = {"header_request_method": "This endpoint only supports GET, PUT and DELETE requests."}
+        return Response(content=errors, headers=headers, status=status.HTTP_405_METHOD_NOT_ALLOWED)
+
+    def delete(self, request, contact_id):
+        #################
+        # Setup
+        #################
+
+        headers = {
+            "Content-Type": "application/json",
+            "Allow": "",
+        }
+
+        query_dict = dict([(k,v) for k,v in request.GET.iteritems()])
+
+        #################
+        # Validation
+        #################
+
+        try:
+            account_id = int(request.session["_auth_user_id"])
+        except KeyError:
+            return Response(status=status.HTTP_401_UNAUTHORIZED)
+
+        try:
+            account = Account.objects.get(user_id=account_id)
+        except Account.DoesNotExist:
+            return Response(status=status.HTTP_401_UNAUTHORIZED)
+          
+        if account.type is not 'administrator':
+            return Response(status=status.HTTP_401_UNAUTHORIZED)
+
+        #################
+        # Operation
+        #################
+
+        errors = {"header_request_method": "This endpoint only supports GET and PUT requests."}
+        return Response(content=errors, headers=headers, status=status.HTTP_405_METHOD_NOT_ALLOWED)
+
+    def get(self, request, contact_id):
+        #################
+        # Setup
+        #################
+
+        headers = {
+            "Content-Type": "application/json",
+            "Allow": "GET, PUT, DELETE",
+        }
+
+        query_dict = dict([(k,v) for k,v in request.GET.iteritems()])
+
+        #################
+        # Validation
+        #################
+
+        try:
+            account_id = int(request.session["_auth_user_id"])
+        except KeyError:
+            return Response(status=status.HTTP_401_UNAUTHORIZED)
+
+        try:
+            account = Account.objects.get(user_id=account_id)
+        except Account.DoesNotExist:
+            return Response(status=status.HTTP_401_UNAUTHORIZED)
+          
+        if account.type is not 'administrator':
+            return Response(status=status.HTTP_401_UNAUTHORIZED)
+
+        #################
+        # Operation
+        #################
+        
+        try:
+            contact = Contact.objects.get(id=int(contact_id))
+        except Contact.DoesNotExist:
+            errors = {"contact_id": "Invalid contact ID."}
+            return Response(content=errors, headers=headers, status=status.HTTP_404_NOT_FOUND)
+
+        return Response(content=contact.record_to_dictionary(), headers=headers, status=status.HTTP_200_OK)
+
+    def put(self, request, contact_id):
+        #################
+        # Setup
+        #################
+
+        headers = {
+            "Content-Type": "application/json",
+            "Allow": "",
+        }
+
+        #################
+        # Validation
+        #################
+
+        try:
+            account_id = int(request.session["_auth_user_id"])
+        except KeyError:
+            return Response(status=status.HTTP_401_UNAUTHORIZED)
+
+        try:
+            account = Account.objects.get(user_id=account_id)
+        except Account.DoesNotExist:
+            return Response(status=status.HTTP_401_UNAUTHORIZED)
+          
+        if account.type is not 'administrator':
+            return Response(status=status.HTTP_401_UNAUTHORIZED)
+
+        # Check content-type header
+        if not self.content_type.startswith('application/json'):
+            errors = {"header_content_type": "Content-Type must be 'application/json'. Your Content-Type is " + str(self.content_type)}
+            return Response(content=errors, headers=headers, status=status.HTTP_400_BAD_REQUEST)
+
+        #################
+        # Operation
+        #################
+
+        try:
+            contact = Contact.objects.get(id=int(contact_id))
+        except Contact.DoesNotExist:
+            errors = {"contact_id": "Invalid contact ID."}
+            return Response(content=errors, headers=headers, status=status.HTTP_404_NOT_FOUND)
+
+        result = contact.update_record(self.CONTENT)
+        if isinstance(result, dict):
+            return Response(content=result, headers=headers, status=status.HTTP_400_BAD_REQUEST)
+
+        return Response(content=contact.record_to_dictionary(), headers=headers, status=status.HTTP_200_OK)
 

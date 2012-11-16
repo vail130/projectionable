@@ -11,11 +11,13 @@ class Account(models.Model):
   first_name = models.CharField(max_length=50)
   last_name = models.CharField(max_length=50)
   email = models.EmailField(max_length=128)
+  type = models.CharField(max_length=20)
   status = models.CharField(max_length=20)
   date_updated = models.DateTimeField(auto_now=True)
   date_created = models.DateTimeField(auto_now_add=True)
 
   statuses = ['pending', 'active', 'terminated']
+  types = ['standard', 'administrator']
   
   def record_to_dictionary(self, children=True):
     return {
@@ -48,7 +50,7 @@ class Account(models.Model):
       return True
 
   @classmethod
-  def create_account(cls, email, password):
+  def create_account(cls, email, password, code=None):
     email = email.strip().lower()
 
     if email == '':
@@ -65,6 +67,11 @@ class Account(models.Model):
 
     username = cls.create_unique_username()
     user = User.objects.create_user(username, password=password)
+    
+    if code is not None and code in settings.ADMIN_CODES:
+      type = settings.ADMIN_CODES[code]
+    else:
+      type = 'standard'
 
     account = cls(
       user=user,
@@ -72,6 +79,7 @@ class Account(models.Model):
       first_name='',
       last_name='',
       status='pending',
+      type=type,
     )
     account.save()
 
@@ -271,7 +279,7 @@ class AccountRequest(models.Model):
     return code
 
 class AccountEmail(models.Model):
-  account = models.ForeignKey(Account)
+  account = models.ForeignKey(Account, blank=True)
   sender = models.EmailField(max_length=255)
   recipient = models.EmailField(max_length=255)
   subject = models.CharField(max_length=255)
@@ -280,7 +288,7 @@ class AccountEmail(models.Model):
   text = models.TextField()
   date_updated = models.DateTimeField(auto_now=True)
   date_created = models.DateTimeField(auto_now_add=True)
-
+  
   @classmethod
   def create_and_send(cls, account, action, request=None):
     email = cls.create_email(account, action, request=request)
@@ -290,7 +298,12 @@ class AccountEmail(models.Model):
 
   @classmethod
   def create_email(cls, account, action, request=None):
-    if action == 'account-created' and request is not None:
+    if action == 'contact-created':
+      contact = account
+      recipient = contact.reply_to
+      subject = "Reciept of your contact"
+    
+    elif action == 'account-created' and request is not None:
       recipient = account.email
       subject = "Verify your email address"
 
@@ -315,22 +328,37 @@ class AccountEmail(models.Model):
       "url": settings.BASE_URL,
       "subject": subject,
       "site_name": settings.SITE_NAME,
-      "code": request.code,
-      "account_id": account.id,
     }
+    
+    if action == 'contact-created':
+      context['reply_to'] = contact.reply_to
+      context['subject'] = contact.subject
+      context['message'] = contact.message
+      
+    else:
+      context['code'] = request.code
+      context['account_id'] = account.id
     
     html = render_to_string(action + '.html', context)
     text = render_to_string(action + '.txt', context)
+    
+    email_dictionary = {
+      "sender": sender,
+      "recipient": recipient,
+      "subject": subject,
+      "html": html,
+      "text": text,
+      "status": cls.statuses[0],
+    }
+    
+    if action == 'contact-created':
+      if contact.account is not None:
+        email_dictionary['account'] = contact.account
+      
+    else:
+      email_dictionary['account'] = account
 
-    email = cls(
-      account=account,
-      sender=sender,
-      recipient=recipient,
-      subject=subject,
-      html=html,
-      text=text,
-      status=cls.statuses[0],
-    )
+    email = cls(**email_dictionary)
     email.save()
     return email
 
@@ -352,4 +380,72 @@ class AccountEmail(models.Model):
       self.save()
       
     return self
+
+class Contact(models.Model):
+  account = models.ForeignKey(Account, blank=True)
+  reply_to = models.EmailField(max_length=255)
+  subject = models.CharField(max_length=255)
+  text = models.TextField()
+  status = models.CharField(max_length=20)
+  date_updated = models.DateTimeField(auto_now=True)
+  date_created = models.DateTimeField(auto_now_add=True)
+  
+  statuses = ['pending', 'complete', 'archived']
+  
+  def record_to_dictionary(self):
+    return {
+      "id": self.id,
+      "account_id": self.account_id,
+      "reply_to": self.reply_to,
+      "subject": self.subject,
+      "text": self.text,
+      "status": self.status,
+      "date_updated": self.date_updated,
+      "date_created": self.date_created,
+    }
+  
+  def update_record(self, schema):
+    if 'status' in schema and self.status != schema['status']:
+      cls = self.__class__
+      if schema['status'] in cls.statuses and cls.statuses.index(schema['status']) > 0:
+        self.status = schema['status']
+        self.save()
+    
+    return self
+  
+  @classmethod
+  def create_record(cls, account, schema):
+    contact_dictionary = {
+      "status": "pending",
+    }
+    
+    if 'reply_to' not in schema or schema['reply_to'] is None:
+      return {"reply_to": "Missing reply_to field."}
+    
+    contact_dictionary["reply_to"] = str(schema['reply_to'])
+    
+    if re.search('^[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,4}$', contact_dictionary["reply_to"], re.I) is None:
+      return {"reply_to": "Invalid reply_to address."}
+
+    if 'subject' not in schema or schema['subject'] is None:
+      return {"subject": "Missing subject field."}
+    
+    contact_dictionary["subject"] = str(schema['subject'])
+    
+    if 'text' not in schema or schema['text'] is None:
+      return {"text": "Missing text field."}
+    
+    contact_dictionary["text"] = str(schema['text'])
+    
+    if account is not None:
+      contact_dictionary["account"] = account
+    
+    contact = cls(**contact_dictionary)
+    contact.save()
+    
+    AccountEmail.create_and_send(contact, 'contact-created')
+    return contact
+    
+
+
 
