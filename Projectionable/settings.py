@@ -37,13 +37,12 @@ if ENVIRONMENT == 'heroku':
   
   DATABASES = {
     'default': {
-      #'ENGINE': 'django.db.backends.postgresql_psycopg2',
-      'ENGINE': 'postgresql_psycopg2',
-      'NAME': 'd5as0njj8afn5t',
+      'ENGINE': 'django.db.backends.postgresql_psycopg2',
+      'NAME': 'dc3ci5u5occinr',
       'HOST': 'ec2-54-243-65-149.compute-1.amazonaws.com',
       'PORT': 5432,
-      'USER': 'aelnzpnkfugjeg',
-      'PASSWORD': 'SH1ZUYZaAlUhBEqdQZde8W3ogE'
+      'USER': 'kjasteqewlibhq',
+      'PASSWORD': '-5Le-z_BHuEO8agRp4KX_aT2si'
     }
   }
 elif ENVIRONMENT == 'appfog':
