@@ -37,7 +37,7 @@ if ENVIRONMENT == 'heroku':
   
   import dj_database_url
   DATABASES = {
-    'default': dj_database_url.config()
+    'default': dj_database_url.config(default=os.environ["HEROKU_POSTGRESQL_OLIVE_URL"])
   }
   
 elif ENVIRONMENT == 'appfog':
