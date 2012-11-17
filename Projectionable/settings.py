@@ -37,7 +37,8 @@ if ENVIRONMENT == 'heroku':
   
   DATABASES = {
     'default': {
-      'ENGINE': 'django.db.backends.postgresql_psycopg2',
+      #'ENGINE': 'django.db.backends.postgresql_psycopg2',
+      'ENGINE': 'postgresql_psycopg2',
       'NAME': 'dc3ci5u5occinr',
       'HOST': 'ec2-54-243-65-149.compute-1.amazonaws.com',
       'PORT': 5432,
