@@ -30,19 +30,19 @@ if ENVIRONMENT == 'heroku':
   )
   
   EMAIL_HOST_USER = os.environ['SENDGRID_USERNAME']
-  EMAIL_HOST= 'smtp.sendgrid.net'
+  EMAIL_HOST = 'smtp.sendgrid.net'
   EMAIL_PORT = 587
   EMAIL_USE_TLS = True
   EMAIL_HOST_PASSWORD = os.environ['SENDGRID_PASSWORD']
   
   DATABASES = {
     'default': {
-      'ENGINE':   'postgresql_psycopg2',
-      'NAME':     'dbg0ajdn9fb6na',
-      'USER':     'prxovxmcytbmnl',
-      'PASSWORD': 'Ic9ZszEKA12FrUZ0ysxQep9qVT',
-      'HOST':     'ec2-54-243-228-52.compute-1.amazonaws.com',
-      'PORT':     '5542',
+      'ENGINE': 'django.db.backends.postgresql_psycopg2',
+      'NAME': 'd5as0njj8afn5t',
+      'HOST': 'ec2-54-243-65-149.compute-1.amazonaws.com',
+      'PORT': 5432,
+      'USER': 'aelnzpnkfugjeg',
+      'PASSWORD': 'SH1ZUYZaAlUhBEqdQZde8W3ogE'
     }
   }
 elif ENVIRONMENT == 'appfog':
