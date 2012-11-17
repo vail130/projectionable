@@ -35,17 +35,11 @@ if ENVIRONMENT == 'heroku':
   EMAIL_USE_TLS = True
   EMAIL_HOST_PASSWORD = os.environ['SENDGRID_PASSWORD']
   
+  import dj_database_url
   DATABASES = {
-    'default': {
-      #'ENGINE': 'django.db.backends.postgresql_psycopg2',
-      'ENGINE': 'postgresql_psycopg2',
-      'NAME': 'dc3ci5u5occinr',
-      'HOST': 'ec2-54-243-65-149.compute-1.amazonaws.com',
-      'PORT': 5432,
-      'USER': 'kjasteqewlibhq',
-      'PASSWORD': '-5Le-z_BHuEO8agRp4KX_aT2si'
-    }
+    'default': dj_database_url.config()
   }
+  
 elif ENVIRONMENT == 'appfog':
   BASE_URL = 'http://projectionable.aws.us.cm'
   BIN_PATH = '/app/bin/'
@@ -70,6 +64,7 @@ elif ENVIRONMENT == 'appfog':
       'PORT':     CREDENTIALS['port'],
     }
   }
+  
 else:
   BASE_URL = 'http://127.0.0.1:8000/'
   BIN_PATH = '/usr/local/bin/'
