@@ -5,8 +5,8 @@ class Projectionable.Manager extends Spine.Controller
     App.Manager = @
     $('#work').html @view 'work_work-structure'
     
-    Project.bind 'create', @addOne
-    Project.bind 'refresh change', @addAll
+    Projectionable.Project.bind 'create', @addOne
+    Projectionable.Project.bind 'refresh change', @addAll
     @routes
       '/manager': =>
         App.project = null
@@ -26,7 +26,7 @@ class Projectionable.Manager extends Spine.Controller
     
   new: (event) ->
     event.preventDefault()
-    project = Project.create App.makeProjectTemplate()
+    project = Projectionable.Project.create App.makeProjectTemplate()
     @addOne project
   
   addOne: (project) =>
@@ -35,7 +35,7 @@ class Projectionable.Manager extends Spine.Controller
 
   addAll: =>
     @$projectList.empty()
-    projects = Project.all()
+    projects = Projectionable.Project.all()
     if projects.length > 0
       @addOne project for project in projects
     else

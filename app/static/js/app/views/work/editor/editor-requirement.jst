@@ -13,10 +13,10 @@
   
   <div class='clearfix'>
     <div class='requirement-title-wrapper'>
-      <span class='input-label'>User Should Be Able To...</span>
+      <span class='input-label'>Requirement Title</span>
       <% if (!saved || (agent && pending) || (client && requested)) { %>
         <div class='edit-block'>
-          <input class="edit-input requirement-title-input" type='text' placeholder='Feature title...' value="<%= req.title %>" />
+          <input class="edit-input requirement-title-input" type='text' placeholder='Requirement title...' value="<%= req.title %>" />
           <i class='edit-icon icon-pencil'></i>
         </div>
       <% } else { %>

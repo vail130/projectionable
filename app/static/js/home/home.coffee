@@ -55,8 +55,10 @@ $ ->
         displaySuccess 'Thank you! Please check your email to activate your account.'
         $formBody.children().not('.alert').hide().filter('input').val('')
       error: (jqXHR) =>
-        json = JSON.parse(jqXHR.responseText)
-        displayError json[_.keys(JSON.parse(jqXHR.responseText))[0]]
+        try
+          displayError _.pairs(JSON.parse(jqXHR.responseText))[0][1]
+        catch e
+          displayError jqXHR.statusText
         $formInputs.get(0).focus()
         $signupButton.button 'reset'
     

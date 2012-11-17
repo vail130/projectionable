@@ -52,7 +52,7 @@ class Projectionable.Editor extends Spine.Controller
   
   new: (event=null) ->
     event.preventDefault() if event isnt null
-    group = RequirementGroup.create App.makeGroupTemplate(@project.id, RequirementGroup.findAllByAttribute('project_id', @project.id).length)
+    group = Projectionable.RequirementGroup.create App.makeGroupTemplate(@project.id, Projectionable.RequirementGroup.findAllByAttribute('project_id', @project.id).length)
     @addOne group
   
   addOne: (group) =>
@@ -63,7 +63,7 @@ class Projectionable.Editor extends Spine.Controller
     @$groupList.append controller.render().el
 
   addAll: =>
-    groups = _.sortBy(RequirementGroup.findAllByAttribute('project_id', @project.id), 'index')
+    groups = _.sortBy(Projectionable.RequirementGroup.findAllByAttribute('project_id', @project.id), 'index')
     @$groupList.empty()
     @children = []
     
@@ -78,9 +78,9 @@ class Projectionable.Editor extends Spine.Controller
   assessStartable: =>
     if @project.permission is 'client'
       enable = true
-      _.each RequirementGroup.findAllByAttribute('project_id', @project.id), (group) ->
+      _.each Projectionable.RequirementGroup.findAllByAttribute('project_id', @project.id), (group) ->
         enable = false if group.status in ['pending', 'requested']
-      _.each Requirement.findAllByAttribute('project_id', @project.id), (req) ->
+      _.each Projectionable.Requirement.findAllByAttribute('project_id', @project.id), (req) ->
         enable = false if req.status in ['pending', 'requested']
       
       if enable is true
@@ -105,7 +105,7 @@ class Projectionable.Editor extends Spine.Controller
         @$groupList.children('li').each (index, el) =>
           groupID = parseInt($(el).data('group-id'))
           if not isNaN groupID
-            groups.push RequirementGroup.findByAttribute('id', groupID)
+            groups.push Projectionable.RequirementGroup.findByAttribute('id', groupID)
         
         _.each groups, (group, index) => group.updateAttribute 'index', index
     
@@ -114,8 +114,8 @@ class Projectionable.Editor extends Spine.Controller
   
   getContext: =>
     project: @project
-    permissions: Permission.findAllByAttribute 'project_id', @project.id
-    groups: RequirementGroup.findAllByAttribute 'project_id', @project.id
+    permissions: Projectionable.Permission.findAllByAttribute 'project_id', @project.id
+    groups: Projectionable.RequirementGroup.findAllByAttribute 'project_id', @project.id
   
   render: =>
     @html(@view('work_editor_editor')(@getContext()))
@@ -168,7 +168,7 @@ class WorkPermissionModal extends Spine.Controller
   inviteCoworker: (event) =>
     event.preventDefault()
     return if @$coworkerButton.hasClass 'disabled'
-    perm = Permission.create
+    perm = Projectionable.Permission.create
       email: $.trim(@$coworkerInput.val())
       project_id: @parent.project.id
       permission: 'coworker'
@@ -178,7 +178,7 @@ class WorkPermissionModal extends Spine.Controller
   inviteClient: (event) =>
     event.preventDefault()
     return if @$clientButton.hasClass 'disabled'
-    perm = Permission.create
+    perm = Projectionable.Permission.create
       email: $.trim(@$clientInput.val())
       project_id: @parent.project.id
       permission: 'client'
@@ -226,7 +226,7 @@ class WorkPermissionModal extends Spine.Controller
 
   addAllPermissions: =>
     @$coworkerList.empty()
-    permissions = Permission.findAllByAttribute('project_id', @parent.project.id)
+    permissions = Projectionable.Permission.findAllByAttribute('project_id', @parent.project.id)
     coworkers = _.where permissions, {permission: 'coworker'}
     if coworkers.length > 0
       @addOneCoworker coworker for coworker in coworkers
@@ -360,7 +360,7 @@ class WorkGroup extends Spine.Controller
     @$reqList.append controller.render().el
   
   addAll: =>
-    requirements = _.sortBy(Requirement.findAllByAttribute('group_id', @group.id), 'index')
+    requirements = _.sortBy(Projectionable.Requirement.findAllByAttribute('group_id', @group.id), 'index')
     @$reqList.empty()
     @children = []
     
@@ -383,9 +383,9 @@ class WorkGroup extends Spine.Controller
     @$titleInput.off 'keyup'
     
     $.extend(@group, {title: title})
-    @group = RequirementGroup.create @group
+    @group = Projectionable.RequirementGroup.create @group
     
-    group = App.makeGroupTemplate @parent.project.id, RequirementGroup.findAllByAttribute('project_id', @parent.project.id).length
+    group = App.makeGroupTemplate @parent.project.id, Projectionable.RequirementGroup.findAllByAttribute('project_id', @parent.project.id).length
     @parent.addOne group
     
     @$groupBody.add(@$deleteWrapper).add(@$statusWrapper).addClass 'active'
@@ -425,7 +425,7 @@ class WorkGroup extends Spine.Controller
     @$approveButton.add(@$rejectButton).addClass 'disabled'
     
     @group.updateAttribute 'status', 'rejected'
-    _.each Requirement.findAllByAttribute('group_id', @group.id), (req) => req.status = 'rejected'
+    _.each Projectionable.Requirement.findAllByAttribute('group_id', @group.id), (req) => req.status = 'rejected'
     @render()
     @parent.assessStartable()
     @trigger 'calculateHours'
@@ -577,9 +577,9 @@ class WorkRequirement extends Spine.Controller
     hours = 0 if isNaN(hours)
     
     $.extend(@requirement, {title: title, hours: hours})
-    @requirement = Requirement.create @requirement
+    @requirement = Projectionable.Requirement.create @requirement
     
-    req = App.makeRequirementTemplate @parent.group.id, Requirement.findAllByAttribute('group_id', @parent.group.id).length
+    req = App.makeRequirementTemplate @parent.group.id, Projectionable.Requirement.findAllByAttribute('group_id', @parent.group.id).length
     @parent.addOne req
     
     @$deleteWrapper.add(@$statusWrapper).addClass 'active'

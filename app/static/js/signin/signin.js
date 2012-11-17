@@ -4,13 +4,13 @@
   $(function() {
     var $alert, $email, $forgotPasswordButton, $formBody, $formInputs, $password, $signinButton, displayError, displaySuccess;
     $formBody = $('.signin-form .proj-form-body');
-    $formInputs = $formBody.find('> input');
-    $alert = $formBody.find('> .alert');
+    $formInputs = $formBody.children('input');
+    $alert = $formBody.children('.alert');
     $email = $('#email');
     $password = $('#password');
     $signinButton = $formBody.find('.signin-button');
     $forgotPasswordButton = $formBody.find('.forgot-password-button');
-    $formInputs.get(0).focus();
+    $formInputs.first().get(0).focus();
     $formInputs.on('keypress', function(event) {
       var code;
       code = event.keyCode ? event.keyCode : event.charCode;
@@ -58,9 +58,11 @@
           }), 750);
         },
         error: function(jqXHR) {
-          var json;
-          json = JSON.parse(jqXHR.responseText);
-          displayError(json[_.keys(JSON.parse(jqXHR.responseText))[0]]);
+          try {
+            displayError(_.pairs(JSON.parse(jqXHR.responseText))[0][1]);
+          } catch (e) {
+            displayError(jqXHR.statusText);
+          }
           $signinButton.button('reset');
           return $formInputs.get(0).focus();
         }
@@ -90,9 +92,11 @@
           return displaySuccess('Please check your email to reset your password.');
         },
         error: function(jqXHR) {
-          var json;
-          json = JSON.parse(jqXHR.responseText);
-          displayError(json[_.keys(JSON.parse(jqXHR.responseText))[0]]);
+          try {
+            displayError(_.pairs(JSON.parse(jqXHR.responseText))[0][1]);
+          } catch (e) {
+            displayError(jqXHR.statusText);
+          }
           $formInputs.get(0).focus();
           return $forgotPasswordButton.button('reset');
         }

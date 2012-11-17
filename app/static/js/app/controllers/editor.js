@@ -101,7 +101,7 @@
       if (event !== null) {
         event.preventDefault();
       }
-      group = RequirementGroup.create(App.makeGroupTemplate(this.project.id, RequirementGroup.findAllByAttribute('project_id', this.project.id).length));
+      group = Projectionable.RequirementGroup.create(App.makeGroupTemplate(this.project.id, Projectionable.RequirementGroup.findAllByAttribute('project_id', this.project.id).length));
       return this.addOne(group);
     };
 
@@ -117,7 +117,7 @@
 
     Editor.prototype.addAll = function() {
       var group, groups, _i, _len;
-      groups = _.sortBy(RequirementGroup.findAllByAttribute('project_id', this.project.id), 'index');
+      groups = _.sortBy(Projectionable.RequirementGroup.findAllByAttribute('project_id', this.project.id), 'index');
       this.$groupList.empty();
       this.children = [];
       if (groups.length > 0) {
@@ -137,13 +137,13 @@
       var enable;
       if (this.project.permission === 'client') {
         enable = true;
-        _.each(RequirementGroup.findAllByAttribute('project_id', this.project.id), function(group) {
+        _.each(Projectionable.RequirementGroup.findAllByAttribute('project_id', this.project.id), function(group) {
           var _ref;
           if ((_ref = group.status) === 'pending' || _ref === 'requested') {
             return enable = false;
           }
         });
-        _.each(Requirement.findAllByAttribute('project_id', this.project.id), function(req) {
+        _.each(Projectionable.Requirement.findAllByAttribute('project_id', this.project.id), function(req) {
           var _ref;
           if ((_ref = req.status) === 'pending' || _ref === 'requested') {
             return enable = false;
@@ -180,7 +180,7 @@
             var groupID;
             groupID = parseInt($(el).data('group-id'));
             if (!isNaN(groupID)) {
-              return groups.push(RequirementGroup.findByAttribute('id', groupID));
+              return groups.push(Projectionable.RequirementGroup.findByAttribute('id', groupID));
             }
           });
           return _.each(groups, function(group, index) {
@@ -195,8 +195,8 @@
     Editor.prototype.getContext = function() {
       return {
         project: this.project,
-        permissions: Permission.findAllByAttribute('project_id', this.project.id),
-        groups: RequirementGroup.findAllByAttribute('project_id', this.project.id)
+        permissions: Projectionable.Permission.findAllByAttribute('project_id', this.project.id),
+        groups: Projectionable.RequirementGroup.findAllByAttribute('project_id', this.project.id)
       };
     };
 
@@ -301,7 +301,7 @@
       if (this.$coworkerButton.hasClass('disabled')) {
         return;
       }
-      perm = Permission.create({
+      perm = Projectionable.Permission.create({
         email: $.trim(this.$coworkerInput.val()),
         project_id: this.parent.project.id,
         permission: 'coworker'
@@ -316,7 +316,7 @@
       if (this.$clientButton.hasClass('disabled')) {
         return;
       }
-      perm = Permission.create({
+      perm = Projectionable.Permission.create({
         email: $.trim(this.$clientInput.val()),
         project_id: this.parent.project.id,
         permission: 'client'
@@ -384,7 +384,7 @@
     WorkPermissionModal.prototype.addAllPermissions = function() {
       var client, clients, coworker, coworkers, permissions, _i, _j, _len, _len1;
       this.$coworkerList.empty();
-      permissions = Permission.findAllByAttribute('project_id', this.parent.project.id);
+      permissions = Projectionable.Permission.findAllByAttribute('project_id', this.parent.project.id);
       coworkers = _.where(permissions, {
         permission: 'coworker'
       });
@@ -613,7 +613,7 @@
 
     WorkGroup.prototype.addAll = function() {
       var req, requirements, _i, _len;
-      requirements = _.sortBy(Requirement.findAllByAttribute('group_id', this.group.id), 'index');
+      requirements = _.sortBy(Projectionable.Requirement.findAllByAttribute('group_id', this.group.id), 'index');
       this.$reqList.empty();
       this.children = [];
       if (requirements.length > 0) {
@@ -643,8 +643,8 @@
       $.extend(this.group, {
         title: title
       });
-      this.group = RequirementGroup.create(this.group);
-      group = App.makeGroupTemplate(this.parent.project.id, RequirementGroup.findAllByAttribute('project_id', this.parent.project.id).length);
+      this.group = Projectionable.RequirementGroup.create(this.group);
+      group = App.makeGroupTemplate(this.parent.project.id, Projectionable.RequirementGroup.findAllByAttribute('project_id', this.parent.project.id).length);
       this.parent.addOne(group);
       this.$groupBody.add(this.$deleteWrapper).add(this.$statusWrapper).addClass('active');
       this.$titleInput.on('blur', this.saveTitle);
@@ -690,7 +690,7 @@
       this.$titleInput.attr('readonly', 'readonly').off('keyup');
       this.$approveButton.add(this.$rejectButton).addClass('disabled');
       this.group.updateAttribute('status', 'rejected');
-      _.each(Requirement.findAllByAttribute('group_id', this.group.id), function(req) {
+      _.each(Projectionable.Requirement.findAllByAttribute('group_id', this.group.id), function(req) {
         return req.status = 'rejected';
       });
       this.render();
@@ -900,8 +900,8 @@
         title: title,
         hours: hours
       });
-      this.requirement = Requirement.create(this.requirement);
-      req = App.makeRequirementTemplate(this.parent.group.id, Requirement.findAllByAttribute('group_id', this.parent.group.id).length);
+      this.requirement = Projectionable.Requirement.create(this.requirement);
+      req = App.makeRequirementTemplate(this.parent.group.id, Projectionable.Requirement.findAllByAttribute('group_id', this.parent.group.id).length);
       this.parent.addOne(req);
       this.$deleteWrapper.add(this.$statusWrapper).addClass('active');
       this.$titleInput.on('blur', this.saveTitle);

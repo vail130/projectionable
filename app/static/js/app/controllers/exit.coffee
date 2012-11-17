@@ -7,7 +7,7 @@ class Projectionable.Exit extends Spine.Controller
           type: 'DELETE'
           dataType: 'json'
           contentType: 'application/json'
-          url: '/api/sessions'
+          url: "/api/sessions/#{window.sessionID}"
           complete: ->
             window.location.href = 'http://' + window.location.host
   

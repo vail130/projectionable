@@ -1,4 +1,4 @@
-class window.Account extends Spine.Model
+class Projectionable.Account extends Spine.Model
   @configure "Account",
     "id"
     "first_name"
@@ -11,7 +11,7 @@ class window.Account extends Spine.Model
   @extend Spine.Model.Ajax
   @extend url: "/api/accounts"
 
-class window.Project extends Spine.Model
+class Projectionable.Project extends Spine.Model
   @configure "Project",
     "id"
     "account_id"
@@ -28,7 +28,7 @@ class window.Project extends Spine.Model
   @extend Spine.Model.Ajax
   @extend url: "/api/projects"
   
-class window.Permission extends Spine.Model
+class Projectionable.Permission extends Spine.Model
   @configure "Permission",
     "id"
     "email"
@@ -41,7 +41,7 @@ class window.Permission extends Spine.Model
   @extend Spine.Model.Ajax
   @extend url: "/api/permissions"
   
-class window.RequirementGroup extends Spine.Model
+class Projectionable.RequirementGroup extends Spine.Model
   @configure "RequirementGroup",
     "id"
     "account_id"
@@ -57,7 +57,7 @@ class window.RequirementGroup extends Spine.Model
   @extend Spine.Model.Ajax
   @extend url: "/api/groups"
   
-class window.Requirement extends Spine.Model
+class Projectionable.Requirement extends Spine.Model
   @configure "Requirement",
     "id"
     "account_id"

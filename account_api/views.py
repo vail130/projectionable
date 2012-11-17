@@ -16,10 +16,10 @@ class SessionManager(View):
 
         headers = {
             "Content-Type": "application/json",
-            "Allow": "GET, POST, DELETE",
+            "Allow": "GET, POST",
         }
 
-        errors = {"header_request_method": "This endpoint only supports GET, POST, and DELETE requests."}
+        errors = {"header_request_method": "This endpoint only supports GET and POST requests."}
         return Response(content=errors, headers=headers, status=status.HTTP_405_METHOD_NOT_ALLOWED)
     
     def delete(self, request):
@@ -29,24 +29,11 @@ class SessionManager(View):
 
         headers = {
             "Content-Type": "application/json",
-            "Allow": "GET, POST, DELETE",
+            "Allow": "GET, POST",
         }
 
-        try:
-            user_id = int(request.session["_auth_user_id"])
-        except KeyError:
-            error = {"session": "No valid session."}
-            return Response(content=error, headers=headers, status=status.HTTP_400_BAD_REQUEST)
-
-        try:
-            account = Account.objects.get(user_id=user_id)
-        except Account.DoesNotExist:
-            error = {"session": "Invalid session ID."}
-            return Response(content=error, headers=headers, status=status.HTTP_400_BAD_REQUEST)
-
-        del request.session["_auth_user_id"]
-
-        return Response(content={}, headers=headers, status=status.HTTP_200_OK)
+        errors = {"header_request_method": "This endpoint only supports GET and POST requests."}
+        return Response(content=errors, headers=headers, status=status.HTTP_405_METHOD_NOT_ALLOWED)
     
     def get(self, request):
         #################
@@ -55,14 +42,13 @@ class SessionManager(View):
 
         headers = {
             "Content-Type": "application/json",
-            "Allow": "GET, POST, DELETE",
+            "Allow": "GET, POST",
         }
 
         try:
             session_id = int(request.session["_auth_user_id"])
         except KeyError:
-            error = {"session": "No valid session."}
-            return Response(content=error, headers=headers, status=status.HTTP_400_BAD_REQUEST)
+            return Response(content=[{"id": None}], headers=headers, status=status.HTTP_200_OK)
         else:
             return Response(content=[{"id": session_id}], headers=headers, status=status.HTTP_200_OK)
     
@@ -73,7 +59,7 @@ class SessionManager(View):
 
         headers = {
             "Content-Type": "application/json",
-            "Allow": "GET, POST, DELETE",
+            "Allow": "GET, POST",
         }
 
         # Check content-type header
@@ -161,20 +147,13 @@ class SessionEditor(View):
         }
 
         try:
-            user_id = int(request.session["_auth_user_id"])
+            request.session["_auth_user_id"]
         except KeyError:
-            error = {"session": "No valid session."}
-            return Response(content=error, headers=headers, status=status.HTTP_400_BAD_REQUEST)
-
-        try:
-            account = Account.objects.get(user_id=user_id)
-        except Account.DoesNotExist:
-            error = {"session": "Invalid session ID."}
-            return Response(content=error, headers=headers, status=status.HTTP_400_BAD_REQUEST)
-
-        del request.session["_auth_user_id"]
-
-        return Response(content={}, headers=headers, status=status.HTTP_200_OK)
+            pass
+        else:
+            del request.session["_auth_user_id"]
+        
+        return Response(content={"id": None}, headers=headers, status=status.HTTP_200_OK)
     
     def get(self, request, session_id):
         #################
@@ -189,8 +168,7 @@ class SessionEditor(View):
         try:
             request.session["_auth_user_id"]
         except KeyError:
-            error = {"session": "No valid session."}
-            return Response(content=error, headers=headers, status=status.HTTP_400_BAD_REQUEST)
+            return Response(content={"id": None}, headers=headers, status=status.HTTP_400_BAD_REQUEST)
         else:
             return Response(content={"id": int(session_id)}, headers=headers, status=status.HTTP_200_OK)
 

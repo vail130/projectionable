@@ -108,6 +108,163 @@ body {
     & > div.active { display: block; }
   }
   
+  #contact {
+    
+    .contact-tab-wrapper {
+      position: fixed;
+      top: 40%;
+      right: -35px;
+      -webkit-transform: rotate(-90deg);
+      -moz-transform: rotate(-90deg);
+      -ms-transform: rotate(-90deg);
+      -o-transform: rotate(-90deg);
+      transform: rotate(-90deg);
+      -webkit-border-top-left-radius: 5px;
+      -webkit-border-top-right-radius: 5px;
+      -moz-border-radius-topleft: 5px;
+      -moz-border-radius-topright: 5px;
+      border-top-left-radius: 5px;
+      border-top-right-radius: 5px;
+      box-shadow: 0 0 5px 0 black inset, 0 -2px 9px -3px black;
+      background-color: #eacea0;
+      
+      &:active {
+        box-shadow: 0 0 5px 0 black inset;
+      }
+      
+      .contact-tab-link {
+        display: block;
+        margin: 1px;
+        -webkit-border-top-left-radius: 4px;
+        -webkit-border-top-right-radius: 4px;
+        -moz-border-radius-topleft: 4px;
+        -moz-border-radius-topright: 4px;
+        border-top-left-radius: 4px;
+        border-top-right-radius: 4px;
+        background-color: #eacea0;
+        color: @black;
+        font-weight: bold;
+        font-size: 14px;
+        line-height: 14px;
+        padding: 8px 14px;
+        
+        &:hover {
+          text-decoration: none;
+        }
+      }
+    }
+    
+    .contact-modal.proj-modal {
+      display: none;
+      
+      .proj-modal-dialog {
+        width: 400px;
+        margin-left: -200px;
+        
+        .proj-modal-body {
+          
+          
+          textarea, input {
+            border: 1px solid #a88244;
+            border-radius: 0;
+            width: 96%;
+            margin: 5px 0;
+          }
+            
+          textarea {
+            height: 150px;
+            min-width: 96%;
+            max-width: 96%;
+          }
+          
+          .button-row {
+            text-align: center;
+            margin: 5px 0;
+          }
+        }
+      }
+    }
+  }
+  
+  .proj-modal {
+    display: none;
+    
+    .proj-modal-shadow {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background-color: black;
+      opacity: .75;
+      z-index: 9998;
+    }
+    
+    .proj-modal-dialog {
+      position: absolute;
+      width: 693px;
+      top: 100px;
+      left: 50%;
+      margin: 0 0 100px -347px;
+      z-index: 9999;
+      border-radius: 15px;
+      box-shadow: 0 0 5px 0 black inset;
+      background-color: #eacea0;
+      
+      .proj-modal-dialog-liner {
+        margin: 1px;
+        border-radius: 14px;
+        background-color: #eacea0;
+        
+        .proj-modal-header {
+          padding: 15px;
+          text-align: right;
+          
+          h3 {
+            float: left;
+            margin: 0;
+            line-height: 20px;
+            font-size: 20px;
+            text-shadow: 0 1px 0 #a88244;
+          }
+          
+          .close-modal-button {
+            font-size: 20px;
+            text-shadow: 0 1px 0 #a88244;
+            color: @black;
+            
+            &:hover {
+              text-decoration: none;
+            }
+          }
+        }
+        
+        .proj-modal-body {
+          border-top: 1px solid #a88244;
+          box-shadow: 0 1px 2px -1px white inset;
+          padding: 15px;
+          text-align: left;
+          
+          .alert {
+            display: none;
+            
+            strong {
+              padding-right: 10px;
+            }
+          }
+        }
+        
+        .proj-modal-footer {
+          border-top: 1px solid #a88244;
+          box-shadow: 0 1px 2px -1px white inset;
+          padding: 15px;
+          
+        }
+      }
+    }
+  }
+  
+  
   #content {
     border: 1px solid #a88244;
     border-top-width: 0;
@@ -126,7 +283,7 @@ body {
       & > a {
         float: left;
         width: 350px;
-        margin: 50px 0 0 50px;
+        margin: 50px 20px 0;
         border: 1px solid #a88244;
         padding: 10px;
         border-radius: 5px;
@@ -145,11 +302,12 @@ body {
       
       .value-prop {
         float: left;
-        margin: 50px 0 0 50px;
+        width: 385px;
+        margin: 50px 20px 0;
         
         & > h1 {
-          font-size: 42px;
-          line-height: 48px;
+          font-size: 38px;
+          line-height: 44px;
           text-shadow: 0 1px 0 #a88244;
         }
         

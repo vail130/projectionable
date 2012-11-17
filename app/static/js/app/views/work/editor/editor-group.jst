@@ -13,10 +13,10 @@
   
   <div class='edit-group-form-head clearfix'>
     <div class='group-title-wrapper'>
-      <span class='input-label'>When user navigates to...</span>
+      <span class='input-label'>Category Title</span>
       <% if (!saved || (agent && pending) || (client && requested)) { %>
         <div class='edit-block group-edit-block'>
-          <input class="edit-input group-title-input" type='text' placeholder='Application view title...' value="<%= group.title %>" />
+          <input class="edit-input group-title-input" type='text' placeholder='Category title...' value="<%= group.title %>" />
           <i class='edit-icon icon-pencil'></i>
         </div>
       <% } else { %>

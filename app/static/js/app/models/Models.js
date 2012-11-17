@@ -3,7 +3,7 @@
   var __hasProp = {}.hasOwnProperty,
     __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; };
 
-  window.Account = (function(_super) {
+  Projectionable.Account = (function(_super) {
 
     __extends(Account, _super);
 
@@ -23,7 +23,7 @@
 
   })(Spine.Model);
 
-  window.Project = (function(_super) {
+  Projectionable.Project = (function(_super) {
 
     __extends(Project, _super);
 
@@ -43,7 +43,7 @@
 
   })(Spine.Model);
 
-  window.Permission = (function(_super) {
+  Projectionable.Permission = (function(_super) {
 
     __extends(Permission, _super);
 
@@ -63,7 +63,7 @@
 
   })(Spine.Model);
 
-  window.RequirementGroup = (function(_super) {
+  Projectionable.RequirementGroup = (function(_super) {
 
     __extends(RequirementGroup, _super);
 
@@ -83,7 +83,7 @@
 
   })(Spine.Model);
 
-  window.Requirement = (function(_super) {
+  Projectionable.Requirement = (function(_super) {
 
     __extends(Requirement, _super);
 

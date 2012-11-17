@@ -288,6 +288,8 @@ class AccountEmail(models.Model):
   text = models.TextField()
   date_updated = models.DateTimeField(auto_now=True)
   date_created = models.DateTimeField(auto_now_add=True)
+
+  statuses = ['pending', 'sent']
   
   @classmethod
   def create_and_send(cls, account, action, request=None):
@@ -373,7 +375,7 @@ class AccountEmail(models.Model):
 
     try:
       msg.send()
-    except (smtplib.SMTPRecipientsRefused, smtplib.SMTPHeloError, smtplib.SMTPSenderRefused, smtplib.SMTPDataError):
+    except Exception:
       pass
     else:
       self.status = 'sent'

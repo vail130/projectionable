@@ -59,9 +59,11 @@
           return $formBody.children().not('.alert').hide().filter('input').val('');
         },
         error: function(jqXHR) {
-          var json;
-          json = JSON.parse(jqXHR.responseText);
-          displayError(json[_.keys(JSON.parse(jqXHR.responseText))[0]]);
+          try {
+            displayError(_.pairs(JSON.parse(jqXHR.responseText))[0][1]);
+          } catch (e) {
+            displayError(jqXHR.statusText);
+          }
           $formInputs.get(0).focus();
           return $signupButton.button('reset');
         }

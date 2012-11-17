@@ -56,19 +56,21 @@
           return $formBody.children().not('.alert').hide().filter('input, textarea').val('');
         },
         error: function(jqXHR) {
-          var json;
-          json = JSON.parse(jqXHR.responseText);
-          displayError(json[_.keys(JSON.parse(jqXHR.responseText))[0]]);
+          try {
+            displayError(_.pairs(JSON.parse(jqXHR.responseText))[0][1]);
+          } catch (e) {
+            displayError(jqXHR.statusText);
+          }
           $submitButton.button('reset');
           return $formInputs.get(0).focus();
         }
       });
     });
     displayError = function(msg) {
-      return $alert.removeClass('alert-success').find('span').text(msg).end().addClass('alert-error').show();
+      return $alert.removeClass('alert-success').children('span').text(msg).end().addClass('alert-error').show();
     };
     return displaySuccess = function(msg) {
-      return $alert.removeClass('alert-error').find('span').text(msg).end().addClass('alert-success').show();
+      return $alert.removeClass('alert-error').children('span').text(msg).end().addClass('alert-success').show();
     };
   });
 

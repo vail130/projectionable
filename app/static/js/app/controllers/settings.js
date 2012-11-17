@@ -232,7 +232,7 @@
       });
       this.lock.start();
       $.ajax({
-        url: '/api/accounts/' + Account.first().id,
+        url: '/api/accounts/' + Projectionable.Account.first().id,
         type: 'PUT',
         contentType: 'application/json',
         data: JSON.stringify(payload),
@@ -257,7 +257,7 @@
 
     Credentials.prototype.getContext = function() {
       return {
-        account: Account.first()
+        account: Projectionable.Account.first()
       };
     };
 
@@ -325,7 +325,7 @@
       });
       this.lock.start();
       $.ajax({
-        url: '/api/accounts/' + Account.first().id + '?password=' + password,
+        url: '/api/accounts/' + Projectionable.Account.first().id + '?password=' + password,
         type: 'DELETE',
         success: function() {
           $message.addClass('alert-success').text('Your account was successfully delete...').show();
@@ -370,7 +370,7 @@
     className: 'notifications'
     
     getContext: =>
-      account: Account.first()
+      account: Projectionable.Account.first()
     
     render: =>
       @html(@view('settings_settings-notifications')(@getContext()))

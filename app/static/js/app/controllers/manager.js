@@ -18,8 +18,8 @@
       Manager.__super__.constructor.apply(this, arguments);
       App.Manager = this;
       $('#work').html(this.view('work_work-structure'));
-      Project.bind('create', this.addOne);
-      Project.bind('refresh change', this.addAll);
+      Projectionable.Project.bind('create', this.addOne);
+      Projectionable.Project.bind('refresh change', this.addAll);
       this.routes({
         '/manager': function() {
           App.project = null;
@@ -49,7 +49,7 @@
     Manager.prototype["new"] = function(event) {
       var project;
       event.preventDefault();
-      project = Project.create(App.makeProjectTemplate());
+      project = Projectionable.Project.create(App.makeProjectTemplate());
       return this.addOne(project);
     };
 
@@ -64,7 +64,7 @@
     Manager.prototype.addAll = function() {
       var project, projects, _i, _len;
       this.$projectList.empty();
-      projects = Project.all();
+      projects = Projectionable.Project.all();
       if (projects.length > 0) {
         for (_i = 0, _len = projects.length; _i < _len; _i++) {
           project = projects[_i];

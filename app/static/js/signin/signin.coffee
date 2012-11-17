@@ -1,14 +1,14 @@
 $ ->
 
   $formBody = $ '.signin-form .proj-form-body'
-  $formInputs = $formBody.find '> input'
-  $alert = $formBody.find '> .alert'
+  $formInputs = $formBody.children 'input'
+  $alert = $formBody.children '.alert'
   $email = $ '#email'
   $password = $ '#password'
   $signinButton = $formBody.find '.signin-button'
   $forgotPasswordButton = $formBody.find '.forgot-password-button'
   
-  $formInputs.get(0).focus()
+  $formInputs.first().get(0).focus()
 
   $formInputs.on('keypress', (event) ->
     code = if event.keyCode then event.keyCode else event.charCode
@@ -51,8 +51,10 @@ $ ->
         $formBody.children().not('.alert').hide().filter('input').val('')
         setTimeout (-> window.location.href = 'http://' + window.location.host), 750
       error: (jqXHR) =>
-        json = JSON.parse(jqXHR.responseText)
-        displayError json[_.keys(JSON.parse(jqXHR.responseText))[0]]
+        try
+          displayError _.pairs(JSON.parse(jqXHR.responseText))[0][1]
+        catch e
+          displayError jqXHR.statusText
         $signinButton.button 'reset'
         $formInputs.get(0).focus()
   
@@ -78,8 +80,10 @@ $ ->
       success: (json) =>
         displaySuccess 'Please check your email to reset your password.'
       error: (jqXHR) =>
-        json = JSON.parse(jqXHR.responseText)
-        displayError json[_.keys(JSON.parse(jqXHR.responseText))[0]]
+        try
+          displayError _.pairs(JSON.parse(jqXHR.responseText))[0][1]
+        catch e
+          displayError jqXHR.statusText
         $formInputs.get(0).focus()
         $forgotPasswordButton.button 'reset'
       

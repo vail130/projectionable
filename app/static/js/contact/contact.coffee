@@ -52,20 +52,22 @@ $ ->
         displaySuccess 'Thank you for your contact.'
         $formBody.children().not('.alert').hide().filter('input, textarea').val('')
       error: (jqXHR) =>
-        json = JSON.parse(jqXHR.responseText)
-        displayError json[_.keys(JSON.parse(jqXHR.responseText))[0]]
+        try
+          displayError _.pairs(JSON.parse(jqXHR.responseText))[0][1]
+        catch e
+          displayError jqXHR.statusText
         $submitButton.button 'reset'
         $formInputs.get(0).focus()
     
   displayError = (msg) ->
     $alert
       .removeClass('alert-success')
-      .find('span').text(msg)
+      .children('span').text(msg)
       .end().addClass('alert-error').show()
   
   displaySuccess = (msg) ->
     $alert
       .removeClass('alert-error')
-      .find('span').text(msg)
+      .children('span').text(msg)
       .end().addClass('alert-success').show()
   

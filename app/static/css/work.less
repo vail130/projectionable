@@ -595,279 +595,120 @@
       
     }
     
-    .proj-modal {
-      display: none;
-      
-      &.comments-modal .proj-modal-dialog {
-        top: 50px;
-        width: 593px;
-        margin-left: -297px;
-      }
-      
-      .proj-modal-shadow {
-        position: fixed;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-        background-color: black;
-        opacity: .75;
-        z-index: 9998;
-      }
-      
-      .proj-modal-dialog {
-        position: absolute;
-        width: 693px;
-        top: 100px;
-        left: 50%;
-        margin: 0 0 100px -347px;
-        z-index: 9999;
-        border-radius: 15px;
-        box-shadow: 0 0 5px 0 black inset;
-        background-color: #eacea0;
+    .sharing-modal {
+      .modal-data-row {
+        margin-top: 10px;
+        text-align: right;
+        font-size: 0;
         
-        .proj-modal-dialog-liner {
-          margin: 1px;
-          border-radius: 14px;
-          background-color: #eacea0;
+        &:first-child {
+          margin: 0;
+        }
+        
+        .data-wrapper {
+          display: inline-block;
+          float: none;
+          margin: 0 0 0 20px;
           
-          .proj-modal-header {
-            padding: 15px;
-            text-align: right;
-            
-            h3 {
-              float: left;
-              margin: 0;
-              line-height: 20px;
-              font-size: 20px;
-              text-shadow: 0 1px 0 #a88244;
-            }
-            
-            .close-modal-button {
-              font-size: 20px;
-              text-shadow: 0 1px 0 #a88244;
-              color: @black;
-              
-              &:hover {
-                text-decoration: none;
-              }
-            }
+          & > h2 {
+            width: 100px;
+            font-size: 14px;
+            line-height: 16px;
           }
+        }
+        
+        .modal-title-wrapper {
+          float: left;
+          margin: 0;
           
-          .proj-modal-body {
-            border-top: 1px solid #a88244;
-            box-shadow: 0 1px 2px -1px white inset;
-            padding: 15px;
+          & > h2 {
+            width: 285px;
+          }
+        }
+      }
+      
+      .half {
+        float: left;
+        width: 315px;
+        
+        &:first-child {
+          border-right: 1px solid #a88244;
+          padding-right: 15px;
+        }
+        
+        &:last-child {
+          box-shadow: 1px 0 2px -1px white inset;
+          padding-left: 15px;
+        }
+        
+        h4 {
+          margin: 0 0 10px 0;
+        }
+        
+        .stripe-button-form {
+          width: 155px;
+          height: 36px;
+          margin: 50px 75px;
+        }
+        
+        & > ul {
+          list-style: none;
+          margin: 0;
+          height: 200px;
+          overflow-x: hidden;
+          overflow-y: scroll;
+          border: 1px solid #a88244;
+          background-color: #F7E4C6;
+          box-shadow: 0 2px 7px -3px black inset;
+          padding: 5px;
+          
+          .permission {
+            border: 1px solid #a88244;
+            padding: 5px 5px 5px 10px;
             text-align: left;
+            border-radius: 5px;
+            margin: 0 0 5px 0;
+            background-color: #eacea0;
+            box-shadow: 0 2px 5px -3px black;
             
-            .modal-data-row {
-              margin-top: 10px;
-              text-align: right;
-              font-size: 0;
-              
-              &:first-child {
-                margin: 0;
-              }
-              
-              .data-wrapper {
-                display: inline-block;
-                float: none;
-                margin: 0 0 0 20px;
-                
-                & > h2 {
-                  width: 100px;
-                  font-size: 14px;
-                  line-height: 16px;
-                }
-              }
-              
-              .modal-title-wrapper {
-                float: left;
-                margin: 0;
-                
-                & > h2 {
-                  width: 285px;
-                }
-              }
-            }
-            
-            ul.comment-list {
-              list-style: none;
+            h5 {
               margin: 0;
-              height: 225px;
-              overflow-x: hidden;
-              overflow-y: scroll;
-              border: 1px solid #a88244;
-              background-color: #F7E4C6;
-              box-shadow: 0 2px 7px -3px black inset;
-              padding: 5px;
-              
-              & > li {
-                border: 1px solid #a88244;
-                padding: 10px;
-                text-align: left;
-                border-radius: 5px;
-                margin: 0 0 5px 0;
-                background-color: #eacea0;
-                box-shadow: 0 2px 5px -3px black;
-        
-                &:nth-child(even) {
-                  background-color: #D8B376;
-                }
-                
-                .comment-text {
-                  font-size: 12px;
-                  line-height: 18px;
-                }
-                
-                .comment-header {
-                  
-                  & > h5 {
-                    float: left;
-                    margin: 0;
-                    font-size: 14px;
-                    line-height: 20px;
-                  }
-                  
-                  .comment-timestamp {
-                    float: right;
-                    font-size: 12px;
-                    line-height: 18px;
-                    color: #555;
-                  }
-                }
-              }
-            }
-            
-            .half {
               float: left;
-              width: 315px;
-              
-              &:first-child {
-                border-right: 1px solid #a88244;
-                padding-right: 15px;
-              }
-              
-              &:last-child {
-                box-shadow: 1px 0 2px -1px white inset;
-                padding-left: 15px;
-              }
-              
-              h4 {
-                margin: 0 0 10px 0;
-              }
-              
-              .stripe-button-form {
-                width: 155px;
-                height: 36px;
-                margin: 50px 75px;
-              }
-              
-              & > ul {
-                list-style: none;
-                margin: 0;
-                height: 200px;
-                overflow-x: hidden;
-                overflow-y: scroll;
-                border: 1px solid #a88244;
-                background-color: #F7E4C6;
-                box-shadow: 0 2px 7px -3px black inset;
-                padding: 5px;
-                
-                .permission {
-                  border: 1px solid #a88244;
-                  padding: 5px 5px 5px 10px;
-                  text-align: left;
-                  border-radius: 5px;
-                  margin: 0 0 5px 0;
-                  background-color: #eacea0;
-                  box-shadow: 0 2px 5px -3px black;
-                  
-                  h5 {
-                    margin: 0;
-                    float: left;
-                    line-height: 26px;
-                    width: 221px;
-                  }
-                  
-                  .remove-link {
-                    float: right;
-                    padding: 1px 4px;
-                    margin-top: 2px;
-                  }
-                  
-                  &.empty {
-                    padding: 8px 10px;
-                    font-size: 12px;
-                  }
-                }
-              }
-              
-              .new-permission-row {
-                margin-top: 10px;
-                text-align: right;
-                
-                .new-permission-wrapper {
-                  float: left;
-                  
-                  .edit-input {
-                    font-size: 14px;
-                    line-height: 16px;
-                    width: 223px;
-                  }
-                }
-                
-                .invite-button {
-                  margin-top: 12px;
-                }
-              }
-            }
-          }
-          
-          .proj-modal-footer {
-            border-top: 1px solid #a88244;
-            box-shadow: 0 1px 2px -1px white inset;
-            padding: 15px;
-            
-            .comment-textarea {
-              display: block;
-              float: left;
-              color: @black;
-              border-radius: 0;
-              margin: 0;
-              width: 475px;
-              min-width: 475px;
-              max-width: 475px;
-              font-size: 14px;
-              line-height: 16px;
-              height: 64px;
-              min-height: 64px;
-              max-height: 64px;
-              border: none;
-              background: white;
-              outline: 0;
-              box-shadow: none;
-              border: 1px solid #a88244;
-              resize: none;
-              
-              &:focus {
-                border-color: rgba(82, 168, 236, 0.8);
-                outline: 0;
-                outline: thin dotted \9;
-                /* IE6-9 */
-              
-                -webkit-box-shadow: inset 0 1px 1px rgba(0, 0, 0, 0.075), 0 0 8px rgba(82, 168, 236, 0.6);
-                -moz-box-shadow: inset 0 1px 1px rgba(0, 0, 0, 0.075), 0 0 8px rgba(82, 168, 236, 0.6);
-                box-shadow: inset 0 1px 1px rgba(0, 0, 0, 0.075), 0 0 8px rgba(82, 168, 236, 0.6);
-              }
+              line-height: 26px;
+              width: 221px;
             }
             
-            .comment-submit-button {
+            .remove-link {
               float: right;
+              padding: 1px 4px;
+              margin-top: 2px;
+            }
+            
+            &.empty {
+              padding: 8px 10px;
+              font-size: 12px;
             }
           }
         }
         
+        .new-permission-row {
+          margin-top: 10px;
+          text-align: right;
+          
+          .new-permission-wrapper {
+            float: left;
+            
+            .edit-input {
+              font-size: 14px;
+              line-height: 16px;
+              width: 223px;
+            }
+          }
+          
+          .invite-button {
+            margin-top: 12px;
+          }
+        }
       }
     
     }

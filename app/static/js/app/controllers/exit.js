@@ -16,7 +16,7 @@
             type: 'DELETE',
             dataType: 'json',
             contentType: 'application/json',
-            url: '/api/sessions',
+            url: "/api/sessions/" + window.sessionID,
             complete: function() {
               return window.location.href = 'http://' + window.location.host;
             }
