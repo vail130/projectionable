@@ -314,7 +314,12 @@ class AccountManager(View):
             error = {"password": "Missing password field."}
             return Response(content=error, headers=headers, status=status.HTTP_400_BAD_REQUEST)
 
-        account = Account.create_account(email, password)
+        try:
+            code = self.CONTENT['code']
+        except KeyError:
+            code = None
+
+        account = Account.create_account(email, password, code=code)
         if not isinstance(account, Account):
             return Response(content=account, headers=headers, status=status.HTTP_400_BAD_REQUEST)
 

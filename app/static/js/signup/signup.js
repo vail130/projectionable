@@ -2,7 +2,13 @@
 (function() {
 
   $(function() {
-    var $alert, $formBody, $password1, $password2, $signupButton, $signupEmail, $signupInputs, displayError, displaySuccess;
+    var $alert, $code, $formBody, $password1, $password2, $px, $signupButton, $signupEmail, $signupInputs, displayError, displaySuccess;
+    $px = $('#content > .px');
+    $code = $('#code');
+    $px.click(function(event) {
+      event.preventDefault();
+      return $code.addClass('active');
+    });
     $formBody = $('.signup-page .proj-form-body');
     $alert = $formBody.children('.alert');
     $signupInputs = $formBody.children('input');
@@ -19,7 +25,7 @@
       }
     });
     $signupButton.click(function(event) {
-      var email, password1, password2,
+      var code, email, password1, password2,
         _this = this;
       event.preventDefault();
       email = $signupEmail.val();
@@ -43,6 +49,10 @@
         $signupInputs.get(1).focus();
         return;
       }
+      code = '';
+      if ($code.hasClass('active')) {
+        code = $.trim($code.val());
+      }
       $signupButton.button('loading');
       $alert.hide();
       return $.ajax({
@@ -52,7 +62,8 @@
         url: '/api/accounts',
         data: JSON.stringify({
           email: email,
-          password: password1
+          password: password1,
+          code: code
         }),
         success: function(json) {
           displaySuccess('Thank you! Please check your email to activate your account.');

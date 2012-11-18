@@ -1,5 +1,12 @@
 $ ->
   
+  $px = $ '#content > .px'
+  $code = $ '#code'
+  
+  $px.click (event) ->
+    event.preventDefault()
+    $code.addClass 'active'
+  
   $formBody = $ '.signup-page .proj-form-body'
   $alert = $formBody.children '.alert'
   
@@ -40,6 +47,10 @@ $ ->
       $signupInputs.get(1).focus()
       return
     
+    code = ''
+    if $code.hasClass 'active'
+      code = $.trim $code.val()
+    
     $signupButton.button 'loading'
     $alert.hide()
     
@@ -52,6 +63,7 @@ $ ->
         JSON.stringify
           email: email
           password: password1
+          code: code
       success: (json) =>
         displaySuccess 'Thank you! Please check your email to activate your account.'
         $formBody.children().not('.alert').hide().filter('input').val('')

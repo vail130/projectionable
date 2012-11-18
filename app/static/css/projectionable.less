@@ -268,12 +268,26 @@ body {
   
   
   #content {
+    position: relative;
     border: 1px solid #a88244;
     border-top-width: 0;
     padding: 15px;
     box-shadow: 0 1px 2px -1px white inset;
     background-color: #F7E4C6;
     margin: 0;
+    
+    .px {
+      display: block;
+      position: absolute;
+      top: 0;
+      right: 0;
+      width: 5px;
+      height: 5px;
+      background-color: transparent;
+      cursor: default;
+      text-decoration: none;
+      border: none;
+    }
     
     .copy {
       margin: 0 100px;
@@ -390,6 +404,14 @@ body {
     
     .signup-page {
       margin: 50px auto;
+      
+      #code {
+        display: none;
+        
+        &.active {
+          display: inline-block;
+        }
+      }
     }
     
     .signin-form {
