@@ -6,13 +6,13 @@
   <% var client = project.permission === 'client'; %>
   <% var pending = project.status === 'pending'; %>
   <% var started = project.status === 'started'; %>
+  <% var locked = project.status === 'locked'; %>
   
   <div class='data-wrapper project-data-wrapper title-data-wrapper'>
     <div class='input-label'>Project Title</div>
-    <% console.log(agent, pending); %>
-    <% if (agent && pending) { %>
+    <% if (owner && pending) { %>
       <div class='edit-block'>
-        <input class='edit-input project-title-input' type='text' placeholder='Project title...' value="<%= project.title %>" />
+        <input class='edit-input project-title-input' type='text' value="<%= project.title %>" />
         <i class='edit-icon icon-pencil'></i>
       </div>
     <% } else { %>
@@ -25,7 +25,7 @@
     <h2 class='prefix'>$</h2>
     <% if (owner && pending) { %>
       <div class='edit-block'>
-        <input class='edit-input project-rate-input' type='text' placeholder='Hourly rate...' value="<%= project.rate %>" />
+        <input class='edit-input project-rate-input' type='text' value="<%= project.rate %>" />
         <i class='edit-icon icon-pencil'></i>
       </div>
     <% } else { %>
@@ -51,7 +51,17 @@
     <% } else if (pending) { %>
       <span class='label'>Pending</span>
     <% } else if (started) { %>
+      <% if (owner) { %>
+      <a href="#" tabindex='-1' class='btn btn-info btn-small lock-button' title='Lock Project'>Lock Project</a>
+      <% } else { %>
       <span class='label label-approved'>Started</span>
+      <% } %>
+    <% } else if (locked) { %>
+      <% if (owner) { %>
+      <a href="#" tabindex='-1' class='btn btn-inverse btn-small unlock-button' title='Unlock Project'>Unlock</a>
+      <% } else { %>
+      <span class='label label-info'>Locked</span>
+      <% } %>
     <% } %>
   </div>
     

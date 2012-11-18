@@ -221,7 +221,7 @@ class VerifyInvitation(View):
 
         return render_to_response('verify_invitation.html', context, context_instance=RequestContext(request))
 
-class Contact(View):
+class ContactUs(View):
 
     def get(self, request):
         context = {

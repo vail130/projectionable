@@ -47,10 +47,9 @@
     };
 
     Manager.prototype["new"] = function(event) {
-      var project;
       event.preventDefault();
-      project = Projectionable.Project.create(App.makeProjectTemplate());
-      return this.addOne(project);
+      Projectionable.Project.create(App.makeProjectTemplate());
+      return this.addAll();
     };
 
     Manager.prototype.addOne = function(project) {

@@ -13,7 +13,7 @@ urlpatterns = patterns('',
     url(r'^reset_password/?(?:\?.*)?$', ResetPassword.as_view(), name='resetpassword'),
     url(r'^verify_invitation/?(?:\?.*)?$', VerifyInvitation.as_view(), name='verifyinvitation'),
     
-    url(r'^contact/?$', Contact.as_view(), name='contact'),
+    url(r'^contact/?$', ContactUs.as_view(), name='contact'),
     url(r'^terms/?$', Terms.as_view(), name='terms'),
     url(r'^privacy/?$', Privacy.as_view(), name='privacy'),
     

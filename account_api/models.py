@@ -292,14 +292,14 @@ class AccountEmail(models.Model):
   statuses = ['pending', 'sent']
   
   @classmethod
-  def create_and_send(cls, account, action, request=None):
-    email = cls.create_email(account, action, request=request)
-    if isinstance(email, AccountEmail):
+  def create_and_send(cls, account, action, request=None, project=None):
+    email = cls.create_email(account, action, request=request, project=project)
+    if isinstance(email, AccountEmail) and settings.ENVIRONMENT != 'local':
       email.send()
     return email
 
   @classmethod
-  def create_email(cls, account, action, request=None):
+  def create_email(cls, account, action, request=None, project=None):
     if action == 'contact-created':
       contact = account
       recipient = contact.reply_to
@@ -321,6 +321,14 @@ class AccountEmail(models.Model):
       recipient = account.email
       subject = "Set a new password"
 
+    elif action == 'project-started':
+      recipient = account.email
+      subject = "Your Project has been Started"
+
+    elif action == 'client-enabled':
+      recipient = account.email
+      subject = "Your Project has been Enabled for Clients"
+
     else:
       return False
     
@@ -338,8 +346,13 @@ class AccountEmail(models.Model):
       context['message'] = contact.message
       
     else:
-      context['code'] = request.code
       context['account_id'] = account.id
+    
+    if request is not None:
+      context['code'] = request.code
+    
+    if project is not None:
+      context['project_title'] = project.title
     
     html = render_to_string(action + '.html', context)
     text = render_to_string(action + '.txt', context)
@@ -350,7 +363,6 @@ class AccountEmail(models.Model):
       "subject": subject,
       "html": html,
       "text": text,
-      "status": cls.statuses[0],
     }
     
     if action == 'contact-created':
@@ -387,7 +399,7 @@ class Contact(models.Model):
   account = models.ForeignKey(Account, blank=True)
   reply_to = models.EmailField(max_length=255)
   subject = models.CharField(max_length=255)
-  text = models.TextField()
+  message = models.TextField()
   status = models.CharField(max_length=20)
   date_updated = models.DateTimeField(auto_now=True)
   date_created = models.DateTimeField(auto_now_add=True)
@@ -400,7 +412,7 @@ class Contact(models.Model):
       "account_id": self.account_id,
       "reply_to": self.reply_to,
       "subject": self.subject,
-      "text": self.text,
+      "message": self.message,
       "status": self.status,
       "date_updated": self.date_updated,
       "date_created": self.date_created,
@@ -434,10 +446,10 @@ class Contact(models.Model):
     
     contact_dictionary["subject"] = str(schema['subject'])
     
-    if 'text' not in schema or schema['text'] is None:
-      return {"text": "Missing text field."}
+    if 'message' not in schema or schema['message'] is None:
+      return {"message": "Missing message field."}
     
-    contact_dictionary["text"] = str(schema['text'])
+    contact_dictionary["message"] = str(schema['message'])
     
     if account is not None:
       contact_dictionary["account"] = account

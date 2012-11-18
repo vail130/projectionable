@@ -4,6 +4,7 @@
 <% var owner = project.permission === 'owner'; %>
 <% var coworker = project.permission === 'coworker'; %>
 <% var client = project.permission === 'client'; %>
+<% var locked = project.status === 'locked'; %>
 <% var pending = group.status === 'pending'; %>
 <% var approved = group.status === 'approved'; %>
 <% var rejected = group.status === 'rejected'; %>
@@ -14,9 +15,9 @@
   <div class='edit-group-form-head clearfix'>
     <div class='group-title-wrapper'>
       <span class='input-label'>Category Title</span>
-      <% if (!saved || (agent && pending) || (client && requested)) { %>
+      <% if (!locked && (!saved || (agent && pending) || (client && requested))) { %>
         <div class='edit-block group-edit-block'>
-          <input class="edit-input group-title-input" type='text' placeholder='Category title...' value="<%= group.title %>" />
+          <input class="edit-input group-title-input" type='text' value="<%= group.title %>" />
           <i class='edit-icon icon-pencil'></i>
         </div>
       <% } else { %>
@@ -37,7 +38,11 @@
     </div>
     
     <div class="status-wrapper group-status-wrapper <%= saved ? 'active' : '' %>">
-      <% if (!saved) { %>
+      <% if (locked) { %>
+        <div class='label-wrapper'>
+          <span class="label <%= group.status === 'approved' ? 'label-success' : 'label-important' %>"><%= group.status.substr(0, 1).toUpperCase() + group.status.substr(1) %></span>
+        </div>
+      <% } else if (!saved) { %>
         <% if (agent) { %>
           <div class='label-wrapper'><span class='label'>Waiting for client</span></div>
         <% } else if (client) { %>
@@ -72,7 +77,7 @@
       <% } %>
     </div>
     
-    <% if ((owner || client) && (approved || rejected)) { %>
+    <% if (!locked && (owner || client) && (approved || rejected)) { %>
     <div class='dropdown group-dropdown pull-right'>
       <a href='#' class='btn btn-small' data-toggle='dropdown'>
         <i class='icon-pencil'></i>
@@ -81,7 +86,7 @@
       <ul class='dropdown-menu' role='menu'>
         <% if (owner) { %>
         <li><a href='#' tabindex='-1' class='owner-revert-group'>Revert to pending</a></li>
-        <li><a href='#' tabindex='-1' class='owner-delete-group'>Delete this feature</a></li>
+        <li><a href='#' tabindex='-1' class='owner-delete-group'>Delete this category</a></li>
         <% } else if (client) { %>
           <% if (approved) { %>
           <li><a href='#' tabindex='-1' class='client-reject-group'>Change to rejected</a></li>
@@ -97,7 +102,7 @@
     </div>
     <% } %>
     
-    <% if (!saved || (agent && pending) || (client && requested)) { %>
+    <% if (!locked && (!saved || (agent && pending) || (client && requested))) { %>
     <div class="delete-wrapper group-delete-wrapper <%= saved ? 'active' : '' %>">
       <a href='#' tabindex='-1' class='btn btn-small btn-danger delete-link group-delete-link'>Delete</a>
     </div>

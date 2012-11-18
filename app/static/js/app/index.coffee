@@ -186,7 +186,7 @@ class Contact extends Spine.Controller
     '.contact-subject-input' : '$subject'
     '.contact-message-textarea' : '$message'
     '.contact-submit-button' : '$submitButton'
-    '.contact-alert' : '@$alert'
+    '.contact-alert' : '$alert'
   
   events:
     'click .contact-modal-close-button' : 'hideContactModal'
@@ -233,12 +233,13 @@ class Contact extends Spine.Controller
       url: '/api/contacts/'
       data:
         JSON.stringify
-          replyTo: replyTo
+          reply_to: replyTo
           subject: subject
           message: message
       success: (json) =>
         @displaySuccess 'Thank you for your contact.'
         @$contactModal.find('.proj-modal-body').children().not('.alert').hide().filter('input, textarea').val('')
+        setTimeout @hideContactModal, 3000
       error: (jqXHR) =>
         try
           @displayError _.pairs(JSON.parse(jqXHR.responseText))[0][1]

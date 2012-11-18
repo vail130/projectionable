@@ -440,6 +440,10 @@ class GroupManager(View):
     except Project.DoesNotExist:
       errors = {"project_id": "Invalid project ID."}
       return Response(content=errors, headers=headers, status=status.HTTP_404_NOT_FOUND)
+    
+    if project.status == Project.statuses[2]:
+      errors = {"project": "Project is locked."}
+      return Response(content=errors, headers=headers, status=status.HTTP_400_BAD_REQUEST)
       
     try:
       permission = Permission.objects.get(account=account, project=project)
@@ -511,6 +515,10 @@ class GroupEditor(View):
     except RequirementGroup.DoesNotExist:
       errors = {"id": "Invalid group ID."}
       return Response(content=errors, headers=headers, status=status.HTTP_404_NOT_FOUND)
+    
+    if group.project.status == Project.statuses[2]:
+      errors = {"project": "Project is locked."}
+      return Response(content=errors, headers=headers, status=status.HTTP_400_BAD_REQUEST)
 
     try:
       permission = Permission.objects.get(account=account, project=group.project)
@@ -608,6 +616,10 @@ class GroupEditor(View):
     except RequirementGroup.DoesNotExist:
       errors = {"project_id": "Invalid project ID."}
       return Response(content=errors, headers=headers, status=status.HTTP_404_NOT_FOUND)
+    
+    if group.project.status == Project.statuses[2]:
+      errors = {"project": "Project is locked."}
+      return Response(content=errors, headers=headers, status=status.HTTP_400_BAD_REQUEST)
     
     try:
       permission = Permission.objects.get(account=account, project=group.project)
@@ -762,6 +774,10 @@ class RequirementManager(View):
     except RequirementGroup.DoesNotExist:
       errors = {"group_id": "Invalid group ID."}
       return Response(content=errors, headers=headers, status=status.HTTP_404_NOT_FOUND)
+    
+    if group.project.status == Project.statuses[2]:
+      errors = {"project": "Project is locked."}
+      return Response(content=errors, headers=headers, status=status.HTTP_400_BAD_REQUEST)
 
     try:
       permission = Permission.objects.get(account=account, project=group.project)
@@ -833,6 +849,10 @@ class RequirementEditor(View):
     except Requirement.DoesNotExist:
       errors = {"requirement_id": "Invalid requirement ID."}
       return Response(content=errors, headers=headers, status=status.HTTP_404_NOT_FOUND)
+    
+    if req.group.project.status == Project.statuses[2]:
+      errors = {"project": "Project is locked."}
+      return Response(content=errors, headers=headers, status=status.HTTP_400_BAD_REQUEST)
 
     try:
       permission = Permission.objects.get(account=account, project=req.group.project)
@@ -930,6 +950,10 @@ class RequirementEditor(View):
     except Requirement.DoesNotExist:
       errors = {"requirement_id": "Invalid requirement ID."}
       return Response(content=errors, headers=headers, status=status.HTTP_404_NOT_FOUND)
+    
+    if req.group.project.status == Project.statuses[2]:
+      errors = {"project": "Project is locked."}
+      return Response(content=errors, headers=headers, status=status.HTTP_400_BAD_REQUEST)
       
     try:
       permission = Permission.objects.get(account=account, project=req.group.project)

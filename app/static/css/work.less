@@ -192,6 +192,14 @@
             vertical-align: top;
             margin: 0 20px 0 0;
             
+            .edit-block {
+              display: none;
+            }
+            
+            &.active .edit-block {
+              display: block;
+            }
+            
             .data-display {
               font-size: 16px;
               line-height: 20px;
@@ -343,7 +351,9 @@
           margin-top: 7px;
         }
         
-        .start-button {
+        .start-button,
+        .lock-button,
+        .unlock-button {
           margin-top: 3px;
         }
       }

@@ -45,7 +45,7 @@ $ ->
       url: '/api/contacts/'
       data:
         JSON.stringify
-          replyTo: replyTo
+          reply_to: replyTo
           subject: subject
           message: message
       success: (json) =>

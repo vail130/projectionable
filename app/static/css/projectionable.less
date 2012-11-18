@@ -113,7 +113,9 @@ body {
     .contact-tab-wrapper {
       position: fixed;
       top: 40%;
-      right: -35px;
+      width: 120px;
+      text-align: center;
+      right: -45px;
       -webkit-transform: rotate(-90deg);
       -moz-transform: rotate(-90deg);
       -ms-transform: rotate(-90deg);
@@ -413,12 +415,48 @@ body {
     }
     
       
-    .trial-form {
+    .home-form {
       text-align: left;
       
       &.landing-page {
         float: right;
         margin: 50px 25px 0 0;
+        
+        .proj-form-head {
+          
+          h2 {
+            float: left;
+            margin: 10px 0 10px 4px;
+          }
+          
+          .home-toggle-wrapper {
+            float: right;
+            margin: 7px 4px 0 0;
+            
+            .btn-small {
+              padding: 2px 6px;
+            }
+            
+            .show-signup-button { display: none; }
+            .show-signin-button { display: inline-block; }
+            
+            &.active {
+              .show-signup-button { display: inline-block; }
+              .show-signin-button { display: none; }
+            }
+          }
+        }
+        
+        .proj-form-body {
+          
+          .home-signup { display: inline-block; }
+          .home-signin { display: none; }
+          
+          &.active {
+            .home-signup { display: none; }
+            .home-signin { display: inline-block; }
+          }
+        }
       }
     }
   }

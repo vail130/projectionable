@@ -16,6 +16,10 @@
 
       this.initSortable = __bind(this.initSortable, this);
 
+      this.unlockProject = __bind(this.unlockProject, this);
+
+      this.lockProject = __bind(this.lockProject, this);
+
       this.startProject = __bind(this.startProject, this);
 
       this.assessStartable = __bind(this.assessStartable, this);
@@ -67,6 +71,8 @@
       '.project-hours': '$hoursDisplay',
       '.project-dollars': '$dollarsDisplay',
       '.start-button': '$startButton',
+      '.lock-button': '$lockButton',
+      '.unlock-button': '$unlockButton',
       '.sharing-button': '$sharingButton',
       '.permissions-modal-container': '$permissionModalContainer'
     };
@@ -166,6 +172,20 @@
       return this.render();
     };
 
+    Editor.prototype.lockProject = function(event) {
+      event.preventDefault();
+      this.project.status = 'locked';
+      this.project.updateAttribute('status', 'locked');
+      return this.render();
+    };
+
+    Editor.prototype.unlockProject = function(event) {
+      event.preventDefault();
+      this.project.status = 'started';
+      this.project.updateAttribute('status', 'started');
+      return this.render();
+    };
+
     Editor.prototype.initSortable = function() {
       var sortableOptions,
         _this = this;
@@ -206,6 +226,11 @@
       $('#work-editor').html(this.$el);
       this.addAll().assessStartable().initSortable();
       if (this.project.permission === 'owner') {
+        if (this.project.status === 'started') {
+          this.$lockButton.on('click', this.lockProject);
+        } else if (this.project.status === 'locked') {
+          this.$unlockButton.on('click', this.unlockProject);
+        }
         this.permissionModal = new WorkPermissionModal({
           parent: this
         });
@@ -512,14 +537,14 @@
 
     WorkPermission.prototype.getContext = function() {
       return {
-        project: this.parent.project,
+        project: this.parent.parent.project,
         permission: this.permission,
         type: this.type
       };
     };
 
     WorkPermission.prototype.render = function() {
-      if (this.parent.project.permission === 'owner') {
+      if (this.parent.parent.project.permission === 'owner') {
         this.html(this.view('work_editor_editor-permission')(this.getContext()));
       }
       return this;
@@ -709,11 +734,8 @@
       this.trigger('calculateHours');
       if (this.parent.project.status === 'started') {
         this.parent.project.updateAttribute('status', 'pending');
-        return this.parent.project.render();
-      } else {
-        this.render();
-        return this.parent.assessStartable();
       }
+      return this.parent.render();
     };
 
     WorkGroup.prototype.revertGroup = function(event) {
@@ -723,11 +745,8 @@
       this.trigger('calculateHours');
       if (this.parent.project.status === 'started') {
         this.parent.project.updateAttribute('status', 'pending');
-        return this.parent.project.render();
-      } else {
-        this.render();
-        return this.parent.assessStartable();
       }
+      return this.parent.render();
     };
 
     WorkGroup.prototype.clientRevertGroup = function(event) {
@@ -737,11 +756,8 @@
       this.trigger('calculateHours');
       if (this.parent.project.status === 'started') {
         this.parent.project.updateAttribute('status', 'pending');
-        return this.parent.project.render();
-      } else {
-        this.render();
-        return this.parent.assessStartable();
       }
+      return this.parent.render();
     };
 
     WorkGroup.prototype.clientApproveGroup = function(event) {
@@ -751,11 +767,8 @@
       this.trigger('calculateHours');
       if (this.parent.project.status === 'started') {
         this.parent.project.updateAttribute('status', 'pending');
-        return this.parent.project.render();
-      } else {
-        this.render();
-        return this.parent.assessStartable();
       }
+      return this.parent.render();
     };
 
     WorkGroup.prototype.clientRejectGroup = function(event) {
@@ -765,11 +778,8 @@
       this.trigger('calculateHours');
       if (this.parent.project.status === 'started') {
         this.parent.project.updateAttribute('status', 'pending');
-        return this.parent.project.render();
-      } else {
-        this.render();
-        return this.parent.assessStartable();
       }
+      return this.parent.render();
     };
 
     WorkGroup.prototype.getContext = function() {
@@ -963,11 +973,8 @@
       this.parent.trigger('calculateHours');
       if (this.parent.group.status !== 'approved') {
         this.parent.group.status = 'approved';
-        return this.parent.render();
-      } else {
-        this.render();
-        return this.parent.parent.assessStartable();
       }
+      return this.parent.parent.render();
     };
 
     WorkRequirement.prototype.rejectRequirement = function(event) {
@@ -995,11 +1002,8 @@
       this.parent.trigger('calculateHours');
       if (this.parent.parent.project.status === 'started') {
         this.parent.parent.project.updateAttribute('status', 'pending');
-        return this.parent.parent.project.render();
-      } else {
-        this.render();
-        return this.parent.parent.assessStartable();
       }
+      return this.parent.parent.render();
     };
 
     WorkRequirement.prototype.revertRequirement = function(event) {
@@ -1009,11 +1013,8 @@
       this.parent.trigger('calculateHours');
       if (this.parent.parent.project.status === 'started') {
         this.parent.parent.project.updateAttribute('status', 'pending');
-        return this.parent.parent.project.render();
-      } else {
-        this.render();
-        return this.parent.parent.assessStartable();
       }
+      return this.parent.parent.render();
     };
 
     WorkRequirement.prototype.clientRevertRequirement = function(event) {
@@ -1023,11 +1024,8 @@
       this.parent.trigger('calculateHours');
       if (this.parent.parent.project.status === 'started') {
         this.parent.parent.project.updateAttribute('status', 'pending');
-        return this.parent.parent.project.render();
-      } else {
-        this.render();
-        return this.parent.parent.assessStartable();
       }
+      return this.parent.parent.render();
     };
 
     WorkRequirement.prototype.clientApproveRequirement = function(event) {
@@ -1045,11 +1043,8 @@
       this.parent.trigger('calculateHours');
       if (this.parent.parent.project.status === 'started') {
         this.parent.parent.project.updateAttribute('status', 'pending');
-        return this.parent.parent.project.render();
-      } else {
-        this.parent.render();
-        return this.parent.parent.assessStartable();
       }
+      return this.parent.parent.render();
     };
 
     WorkRequirement.prototype.clientRejectRequirement = function(event) {
@@ -1059,11 +1054,8 @@
       this.parent.trigger('calculateHours');
       if (this.parent.parent.project.status === 'started') {
         this.parent.parent.project.updateAttribute('status', 'pending');
-        return this.parent.parent.project.render();
-      } else {
-        this.render();
-        return this.parent.parent.assessStartable();
       }
+      return this.parent.parent.render();
     };
 
     WorkRequirement.prototype.getContext = function() {

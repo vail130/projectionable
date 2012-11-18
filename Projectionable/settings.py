@@ -240,6 +240,10 @@ PIPELINE_JS = {
     'source_filenames': ('js/signin/*.coffee',),
     'output_filename': 'js/signin.js',
   },
+  'signup_behavior': {
+    'source_filenames': ('js/signup/*.coffee',),
+    'output_filename': 'js/signup.js',
+  },
   'contact_behavior': {
     'source_filenames': ('js/contact/*.coffee',),
     'output_filename': 'js/contact.js',

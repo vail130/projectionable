@@ -32,6 +32,8 @@ class Projectionable.Editor extends Spine.Controller
     '.project-hours' : '$hoursDisplay'
     '.project-dollars' : '$dollarsDisplay'
     '.start-button' : '$startButton'
+    '.lock-button' : '$lockButton'
+    '.unlock-button' : '$unlockButton'
     '.sharing-button' : '$sharingButton'
     '.permissions-modal-container' : '$permissionModalContainer'
   
@@ -95,6 +97,18 @@ class Projectionable.Editor extends Spine.Controller
     @project.updateAttribute 'status', 'started'
     @render()
     
+  lockProject: (event) =>
+    event.preventDefault()
+    @project.status = 'locked'
+    @project.updateAttribute 'status', 'locked'
+    @render()
+    
+  unlockProject: (event) =>
+    event.preventDefault()
+    @project.status = 'started'
+    @project.updateAttribute 'status', 'started'
+    @render()
+    
   initSortable: =>
     sortableOptions =
       axis: 'y'
@@ -124,6 +138,11 @@ class Projectionable.Editor extends Spine.Controller
     @addAll().assessStartable().initSortable()
     
     if @project.permission is 'owner'
+      if @project.status is 'started'
+        @$lockButton.on 'click', @lockProject
+      else if @project.status is 'locked'
+        @$unlockButton.on 'click', @unlockProject
+      
       @permissionModal = new WorkPermissionModal
         parent: @
       @$permissionModalContainer.html @permissionModal.render().el
@@ -307,12 +326,12 @@ class WorkPermission extends Spine.Controller
     @
   
   getContext: =>
-    project: @parent.project
+    project: @parent.parent.project
     permission: @permission
     type: @type
   
   render: =>
-    if @parent.project.permission is 'owner' 
+    if @parent.parent.project.permission is 'owner' 
       @html(@view('work_editor_editor-permission')(@getContext()))
     @
     
@@ -439,10 +458,7 @@ class WorkGroup extends Spine.Controller
     @trigger 'calculateHours'
     if @parent.project.status is 'started'
       @parent.project.updateAttribute 'status', 'pending'
-      @parent.project.render()
-    else
-      @render()
-      @parent.assessStartable()
+    @parent.render()
   
   revertGroup: (event) =>
     event.preventDefault()
@@ -452,10 +468,7 @@ class WorkGroup extends Spine.Controller
     @trigger 'calculateHours'
     if @parent.project.status is 'started'
       @parent.project.updateAttribute 'status', 'pending'
-      @parent.project.render()
-    else
-      @render()
-      @parent.assessStartable()
+    @parent.render()
   
   clientRevertGroup: (event) =>
     event.preventDefault()
@@ -465,10 +478,7 @@ class WorkGroup extends Spine.Controller
     @trigger 'calculateHours'
     if @parent.project.status is 'started'
       @parent.project.updateAttribute 'status', 'pending'
-      @parent.project.render()
-    else
-      @render()
-      @parent.assessStartable()
+    @parent.render()
   
   clientApproveGroup: (event) =>
     event.preventDefault()
@@ -478,10 +488,7 @@ class WorkGroup extends Spine.Controller
     @trigger 'calculateHours'
     if @parent.project.status is 'started'
       @parent.project.updateAttribute 'status', 'pending'
-      @parent.project.render()
-    else
-      @render()
-      @parent.assessStartable()
+    @parent.render()
   
   clientRejectGroup: (event) =>
     event.preventDefault()
@@ -491,10 +498,7 @@ class WorkGroup extends Spine.Controller
     @trigger 'calculateHours'
     if @parent.project.status is 'started'
       @parent.project.updateAttribute 'status', 'pending'
-      @parent.project.render()
-    else
-      @render()
-      @parent.assessStartable()
+    @parent.render()
   
   getContext: =>
     project: @parent.project
@@ -633,10 +637,7 @@ class WorkRequirement extends Spine.Controller
     @parent.trigger 'calculateHours'
     if @parent.group.status isnt 'approved'
       @parent.group.status = 'approved'
-      @parent.render()
-    else
-      @render()
-      @parent.parent.assessStartable()
+    @parent.parent.render()
   
   rejectRequirement: (event) =>
     event.preventDefault()
@@ -659,10 +660,7 @@ class WorkRequirement extends Spine.Controller
     
     if @parent.parent.project.status is 'started'
       @parent.parent.project.updateAttribute 'status', 'pending'
-      @parent.parent.project.render()
-    else
-      @render()
-      @parent.parent.assessStartable()
+    @parent.parent.render()
   
   revertRequirement: (event) =>
     event.preventDefault()
@@ -672,10 +670,7 @@ class WorkRequirement extends Spine.Controller
     @parent.trigger 'calculateHours'
     if @parent.parent.project.status is 'started'
       @parent.parent.project.updateAttribute 'status', 'pending'
-      @parent.parent.project.render()
-    else
-      @render()
-      @parent.parent.assessStartable()
+    @parent.parent.render()
   
   clientRevertRequirement: (event) =>
     event.preventDefault()
@@ -685,10 +680,7 @@ class WorkRequirement extends Spine.Controller
     @parent.trigger 'calculateHours'
     if @parent.parent.project.status is 'started'
       @parent.parent.project.updateAttribute 'status', 'pending'
-      @parent.parent.project.render()
-    else
-      @render()
-      @parent.parent.assessStartable()
+    @parent.parent.render()
   
   clientApproveRequirement: (event) =>
     event.preventDefault()
@@ -706,10 +698,7 @@ class WorkRequirement extends Spine.Controller
     @parent.trigger 'calculateHours'
     if @parent.parent.project.status is 'started'
       @parent.parent.project.updateAttribute 'status', 'pending'
-      @parent.parent.project.render()
-    else
-      @parent.render()
-      @parent.parent.assessStartable()
+    @parent.parent.render()
   
   clientRejectRequirement: (event) =>
     event.preventDefault()
@@ -719,10 +708,7 @@ class WorkRequirement extends Spine.Controller
     @parent.trigger 'calculateHours'
     if @parent.parent.project.status is 'started'
       @parent.parent.project.updateAttribute 'status', 'pending'
-      @parent.parent.project.render()
-    else
-      @render()
-      @parent.parent.assessStartable()
+    @parent.parent.render()
   
   getContext: =>
     project: @parent.parent.project

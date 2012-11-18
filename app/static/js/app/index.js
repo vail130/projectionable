@@ -282,7 +282,7 @@
       '.contact-subject-input': '$subject',
       '.contact-message-textarea': '$message',
       '.contact-submit-button': '$submitButton',
-      '.contact-alert': '@$alert'
+      '.contact-alert': '$alert'
     };
 
     Contact.prototype.events = {
@@ -339,13 +339,14 @@
         contentType: 'application/json',
         url: '/api/contacts/',
         data: JSON.stringify({
-          replyTo: replyTo,
+          reply_to: replyTo,
           subject: subject,
           message: message
         }),
         success: function(json) {
           _this.displaySuccess('Thank you for your contact.');
-          return _this.$contactModal.find('.proj-modal-body').children().not('.alert').hide().filter('input, textarea').val('');
+          _this.$contactModal.find('.proj-modal-body').children().not('.alert').hide().filter('input, textarea').val('');
+          return setTimeout(_this.hideContactModal, 3000);
         },
         error: function(jqXHR) {
           try {

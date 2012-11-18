@@ -2,7 +2,7 @@ from djangorestframework.views import View
 from djangorestframework.response import Response
 from djangorestframework import status
 from django.contrib.auth import authenticate, login
-from account_api.models import Account
+from account_api.models import Account, Contact
 
 class SessionManager(View):
     """

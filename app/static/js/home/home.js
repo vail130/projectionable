@@ -2,16 +2,36 @@
 (function() {
 
   $(function() {
-    var $alert, $email, $formBody, $formInputs, $password1, $password2, $signupButton, displayError, displaySuccess;
-    $formBody = $('.trial-form .proj-form-body');
-    $formInputs = $formBody.find('> input');
+    var $alert, $formBody, $password, $password1, $password2, $showSigninButton, $showSignupButton, $signinButton, $signinEmail, $signinInputs, $signupButton, $signupEmail, $signupInputs, displayError, displaySuccess;
+    $formBody = $('.home-form .proj-form-body');
     $alert = $formBody.find('> .alert');
-    $email = $('#email');
+    $signinInputs = $formBody.find('.home-signin > input');
+    $signinEmail = $('#signin-email');
+    $password = $('#password');
+    $signinButton = $formBody.find('.signin-button');
+    $signupInputs = $formBody.find('.home-signup > input');
+    $signupEmail = $('#signup-email');
     $password1 = $('#password1');
     $password2 = $('#password2');
     $signupButton = $formBody.find('.signup-button');
-    $formInputs.first().get(0).focus();
-    $email.add($password1).add($password2).keypress(function(event) {
+    $signupInputs.first().get(0).focus();
+    $showSigninButton = $('.home-form .proj-form-head .show-signin-button');
+    $showSignupButton = $('.home-form .proj-form-head .show-signup-button');
+    $showSigninButton.click(function(event) {
+      event.preventDefault();
+      $showSigninButton.parent().toggleClass('active');
+      $formBody.toggleClass('active');
+      $alert.hide();
+      return $signinInputs.first().get(0).focus();
+    });
+    $showSignupButton.click(function(event) {
+      event.preventDefault();
+      $showSignupButton.parent().toggleClass('active');
+      $formBody.toggleClass('active');
+      $alert.hide();
+      return $signupInputs.first().get(0).focus();
+    });
+    $signupEmail.add($password1).add($password2).keypress(function(event) {
       var code;
       code = event.keyCode ? event.keyCode : event.charCode;
       if (code === 13) {
@@ -22,25 +42,25 @@
       var email, password1, password2,
         _this = this;
       event.preventDefault();
-      email = $email.val();
+      email = $signupEmail.val();
       if (email === '') {
         displayError('Missing email field');
-        $formInputs.get(0).focus();
+        $signupInputs.get(0).focus();
         return;
       }
       password1 = $password1.val();
       password2 = $password2.val();
       if (password1 === '') {
         displayError('Missing password field');
-        $formInputs.get(1).focus();
+        $signupInputs.get(1).focus();
         return;
       } else if (password2 === '') {
         displayError('Missing password field');
-        $formInputs.get(2).focus();
+        $signupInputs.get(2).focus();
         return;
       } else if (password1 !== password2) {
         displayError('Mismatching password fields');
-        $formInputs.get(1).focus();
+        $signupInputs.get(1).focus();
         return;
       }
       $signupButton.button('loading');
@@ -64,8 +84,60 @@
           } catch (e) {
             displayError(jqXHR.statusText);
           }
-          $formInputs.get(0).focus();
+          $signupInputs.get(0).focus();
           return $signupButton.button('reset');
+        }
+      });
+    });
+    $signinEmail.add($password).keypress(function(event) {
+      var code;
+      code = event.keyCode ? event.keyCode : event.charCode;
+      if (code === 13) {
+        return $signinButton.trigger('click');
+      }
+    });
+    $signinButton.click(function(event) {
+      var email, password,
+        _this = this;
+      event.preventDefault();
+      email = $signinEmail.val();
+      if (email === '') {
+        displayError('Missing email field');
+        $signinInputs.get(0).focus();
+        return;
+      }
+      password = $password.val();
+      if (password1 === '') {
+        displayError('Missing password field');
+        $signinInputs.get(1).focus();
+        return;
+      }
+      $signinButton.button('loading');
+      $alert.hide();
+      return $.ajax({
+        type: 'POST',
+        dataType: 'json',
+        contentType: 'application/json',
+        url: '/api/sessions',
+        data: JSON.stringify({
+          email: email,
+          password: password
+        }),
+        success: function(json) {
+          displaySuccess('Logging in...');
+          $formBody.children().not('.alert').hide().filter('input').val('');
+          return setTimeout((function() {
+            return window.location.href = 'http://' + window.location.host;
+          }), 750);
+        },
+        error: function(jqXHR) {
+          try {
+            displayError(_.pairs(JSON.parse(jqXHR.responseText))[0][1]);
+          } catch (e) {
+            displayError(jqXHR.statusText);
+          }
+          $signinButton.button('reset');
+          return $formInputs.get(0).focus();
         }
       });
     });

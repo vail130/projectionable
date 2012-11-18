@@ -26,8 +26,8 @@ class Projectionable.Manager extends Spine.Controller
     
   new: (event) ->
     event.preventDefault()
-    project = Projectionable.Project.create App.makeProjectTemplate()
-    @addOne project
+    Projectionable.Project.create App.makeProjectTemplate()
+    @addAll()
   
   addOne: (project) =>
     controller = new ProjectPreview project: project

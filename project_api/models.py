@@ -1,5 +1,5 @@
 from django.db import models
-from account_api.models import Account
+from account_api.models import Account, AccountEmail
 from utilities import *
 from django.conf import settings
 from django.db.models import Sum
@@ -14,7 +14,7 @@ class Project(models.Model):
   date_updated = models.DateTimeField(auto_now=True)
   date_created = models.DateTimeField(auto_now_add=True)
   
-  statuses = ['pending', 'started']
+  statuses = ['pending', 'started', 'locked']
   
   validation = {
     'title': ('string', (0, 100)),
@@ -109,6 +109,7 @@ class Project(models.Model):
     
     changed = False
     project_started = False
+    client_enabled = False
     
     if self.status == Project.statuses[0]:
       if permission.permission == 'owner':
@@ -120,6 +121,7 @@ class Project(models.Model):
         if 'client_enabled' in schema and self.client_enabled is False and schema['client_enabled'] is True:
           self.client_enabled = True
           changed = True
+          client_enabled = True
         ###
         
         if 'rate' in schema:
@@ -131,12 +133,21 @@ class Project(models.Model):
           self.status = schema['status']
           changed = True
           project_started = True
+          
+    elif permission.permission == 'owner' and self.status in Project.statuses[1:3]:
+      if 'status' in schema and schema['status'] in Project.statuses[1:3] and self.status != schema['status']:
+        self.status = schema['status']
+        changed = True
         
     if changed:
       self.save()
       
     if project_started:
       self.approve_pending_children()
+      AccountEmail.create_and_send(self.account, 'project-started', project=self)
+    
+    if client_enabled:
+      AccountEmail.create_and_send(self.account, 'client-enabled', project=self)
     
     return self
     
@@ -315,7 +326,7 @@ class RequirementGroup(models.Model):
         status_changed = True
         
         project = self.project
-        if revert is True and project.status is 'started':
+        if revert is True and project.status == 'started':
           project.status = 'pending'
           project.save()
     
@@ -477,7 +488,7 @@ class Requirement(models.Model):
           group.save()
     
         project = self.group.project
-        if revert is True and project.status is 'started':
+        if revert is True and project.status == 'started':
           project.status = 'pending'
           project.save()
     
