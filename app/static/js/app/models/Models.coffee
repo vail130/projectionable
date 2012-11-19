@@ -4,6 +4,7 @@ class Projectionable.Account extends Spine.Model
     "first_name"
     "last_name"
     "email"
+    "type"
     "status"
     "date_created"
     "date_updated"

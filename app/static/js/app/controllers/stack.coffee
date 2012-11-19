@@ -5,6 +5,7 @@ class Projectionable.Stack extends Spine.Stack
   
   controllers:
     Manager: Projectionable.Manager
+    Dashboard: Projectionable.Dashboard
     Editor: Projectionable.Editor
     Settings: Projectionable.Settings
     Exit: Projectionable.Exit

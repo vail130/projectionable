@@ -25,6 +25,7 @@ class Account(models.Model):
       "first_name": self.first_name,
       "last_name": self.last_name,
       "email": self.email,
+      "type": self.type,
       "status": self.status,
       "date_updated": self.date_updated,
       "date_created": self.date_created,

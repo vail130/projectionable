@@ -15,11 +15,6 @@
       Projectionable.__super__.constructor.apply(this, arguments);
       window.App = this;
       this.html(this.view('structure'));
-      this.Lock = Lock;
-      this.navigation = new Navigation;
-      this.footer = new Footer;
-      this.contact = new Contact;
-      this.project = null;
       this.bind('renderNavigation', function(page) {
         return _this.navigation.render(page);
       });
@@ -42,6 +37,14 @@
       } else {
         window.location.hash = '#exit';
       }
+      this.Lock = Lock;
+      this.navigation = new Navigation({
+        parent: this,
+        account: null
+      });
+      this.footer = new Footer;
+      this.contact = new Contact;
+      this.project = null;
       this.stack = new Projectionable.Stack;
       Spine.Route.setup();
       hash = window.location.hash;
@@ -220,17 +223,32 @@
 
     function Navigation() {
       this.render = __bind(this.render, this);
+
+      this.getContext = __bind(this.getContext, this);
+
+      var _this = this;
       this.el = $('#navigation');
       Navigation.__super__.constructor.apply(this, arguments);
-      this.render('manager');
+      this.page = 'manager';
+      this.render();
+      $.when(this.parent.accountPromise).done(function() {
+        _this.account = Projectionable.Account.findByAttribute('id', window.sessionID);
+        return _this.render();
+      });
     }
 
-    Navigation.prototype.render = function(page) {
-      var context;
-      context = {
-        page: typeof page === 'undefined' ? 'manager' : page
+    Navigation.prototype.getContext = function() {
+      return {
+        page: this.page,
+        account: this.account
       };
-      this.html(this.view('navigation')(context));
+    };
+
+    Navigation.prototype.render = function(page) {
+      if (typeof page !== 'undefined') {
+        this.page = page;
+      }
+      this.html(this.view('navigation')(this.getContext()));
       return this;
     };
 

@@ -1,0 +1,39 @@
+
+<div class='account-liner clearfix'>
+    
+  <div class='data-wrapper project-data-wrapper title-data-wrapper'>
+    <div class='input-label'>Email Address</div>
+    <h2 class='data-display project-title'>
+      <a href="#" class='title'><%= account.email %></a>
+    </h2>
+  </div>
+  
+  <div class='data-wrapper project-data-wrapper'>
+    <div class='input-label'>Hourly Rate</div>
+    <h2 class='data-display project-dollars'></h2>
+  </div>
+  
+  <div class='data-wrapper project-data-wrapper'>
+    <div class='input-label'>Total Hours</div>
+    <h2 class='data-display project-hours'></h2>
+  </div>
+  
+  <div class='data-wrapper project-data-wrapper'>
+    <div class='input-label'>Total Cost</div>
+    <h2 class='data-display project-dollars'></h2>
+  </div>
+  
+  <div class='dropdown options-dropdown pull-right'>
+    <a href='#' class='btn options-button dropdown-toggle' data-toggle='dropdown'>
+      <i class='icon-wrench'></i>
+      <i class='caret'></i>
+    </a>
+    
+    <ul class='dropdown-menu options-menu' role="menu">
+      <li><a href='#' class='edit-link' tabindex="-1">Manage this project</a></li>
+      <li class="divider"></li>
+      <li><a href='#' tabindex="-1" class='delete' data-id='<%= account.id %>'>Delete this project</a></li>
+    </ul>
+  </div>
+  
+</div>

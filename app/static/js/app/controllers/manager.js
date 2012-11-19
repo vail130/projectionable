@@ -14,6 +14,8 @@
 
       this.addOne = __bind(this.addOne, this);
 
+      this.newProject = __bind(this.newProject, this);
+
       var _this = this;
       Manager.__super__.constructor.apply(this, arguments);
       App.Manager = this;
@@ -39,14 +41,11 @@
     Manager.prototype.className = 'work-manager';
 
     Manager.prototype.elements = {
-      '.manager-projects': '$projectList'
+      '.manager-projects': '$projectList',
+      '.new-project-button': '$newProjectButton'
     };
 
-    Manager.prototype.events = {
-      'click .new-project-button': 'new'
-    };
-
-    Manager.prototype["new"] = function(event) {
+    Manager.prototype.newProject = function(event) {
       event.preventDefault();
       Projectionable.Project.create(App.makeProjectTemplate());
       return this.addAll();
@@ -79,6 +78,7 @@
       this.html(this.view('work_manager_manager'));
       $('#work-manager').html(this.$el);
       this.addAll();
+      this.$newProjectButton.on('click', this.newProject);
       return this;
     };
 

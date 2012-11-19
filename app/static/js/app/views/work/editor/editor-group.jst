@@ -14,7 +14,16 @@
   
   <div class='edit-group-form-head clearfix'>
     <div class='group-title-wrapper'>
-      <span class='input-label'>Category Title</span>
+      <span class='input-label'>
+        Category Title
+        <div class='proj-tooltip'>
+          <span class='proj-tooltip-target'></span>
+          <div class='proj-tooltip-display'>
+            <span>We organize projects into Categories and Requirements. For a web project,
+              categories are usually pages and API endpoints, and requirements are user stories.</span>
+          </div>
+        </div>
+      </span>
       <% if (!locked && (!saved || (agent && pending) || (client && requested))) { %>
         <div class='edit-block group-edit-block'>
           <input class="edit-input group-title-input" type='text' value="<%= group.title %>" />

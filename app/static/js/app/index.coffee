@@ -4,12 +4,6 @@ class window.Projectionable extends Spine.Controller
     window.App = @
     
     @html @view 'structure'
-    @Lock = Lock
-    @navigation = new Navigation
-    @footer = new Footer
-    @contact = new Contact
-    @project = null
-    
     @bind 'renderNavigation', (page) => @navigation.render(page)
     
     if window.sessionID
@@ -29,6 +23,14 @@ class window.Projectionable extends Spine.Controller
       
     else
       window.location.hash = '#exit'
+    
+    @Lock = Lock
+    @navigation = new Navigation
+      parent: @
+      account: null
+    @footer = new Footer
+    @contact = new Contact
+    @project = null
     
     @stack = new Projectionable.Stack
     Spine.Route.setup()
@@ -155,12 +157,19 @@ class Navigation extends Spine.Controller
   constructor: ->
     @el = $('#navigation')
     super
-    @render('manager')
+    @page = 'manager'
+    @render()
+    $.when(@parent.accountPromise).done =>
+      @account = Projectionable.Account.findByAttribute('id', window.sessionID)
+      @render()
+  
+  getContext: =>
+    page: @page
+    account: @account
   
   render: (page) =>
-    context =
-      page: if typeof(page) is 'undefined' then 'manager' else page
-    @html(@view('navigation')(context))
+    @page = page if typeof page isnt 'undefined'
+    @html(@view('navigation')(@getContext()))
     @
 
 class Footer extends Spine.Controller

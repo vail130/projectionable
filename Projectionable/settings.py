@@ -275,6 +275,7 @@ PIPELINE_JS = {
       'js/app/models/*.coffee',
       'js/app/controllers/manager.coffee',
       'js/app/controllers/editor.coffee',
+      'js/app/controllers/dashboard.coffee',
       'js/app/controllers/settings.coffee',
       'js/app/controllers/exit.coffee',
       'js/app/controllers/stack.coffee',

@@ -20,11 +20,9 @@ class Projectionable.Manager extends Spine.Controller
   
   elements:
     '.manager-projects': '$projectList'
+    '.new-project-button' : '$newProjectButton'
     
-  events:
-    'click .new-project-button' : 'new'
-    
-  new: (event) ->
+  newProject: (event) =>
     event.preventDefault()
     Projectionable.Project.create App.makeProjectTemplate()
     @addAll()
@@ -46,6 +44,9 @@ class Projectionable.Manager extends Spine.Controller
     @html @view 'work_manager_manager'
     $('#work-manager').html @$el
     @addAll()
+    
+    @$newProjectButton.on 'click', @newProject
+    
     @
 
 class ProjectPreview extends Spine.Controller

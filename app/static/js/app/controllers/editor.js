@@ -242,13 +242,17 @@
       }
       setTimeout((function() {
         var focused;
-        focused = false;
-        return $('.project-groups input').each(function() {
-          if (!focused && this.value === '') {
-            this.focus();
-            return focused = true;
-          }
-        });
+        if (_this.$titleInput.val() === '') {
+          return _this.$titleInput.get(0).focus();
+        } else {
+          focused = false;
+          return $('.project-groups input').each(function() {
+            if (!focused && this.value === '') {
+              this.focus();
+              return focused = true;
+            }
+          });
+        }
       }), 1);
       return this;
     };

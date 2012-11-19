@@ -151,11 +151,14 @@ class Projectionable.Editor extends Spine.Controller
         @permissionModal.trigger 'showSharingModal'
     
     setTimeout (=>
-      focused = false
-      $('.project-groups input').each ->
-        if not focused and this.value is ''
-          this.focus()
-          focused = true
+      if @$titleInput.val() is ''
+        @$titleInput.get(0).focus()
+      else
+        focused = false
+        $('.project-groups input').each ->
+          if not focused and this.value is ''
+            this.focus()
+            focused = true
       ), 1
   
     @

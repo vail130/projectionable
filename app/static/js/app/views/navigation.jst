@@ -4,6 +4,9 @@
 <ul>
   <li><a href="/home">Home</a></li>
   <li><a href="#/manager" class="<%= page === 'manager' ? 'active' : '' %>">Manager</a></li>
+  <% if (account !== null && account.type === 'administrator') { %>
+  <li><a href="#/dashboard" class="<%= page === 'dashboard' ? 'active' : '' %>">Dashboard</a></li>
+  <% } %>
   <li><a href="#/settings" class="<%= page === 'settings' ? 'active' : '' %>">Settings</a></li>
   <li><a href="#/exit">Sign Out</a></li>
 </ul>

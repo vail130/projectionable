@@ -11,7 +11,7 @@
       return Account.__super__.constructor.apply(this, arguments);
     }
 
-    Account.configure("Account", "id", "first_name", "last_name", "email", "status", "date_created", "date_updated");
+    Account.configure("Account", "id", "first_name", "last_name", "email", "type", "status", "date_created", "date_updated");
 
     Account.extend(Spine.Model.Ajax);
 

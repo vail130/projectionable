@@ -160,7 +160,7 @@ class Credentials extends Spine.Controller
     @lock.start()
     
     $.ajax
-      url: '/api/accounts/' + Projectionable.Account.first().id
+      url: '/api/accounts/' + Projectionable.Account.findByAttribute('id', window.sessionID)
       type: 'PUT'
       contentType: 'application/json'
       data: JSON.stringify payload
@@ -177,7 +177,7 @@ class Credentials extends Spine.Controller
     @
   
   getContext: =>
-    account: Projectionable.Account.first()
+    account: Projectionable.Account.findByAttribute('id', window.sessionID)
   
   render: =>
     @html(@view('settings_settings-credentials')(@getContext()))
@@ -220,7 +220,7 @@ class Terminate extends Spine.Controller
     @lock.start()
     
     $.ajax
-      url: '/api/accounts/' + Projectionable.Account.first().id + '?password=' +password
+      url: '/api/accounts/' + Projectionable.Account.findByAttribute('id', window.sessionID) + '?password=' +password
       type: 'DELETE'
       success: =>
         $message.addClass('alert-success').text('Your account was successfully delete...').show()
@@ -252,7 +252,7 @@ class Notifications extends Spine.Controller
   className: 'notifications'
   
   getContext: =>
-    account: Projectionable.Account.first()
+    account: Projectionable.Account.findByAttribute('id', window.sessionID)
   
   render: =>
     @html(@view('settings_settings-notifications')(@getContext()))

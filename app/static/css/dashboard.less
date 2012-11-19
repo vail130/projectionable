@@ -1,0 +1,136 @@
+
+@black: #222;
+
+#dashboard {
+  
+  .dashboard {
+    border: 1px solid #a88244;
+    border-top-width: 0;
+    text-align: right;
+    padding: 15px;
+    box-shadow: 0 1px 2px -1px white inset;
+    background-color: #F7E4C6;
+    margin: 0;
+    
+    .dashboard-header {
+      text-align: right;
+      font-size: 0;
+      
+      h2 {
+        float: left;
+        margin: 0;
+        font-size: 22px;
+        line-height: 30px;
+      }
+    }
+    
+    .account-list {
+      list-style: none;
+      margin: 0;
+      
+      li.dashboard-no-previews {
+        display: block;
+        margin: 20px 0;
+        border-radius: 5px;
+        box-shadow: 0 0 5px 0 black inset;
+        -webkit-user-select: none;
+        user-select: none;
+        
+        .dashboard-no-previews-liner {
+          margin: 1px;
+          border-radius: 4px;
+          background-color: #eacea0;
+          padding: 10px;
+          text-align: left;
+        }
+      }
+      
+      li.account-wrapper {
+        display: block;
+        margin: 20px 0;
+        border-radius: 5px;
+        box-shadow: 0 0 5px 0 black inset, 0 2px 9px -3px black;
+        cursor: pointer;
+        -webkit-user-select: none;
+        user-select: none;
+        
+        .account-liner {
+          margin: 1px;
+          border-radius: 4px;
+          background-color: #eacea0;
+          padding: 10px;
+          text-align: right;
+          font-size: 0;
+          
+          .project-data-wrapper {
+            display: inline-block;
+            float: none;
+            vertical-align: top;
+            margin: 0 20px 0 0;
+            
+            .edit-block {
+              display: none;
+            }
+            
+            &.active .edit-block {
+              display: block;
+            }
+            
+            .data-display {
+              font-size: 16px;
+              line-height: 20px;
+              width: 94px;
+            }
+            
+            &.title-data-wrapper {
+              float: left;
+              
+              h2 {
+                width: 388px;
+                overflow: hidden;
+                
+                a {
+                  display: inline-block;
+                  width: 100%;
+                }
+              }
+            }
+          
+            &.rate-data-wrapper {
+              position: relative;
+              
+              .prefix {
+                display: inline-block;
+                position: absolute;
+                top: 17px;
+                right: 102%;
+                float: none;
+                margin: 0;
+                line-height: inherit;
+                font-size: inherit;
+              }
+              
+              .edit-input {
+                float: none;
+                width: 100px;
+                padding: 5px 8px;
+              }
+            }
+          }
+          
+          .dropdown {
+            text-align: left;
+            font-size: 14px;
+            
+            .options-button {
+              margin-top: 11px;
+            }
+          }
+        }
+      }
+      
+    }
+    
+  }
+  
+}
