@@ -460,7 +460,6 @@ class Contact(models.Model):
     
     AccountEmail.create_and_send(contact, 'contact-created')
     return contact
-    
 
 
 

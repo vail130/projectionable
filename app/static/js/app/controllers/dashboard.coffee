@@ -42,6 +42,7 @@ class DashboardAccount extends Spine.Controller
   constructor: ->
     super
   
+  tag: 'li'
   className: 'account-wrapper clearfix'
   
   getContext: =>

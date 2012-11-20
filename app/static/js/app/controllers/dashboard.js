@@ -84,6 +84,8 @@
       DashboardAccount.__super__.constructor.apply(this, arguments);
     }
 
+    DashboardAccount.prototype.tag = 'li';
+
     DashboardAccount.prototype.className = 'account-wrapper clearfix';
 
     DashboardAccount.prototype.getContext = function() {

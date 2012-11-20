@@ -276,7 +276,7 @@ class AccountManager(View):
             except Account.DoesNotExist:
                 accounts = []
             
-            account_list = [acc.record_to_dictionary() for acc in accounts]
+            account_list = [dict(acc.record_to_dictionary(), **{"projects": list(acc.project_set.all())}) for acc in accounts]
             return Response(content=account_list, headers=headers, status=status.HTTP_200_OK)
 
     def post(self, request):
