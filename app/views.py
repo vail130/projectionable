@@ -5,6 +5,13 @@ from django.template import RequestContext
 from django.shortcuts import render_to_response, redirect
 from django.conf import settings
 
+SITE_DESCRIPTION = """Interactive project estimates that allow clients to request
+and approve what they require. For $99 per project, $499 per month, or $5,499 per year,
+shorten approval time, let clients customize their own estimates, and provide cloud-hosted
+documentation for the duration of the project."""
+
+SITE_KEYWORDS = "project management, estimate, client approval, efficiency, web app, on time, under budget"
+
 class App(View):
     
     def get(self, request):
@@ -13,8 +20,8 @@ class App(View):
             "site_url": settings.BASE_URL,
             "static_url": settings.STATIC_URL,
             "title": settings.SITE_NAME,
-            "description": "",
-            "keywords": "",
+            "description": SITE_DESCRIPTION,
+            "keywords": SITE_KEYWORDS,
             "page": "app"
         }
         
@@ -35,8 +42,8 @@ class Home(View):
             "site_url": settings.BASE_URL,
             "static_url": settings.STATIC_URL,
             "title": settings.SITE_NAME,
-            "description": "",
-            "keywords": "",
+            "description": SITE_DESCRIPTION,
+            "keywords": SITE_KEYWORDS,
             "page": 'home',
         }
 
@@ -59,8 +66,8 @@ class Pricing(View):
             "site_url": settings.BASE_URL,
             "static_url": settings.STATIC_URL,
             "title": settings.SITE_NAME,
-            "description": "",
-            "keywords": "",
+            "description": SITE_DESCRIPTION,
+            "keywords": SITE_KEYWORDS,
             "page": 'pricing',
         }
 
@@ -83,8 +90,8 @@ class Signin(View):
             "site_url": settings.BASE_URL,
             "static_url": settings.STATIC_URL,
             "title": settings.SITE_NAME,
-            "description": "",
-            "keywords": "",
+            "description": SITE_DESCRIPTION,
+            "keywords": SITE_KEYWORDS,
             "page": "signin",
         }
 
@@ -105,8 +112,8 @@ class Signup(View):
             "site_url": settings.BASE_URL,
             "static_url": settings.STATIC_URL,
             "title": settings.SITE_NAME,
-            "description": "",
-            "keywords": "",
+            "description": SITE_DESCRIPTION,
+            "keywords": SITE_KEYWORDS,
             "page": "signup",
         }
 
@@ -127,8 +134,8 @@ class VerifyEmail(View):
             "site_url": settings.BASE_URL,
             "static_url": settings.STATIC_URL,
             "title": settings.SITE_NAME,
-            "description": "",
-            "keywords": "",
+            "description": SITE_DESCRIPTION,
+            "keywords": SITE_KEYWORDS,
             "page": "verify_email",
         }
 
@@ -161,8 +168,8 @@ class ResetPassword(View):
             "site_url": settings.BASE_URL,
             "static_url": settings.STATIC_URL,
             "title": settings.SITE_NAME,
-            "description": "",
-            "keywords": "",
+            "description": SITE_DESCRIPTION,
+            "keywords": SITE_KEYWORDS,
             "page": "reset_password",
         }
 
@@ -195,8 +202,8 @@ class VerifyInvitation(View):
             "site_url": settings.BASE_URL,
             "static_url": settings.STATIC_URL,
             "title": settings.SITE_NAME,
-            "description": "",
-            "keywords": "",
+            "description": SITE_DESCRIPTION,
+            "keywords": SITE_KEYWORDS,
             "page": "verify_invitation",
         }
 
@@ -229,8 +236,8 @@ class ContactUs(View):
             "site_url": settings.BASE_URL,
             "static_url": settings.STATIC_URL,
             "title": settings.SITE_NAME,
-            "description": "",
-            "keywords": "",
+            "description": SITE_DESCRIPTION,
+            "keywords": SITE_KEYWORDS,
             "page": "contact",
         }
 
@@ -253,8 +260,8 @@ class Terms(View):
             "site_url": settings.BASE_URL,
             "static_url": settings.STATIC_URL,
             "title": settings.SITE_NAME,
-            "description": "",
-            "keywords": "",
+            "description": SITE_DESCRIPTION,
+            "keywords": SITE_KEYWORDS,
             "page": 'terms',
             "company": "Projectionable",
         }
@@ -278,8 +285,8 @@ class Privacy(View):
             "site_url": settings.BASE_URL,
             "static_url": settings.STATIC_URL,
             "title": settings.SITE_NAME,
-            "description": "",
-            "keywords": "",
+            "description": SITE_DESCRIPTION,
+            "keywords": SITE_KEYWORDS,
             "page": 'privacy',
             "company": "Projectionable",
         }
