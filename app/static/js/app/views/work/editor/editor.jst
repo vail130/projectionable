@@ -1,79 +1,43 @@
 
-<div class='project-body-title-row clearfix'>
-  <% var agent = ['owner', 'coworker'].indexOf(project.permission) > -1; %>
-  <% var owner = project.permission === 'owner'; %>
-  <% var coworker = project.permission === 'coworker'; %>
-  <% var client = project.permission === 'client'; %>
-  <% var pending = project.status === 'pending'; %>
-  <% var started = project.status === 'started'; %>
-  <% var locked = project.status === 'locked'; %>
+<% var owner = project.permission === 'owner'; %>
+
+<div class='project-title-container clearfix'>
   
-  <div class='data-wrapper project-data-wrapper title-data-wrapper'>
-    <div class='input-label'>Project Title</div>
-    <% if (owner && pending) { %>
-      <div class='edit-block'>
-        <input class='edit-input project-title-input' type='text' value="<%= project.title %>" />
-        <i class='edit-icon icon-pencil'></i>
-      </div>
-    <% } else { %>
-      <h2 class='data-display'><%= project.title %></h2>
-    <% } %>
-  </div>
+  <h1 class='project-title'><%= project.title === '' ? '[Untitled]' : project.title %></h1>
   
-  <div class='data-wrapper project-data-wrapper rate-data-wrapper'>
-    <div class='input-label'>Hourly Rate</div>
-    <h2 class='prefix'>$</h2>
-    <% if (owner && pending) { %>
-      <div class='edit-block'>
-        <input class='edit-input project-rate-input' type='text' value="<%= project.rate %>" />
-        <i class='edit-icon icon-pencil'></i>
-      </div>
-    <% } else { %>
-      <h2 class='data-display'><%= project.rate %></h2>
-    <% } %>
-  </div>
-  
-  <div class='data-wrapper project-data-wrapper'>
-    <div class='input-label'>Total Hours</div>
-    <% var hours = isNaN(parseFloat(project.hours)) ? 0 : parseFloat(project.hours); %>
-    <h2 class='data-display project-hours'><%= App.formatNumber(hours) %></h2>
-  </div>
-  
-  <div class='data-wrapper project-data-wrapper no-right-margin'>
-    <div class='input-label'>Total Cost</div>
-    <% var dollars = isNaN(parseFloat(project.rate)) ? 0 : hours * parseFloat(project.rate); %>
-    <h2 class='data-display project-dollars'>$<%= App.formatNumber(Math.round(dollars)) %></h2>
-  </div>
-  
-  <div class='label-wrapper'>
-    <% if (client && pending) { %>
-      <a href="#" tabindex='-1' class='btn btn-primary btn-small disabled start-button' title='Start Project'>Start Project</a>
-    <% } else if (pending) { %>
-      <span class='label'>Pending</span>
-    <% } else if (started) { %>
-      <% if (owner) { %>
-      <a href="#" tabindex='-1' class='btn btn-info btn-small lock-button' title='Lock Project'>Lock Project</a>
-      <% } else { %>
-      <span class='label label-approved'>Started</span>
-      <% } %>
-    <% } else if (locked) { %>
-      <% if (owner) { %>
-      <a href="#" tabindex='-1' class='btn btn-inverse btn-small unlock-button' title='Unlock Project'>Unlock</a>
-      <% } else { %>
-      <span class='label label-info'>Locked</span>
-      <% } %>
-    <% } %>
-  </div>
-    
   <% if (owner) { %>
-    <div class='sharing-button-wrapper'>
-      <a href="#" tabindex='-1' class='btn project-button sharing-button' title='Sharing'>
-        <i class='icon-user'></i>
-      </a>
-    </div>
+  <a href='#' class='project-title-edit-link'>edit</a>
+  <input type='text' class='project-title-input' />
+  <a href='#' class='btn btn-projectionable btn-small project-title-save-button'>Save</a>
   <% } %>
+  
+  <div class='project-button-wrapper'>
+    <a href='#' class='btn btn-projectionable btn-small reports-button'>
+      <i class='icon-graph'></i>
+      <span>Reports</span>
+    </a>
+    
+    <% if (owner) { %>
+    <a href='#' class='btn btn-projectionable btn-small collaborate-button'>
+      <i class='icon-user'></i>
+      <span>Collaborate</span>
+    </a>
+    <% } %>
+  </div>
 </div>
 
-<ul class='project-groups'></ul>
+<div class='project-body-container clearfix'>
+  <div class='project-content project-front-end clearfix'>
+    <div id='project-front-end-groups'></div>
+    <div id='project-front-end-models'></div>
+  </div>
+  <div class='project-content project-back-end clearfix'>
+    <div id='project-back-end-groups'></div>
+    <div id='project-back-end-models'></div>
+  </div>
+</div>
 
-<div class='permissions-modal-container'></div>
+<div id='project-reports-modal'></div>
+<% if (owner) { %>
+<div id='project-collaborate-modal'></div>
+<% } %>

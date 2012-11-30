@@ -1,11 +1,10 @@
 class Projectionable.Settings extends Spine.Controller
   constructor: ->
     super
-    App.Settings = @
     @routes
       '/settings': => @navigate '/settings/credentials'
       '/settings/:page': (params) =>
-        App.trigger 'renderNavigation', 'settings'
+        App.navigation.render()
         @render(params.page).active()
   
   className: 'settings'

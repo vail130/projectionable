@@ -3,6 +3,26 @@
   var __hasProp = {}.hasOwnProperty,
     __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; };
 
+  Projectionable.Session = (function(_super) {
+
+    __extends(Session, _super);
+
+    function Session() {
+      return Session.__super__.constructor.apply(this, arguments);
+    }
+
+    Session.configure("Session", "id");
+
+    Session.extend(Spine.Model.Ajax);
+
+    Session.extend({
+      url: "/api/sessions"
+    });
+
+    return Session;
+
+  })(Spine.Model);
+
   Projectionable.Account = (function(_super) {
 
     __extends(Account, _super);
@@ -31,7 +51,7 @@
       return Project.__super__.constructor.apply(this, arguments);
     }
 
-    Project.configure("Project", "id", "account_id", "title", "rate", "status", "hours", "hours_worked", "client_enabled", "permission", "date_created", "date_updated");
+    Project.configure("Project", "id", "account_id", "title", "rate", "deadline", "budget", "status", "front_end_hours", "front_end_hours_worked", "back_end_hours", "back_end_hours_worked", "asset_hours", "asset_hours_worked", "owner", "clients", "coworkers", "logs", "date_created", "date_updated");
 
     Project.extend(Spine.Model.Ajax);
 
@@ -51,7 +71,7 @@
       return Permission.__super__.constructor.apply(this, arguments);
     }
 
-    Permission.configure("Permission", "id", "email", "account_id", "project_id", "permission", "date_created", "date_updated");
+    Permission.configure("Permission", "id", "account_id", "email", "project_id", "permission", "date_created", "date_updated");
 
     Permission.extend(Spine.Model.Ajax);
 
@@ -71,7 +91,7 @@
       return RequirementGroup.__super__.constructor.apply(this, arguments);
     }
 
-    RequirementGroup.configure("RequirementGroup", "id", "account_id", "project_id", "title", "index", "status", "hours", "hours_worked", "date_created", "date_updated");
+    RequirementGroup.configure("RequirementGroup", "id", "account_id", "project_id", "title", "index", "method", "uri", "type", "hours", "hours_worked", "date_created", "date_updated");
 
     RequirementGroup.extend(Spine.Model.Ajax);
 
@@ -91,7 +111,7 @@
       return Requirement.__super__.constructor.apply(this, arguments);
     }
 
-    Requirement.configure("Requirement", "id", "account_id", "project_id", "group_id", "title", "index", "status", "hours", "hours_worked", "date_created", "date_updated");
+    Requirement.configure("Requirement", "id", "account_id", "project_id", "group_id", "title", "description", "index", "status", "requester_id", "hours", "hours_worked", "date_created", "date_updated");
 
     Requirement.extend(Spine.Model.Ajax);
 
@@ -100,6 +120,46 @@
     });
 
     return Requirement;
+
+  })(Spine.Model);
+
+  Projectionable.ProjectAsset = (function(_super) {
+
+    __extends(ProjectAsset, _super);
+
+    function ProjectAsset() {
+      return ProjectAsset.__super__.constructor.apply(this, arguments);
+    }
+
+    ProjectAsset.configure("ProjectAsset", "id", "account_id", "project_id", "title", "description", "asset", "index", "status", "requester_id", "hours", "hours_worked", "date_created", "date_updated");
+
+    ProjectAsset.extend(Spine.Model.Ajax);
+
+    ProjectAsset.extend({
+      url: "/api/assets"
+    });
+
+    return ProjectAsset;
+
+  })(Spine.Model);
+
+  Projectionable.ProjectFile = (function(_super) {
+
+    __extends(ProjectFile, _super);
+
+    function ProjectFile() {
+      return ProjectFile.__super__.constructor.apply(this, arguments);
+    }
+
+    ProjectFile.configure("ProjectFile", "id", "account_id", "project_id", "title", "description", "asset", "index", "date_created", "date_updated");
+
+    ProjectFile.extend(Spine.Model.Ajax);
+
+    ProjectFile.extend({
+      url: "/api/files"
+    });
+
+    return ProjectFile;
 
   })(Spine.Model);
 

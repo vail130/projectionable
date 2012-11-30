@@ -18,13 +18,12 @@
 
       var _this = this;
       Settings.__super__.constructor.apply(this, arguments);
-      App.Settings = this;
       this.routes({
         '/settings': function() {
           return _this.navigate('/settings/credentials');
         },
         '/settings/:page': function(params) {
-          App.trigger('renderNavigation', 'settings');
+          App.navigation.render();
           return _this.render(params.page).active();
         }
       });

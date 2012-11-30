@@ -39,6 +39,7 @@ lambdas = {
   'list': lambda x: isinstance(x, list),
   'dict': lambda x: isinstance(x, dict),
   'file': lambda x: True,
+  'model': lambda x: True,
 }
 
 def shim_schema(cls, schema):

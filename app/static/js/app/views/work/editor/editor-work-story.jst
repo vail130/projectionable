@@ -1,0 +1,13 @@
+
+<p><%= req.title %></p>
+
+<% var owner = project.permission === 'owner'; %>
+<% var pending = req.status === 'pending'; %>
+<% var completed = req.status === 'completed'; %>
+<% var approved = req.status === 'approved'; %>
+
+<div class='story-action-wrapper'>
+  <% if (true) { %>
+  <a href='#' class=''></a>
+  <% } %>
+</div>

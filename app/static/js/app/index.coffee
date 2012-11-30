@@ -2,46 +2,70 @@ class window.Projectionable extends Spine.Controller
   constructor: ->
     super
     window.App = @
-    
     @html @view 'structure'
-    @bind 'renderNavigation', (page) => @navigation.render(page)
-    
-    if window.sessionID
-      accountDeferred = $.Deferred()
-      Projectionable.Account.one 'refresh', => accountDeferred.resolve()
-      @accountPromise = accountDeferred.promise()
-      
-      projectDeferred = $.Deferred()
-      Projectionable.Project.one 'refresh', => projectDeferred.resolve()
-      @projectPromise = projectDeferred.promise()
-      
-      Projectionable.Account.fetch()
-      Projectionable.Project.fetch()
-      Projectionable.Permission.fetch()
-      Projectionable.RequirementGroup.fetch()
-      Projectionable.Requirement.fetch()
-      
-    else
-      window.location.hash = '#exit'
     
     @Lock = Lock
     @navigation = new Navigation
-      parent: @
-      account: null
     @footer = new Footer
-    @contact = new Contact
-    @project = null
+    #@contact = new Contact
     
-    @stack = new Projectionable.Stack
-    Spine.Route.setup()
+    if window.sessionID
+      @loadData =>
+        if window.location.hash in ['', '#']
+          window.location.hash = '#/work'
+        new Projectionable.Stack
+        Spine.Route.setup()
     
-    hash = window.location.hash
-    if hash.substr(0, 2) isnt '#/' or hash.split('/')[1] not in ['manager', 'editor', 'settings', 'exit']
-      @navigate '/manager'
+    else
+      if window.location.hash in ['', '#']
+        window.location.hash = '#/home'
+      new Projectionable.Stack
+      Spine.Route.setup()
+  
+  loadData: (callback) =>
+    accountDeferred = $.Deferred()
+    Projectionable.Account.one 'refresh', => accountDeferred.resolve()
+    
+    permissionDeferred = $.Deferred()
+    Projectionable.Permission.one 'refresh', => permissionDeferred.resolve()
+    
+    projectDeferred = $.Deferred()
+    Projectionable.Project.one 'refresh', => projectDeferred.resolve()
+    
+    reqGroupDeferred = $.Deferred()
+    Projectionable.RequirementGroup.one 'refresh', => reqGroupDeferred.resolve()
+    
+    reqDeferred = $.Deferred()
+    Projectionable.Requirement.one 'refresh', => reqDeferred.resolve()
+    
+    assetDeferred = $.Deferred()
+    Projectionable.ProjectAsset.one 'refresh', => assetDeferred.resolve()
+    
+    fileDeferred = $.Deferred()
+    Projectionable.ProjectFile.one 'refresh', => fileDeferred.resolve()
+    
+    Projectionable.Account.fetch()
+    Projectionable.Project.fetch()
+    Projectionable.Permission.fetch()
+    Projectionable.RequirementGroup.fetch()
+    Projectionable.Requirement.fetch()
+    Projectionable.ProjectAsset.fetch()
+    Projectionable.ProjectFile.fetch()
+    
+    $.when(
+      accountDeferred, permissionDeferred, reqGroupDeferred, reqDeferred, assetDeferred, fileDeferred
+    ).done =>
+      @navigation.render()
+      callback?()
+    
+    @
   
   makeProjectTemplate: ->
+    account_id: ""
     title: ""
     rate: ""
+    deadline: ""
+    budget: ""
     hours: ""
     hours_worked: ""
     date_updated: ""
@@ -69,6 +93,23 @@ class window.Projectionable extends Spine.Controller
     index: idx
     hours: ""
     hours_worked: ""
+    date_updated: ""
+    date_created: ""
+  
+  makeModelTemplate: (pid, idx=0) ->
+    project_id: pid
+    title: ""
+    endpoint: ""
+    index: idx
+    date_updated: ""
+    date_created: ""
+  
+  makeFieldTemplate: (mid, idx=0) ->
+    project_id: ""
+    model_id: mid
+    title: ""
+    note: ""
+    index: idx
     date_updated: ""
     date_created: ""
   
@@ -157,19 +198,17 @@ class Navigation extends Spine.Controller
   constructor: ->
     @el = $('#navigation')
     super
-    @page = 'manager'
     @render()
-    $.when(@parent.accountPromise).done =>
-      @account = Projectionable.Account.findByAttribute('id', window.sessionID)
-      @render()
   
-  getContext: =>
-    page: @page
-    account: @account
+  events:
+    'click ul > li > a' : 'makeLinkActive'
   
-  render: (page) =>
-    @page = page if typeof page isnt 'undefined'
-    @html(@view('navigation')(@getContext()))
+  makeLinkActive: (event) =>
+    return if event.target.tagName.toLowerCase() isnt 'a'
+    $(event.target).addClass('active').parent().parent().find('> li > a').not(event.target).removeClass('active')
+  
+  render: =>
+    @html @view 'navigation'
     @
 
 class Footer extends Spine.Controller

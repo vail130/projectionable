@@ -8,35 +8,22 @@ import copy, json, datetime, math, time
 class Project(models.Model):
   account = models.ForeignKey(Account)
   title = models.CharField(max_length=100)
-  rate = models.PositiveIntegerField()
+  deadline = models.DateTimeField(blank=True)
+  rate = models.PositiveIntegerField(blank=True)
+  budget = models.PositiveIntegerField(blank=True)
   status = models.CharField(max_length=20)
-  client_enabled = models.BooleanField()
   date_updated = models.DateTimeField(auto_now=True)
   date_created = models.DateTimeField(auto_now_add=True)
   
-  statuses = ['pending', 'started', 'locked']
+  statuses = ['open', 'locked']
   
   validation = {
     'title': ('string', (0, 100)),
     'rate': ('integer', (0, None)),
+    'budget': ('integer', (0, None)),
+    'deadline': 'string',
     'status': lambda x: x in Project.statuses,
-    'client_enabled': 'boolean'
   }
-  
-  @classmethod
-  def create_record(cls, account, raw_schema):
-    schema = shim_schema(cls, raw_schema)
-    project = cls(
-      account=account,
-      title=schema['title'],
-      rate=schema['rate'],
-      client_enabled=False,
-      status=cls.statuses[0],
-    )
-    project.save()
-    perm = Permission.create_record(account, project, account, {"permission": "owner"})
-    
-    return project
   
   @classmethod
   def get_dummy_schema(cls):
@@ -44,148 +31,123 @@ class Project(models.Model):
       'title': '',
       "status": '',
       'rate': 0,
-      'client_enabled': False,
+      'budget': 0,
+      'deadline': '',
     }
   
-  def record_to_dictionary(self, account=None, children=True):
-    try:
-      result = Requirement.objects.filter(group__project=self).exclude(status='rejected').aggregate(Sum('hours'))
-    except Requirement.DoesNotExist:
-      hours = 0
-    else:
-      hours = result["hours__sum"]
-      if hours is None:
-        hours = 0
+  @classmethod
+  def create_record(cls, account, raw_schema):
+    schema = shim_schema(cls, raw_schema)
     
-    try:
-      result = Requirement.objects.filter(group__project=self).exclude(status='rejected').aggregate(Sum('hours_worked'))
-    except Requirement.DoesNotExist:
-      hours_worked = 0
-    else:
-      hours_worked = result["hours_worked__sum"]
-      if hours_worked is None:
-        hours_worked = 0
-    
-    record_dict = {
-      "id": self.id,
-      "account": self.account,
-      "title": self.title,
-      "rate": self.rate,
-      "status": self.status,
-      "client_enabled": self.client_enabled,
-      "hours": hours,
-      "hours_worked": hours_worked,
-      "date_updated": self.date_updated,
-      "date_created": self.date_created,
+    project_dict = {
+      "account": account,
+      "title": schema['title'],
+      "status": cls.statuses[0]
     }
     
-    if children is True:
-      try:
-        groups = list(RequirementGroup.objects.filter(project=self).order_by('index'))
-      except RequirementGroup.DoesNotExist:
-        record_dict["groups"] = []
-      else:
-        record_dict["groups"] = [group.record_to_dictionary() for group in groups]
-      
-      try:
-        reqs = list(Requirement.objects.filter(group__project=self).order_by('index'))
-      except Requirement.DoesNotExist:
-        record_dict["requirements"] = []
-      else:
-        record_dict["requirements"] = [req.record_to_dictionary() for req in reqs]
+    for field in ['rate', 'deadline', 'budget']:
+      if field in schema:
+        project_dict[field] = schema[field]
+        
+    project = cls(**project_dict)
+    project.save()
+    perm = Permission.create_record(account, project, account, {"permission": "owner"})
     
-    if account is not None:
+    return project
+  
+  def read_record(self, permission):
+    req_hours_data = {}
+    for field_type in ['front-end', 'back-end']:
+      for field in ['hours', 'hours_worked']:
+        req_hours_data['_'.join(field_type.split('-')) + '_' + field] = 0
+        try:
+          result = Requirement.objects.filter(group__project=self, group__type=field_type).aggregate(Sum(field))
+        except Requirement.DoesNotExist:
+          pass
+        else:
+          if result[field + "__sum"] is not None:
+            req_hours_data['_'.join(field_type.split('-')) + '_' + field] = float(result[field + "__sum"])
+    
+    asset_hours_data = {}
+    for field in ['hours', 'hours_worked']:
+      asset_hours_data[field] = 0
       try:
-        perm = Permission.objects.get(project=self, account=account)
+        result = ProjectAsset.objects.filter(project=self).aggregate(Sum(field))
+      except ProjectAsset.DoesNotExist:
+        pass
+      else:
+        if result[field + "__sum"] is not None:
+          asset_hours_data[field] = float(result[field + "__sum"])
+    
+    collaborator_data = {}
+    for user_type in ['coworker', 'client']:
+      collaborator_data[user_type] = []
+      try:
+        perm = Permission.objects.filter(project=self, permission=user_type)
       except Permission.DoesNotExist:
         pass
       else:
-        record_dict["permission"] = perm.permission
+        for p in list(perm):
+          collaborator_data[user_type].append({
+            "account_id": p.account.id,
+            "email": p.account.email
+          })
     
-    return record_dict
+    try:
+      work_logs = WorkLog.objects.filter(project=self).order_by('-date_created')
+    except WorkLog.DoesNotExist:
+      work_logs = []
+    
+    return {
+      "id": self.id,
+      "account_id": self.account.id,
+      "title": self.title,
+      "rate": self.rate,
+      "budget": self.budget,
+      "deadline": self.deadline,
+      "status": self.status,
+      "front_end_hours": req_hours_data['front_end_hours'],
+      "front_end_hours_worked": req_hours_data['front_end_hours_worked'],
+      "back_end_hours": req_hours_data['back_end_hours'],
+      "back_end_hours_worked": req_hours_data['back_end_hours_worked'],
+      "asset_hours": asset_hours_data['hours'],
+      "asset_hours_worked": asset_hours_data['hours_worked'],
+      "owner": {
+        "account_id": permission.account.id,
+        "email": permission.account.email,
+      },
+      "coworkers": collaborator_data['coworker'],
+      "clients": collaborator_data['client'],
+      "logs": [wl.read_record() for wl in work_logs],
+      "date_updated": self.date_updated,
+      "date_created": self.date_created,
+    }
   
   def update_record(self, permission, raw_schema):
+    if permission.permission != 'owner':
+      return {"permission": "Invalid permissions."}
+    
     schema = filter_valid(self.__class__, raw_schema)
-    
     changed = False
-    project_started = False
-    client_enabled = False
     
-    if self.status == Project.statuses[0]:
-      if permission.permission == 'owner':
-        if 'title' in schema:
-          self.title = schema['title']
-          changed = True
-        
-        ###
-        if 'client_enabled' in schema and self.client_enabled is False and schema['client_enabled'] is True:
-          self.client_enabled = True
-          changed = True
-          client_enabled = True
-        ###
-        
-        if 'rate' in schema:
-          self.rate = schema['rate']
-          changed = True
-        
-      elif permission.permission == 'client':
-        if 'status' in schema and schema['status'] == Project.statuses[1] and self.is_startable():
-          self.status = schema['status']
-          changed = True
-          project_started = True
-          
-    elif permission.permission == 'owner' and self.status in Project.statuses[1:3]:
-      if 'status' in schema and schema['status'] in Project.statuses[1:3] and self.status != schema['status']:
-        self.status = schema['status']
+    for prop in ['title', 'rate', 'budget', 'deadline']:
+      if prop in schema and getattr(self, prop) != schema[prop]:
+        setattr(self, prop, schema[prop])
         changed = True
+    
+    if 'status' in schema and self.status != schema['status'] and schema['status'] in self.__class__.statuses:
+      self.status = schema['status']
+      changed = True
         
     if changed:
       self.save()
       
-    if project_started:
-      self.approve_pending_children()
-      AccountEmail.create_and_send(self.account, 'project-started', project=self)
-    
-    if client_enabled:
-      AccountEmail.create_and_send(self.account, 'client-enabled', project=self)
-    
     return self
     
-  def is_startable(self):
-    # There cannot be any groups or requirements that are requested
-    try:
-      group_count = RequirementGroup.objects.filter(project=self, status='requested').count()
-    except RequirementGroup.DoesNotExist:
-      pass
-    else:
-      if group_count > 0:
-        return False
+  def delete_record(self, permission):
+    if permission.permission != 'owner':
+      return {"permission": "Invalid permissions."}
     
-    try:
-      req_count = Requirement.objects.filter(group__project=self, status='requested').count()
-    except Requirement.DoesNotExist:
-      pass
-    else:
-      if req_count > 0:
-        return False
-    
-    return True
-  
-  def approve_pending_children(self):
-    # Starting a project automatically approves all pending groups/requirements
-    try:
-      RequirementGroup.objects.filter(project=self, status='pending').update(status='approved')
-    except RequirementGroup.DoesNotExist:
-      pass
-    
-    try:
-      Requirement.objects.filter(group__project=self, status='pending').update(status='approved')
-    except Requirement.DoesNotExist:
-      pass
-    
-    return True
-  
-  def delete_record(self, account):
     try:
       Permission.objects.filter(project=self).delete()
     except Permission.DoesNotExist:
@@ -196,188 +158,132 @@ class Project(models.Model):
 
 class RequirementGroup(models.Model):
   project = models.ForeignKey(Project)
-  title = models.CharField(max_length=100)
+  title = models.CharField(max_length=255)
+  uri = models.CharField(max_length=255)
   index = models.PositiveIntegerField()
-  status = models.CharField(max_length=20)
+  type = models.CharField(max_length=20)
+  method = models.CharField(max_length=20)
   date_updated = models.DateTimeField(auto_now=True)
   date_created = models.DateTimeField(auto_now_add=True)
   
-  statuses = ['pending', 'requested', 'approved', 'rejected']
+  types = ['front_end', 'back_end']
+  methods = ['get', 'post', 'put', 'delete', 'head', 'options']
   
   validation = {
-    'title': ('string', (0, 100)),
+    'uri': ('string', (0, 200)),
+    'title': ('string', (0, 200)),
+    'type': lambda x: x in RequirementGroup.types,
     'index': ('integer', (0, None)),
-    'status': lambda x: x in RequirementGroup.statuses,
+    'method': lambda x: str(x).lower() in RequirementGroup.methods,
   }
   
   @staticmethod
   def get_dummy_schema():
     return {
       "title": '',
+      "uri": '',
       "index": 0,
-      "status": '',
-      "hours": None,
-      "hours_worked": 0,
+      "type": '',
+      "method": '',
     }
   
   @classmethod
   def create_record(cls, permission, project, raw_schema):
+    if permission.permission not in ['owner', 'coworker']:
+      return {"permission": "Invalid permissions."}
+    
+    if permission.permission != 'owner' and project.status == 'locked':
+      return {"project": "Project is locked."}
+    
     schema = shim_schema(cls, raw_schema)
     
-    if permission.permission == 'client':
-      status = cls.statuses[1]
-    elif permission.permission in ['coworker', 'owner']:
-      status = cls.statuses[0]
+    record_dict = {
+      "project": project,
+      "title": schema['title'],
+      "uri": schema['uri'],
+      "type": schema['type'],
+      "index": schema['index'],
+      "method": schema['method'],
+    }
     
-    record = cls(
-      project=project,
-      title=schema['title'],
-      index=schema['index'],
-      status=status,
-    )
+    record = cls(**record_dict)
     record.save()
     return record
   
-  def record_to_dictionary(self, children=True):
-    try:
-      result = Requirement.objects.filter(group=self).exclude(status='rejected').aggregate(Sum('hours'))
-    except Requirement.DoesNotExist:
-      hours = 0
-    else:
-      hours = result["hours__sum"]
-      if hours is None:
-        hours = 0
+  def read_record(self):
+    hours_data = {}
+    for field in ['hours', 'hours_worked']:
+      hours_data[field] = 0
+      try:
+        result = Requirement.objects.filter(group=self).aggregate(Sum(field))
+      except Requirement.DoesNotExist:
+        pass
+      else:
+        if result[field + "__sum"] is not None:
+          hours_data[field] = result[field + "__sum"]
     
-    try:
-      result = Requirement.objects.filter(group=self).exclude(status='rejected').aggregate(Sum('hours_worked'))
-    except Requirement.DoesNotExist:
-      hours_worked = 0
-    else:
-      hours_worked = result["hours_worked__sum"]
-      if hours_worked is None:
-        hours_worked = 0
-    
-    record_dict = {
+    return {
       "id": self.id,
-      "account": self.project.account,
+      "account_id": self.project.account.id,
       "project_id": self.project.id,
       "index": self.index,
       "title": self.title,
-      "status": self.status,
-      "hours": hours,
-      "hours_worked": hours_worked,
+      "method": self.method,
+      "uri": self.uri,
+      "type": self.type,
+      "hours": hours_data['hours'],
+      "hours_worked": hours_data['hours_worked'],
       "date_updated": self.date_updated,
       "date_created": self.date_created,
     }
-    
-    if children is True:
-      try:
-        reqs = Requirement.objects.filter(group=self).order_by('index')
-      except Requirement.DoesNotExist:
-        reqs = []
-      
-      record_dict["requirements"] = [req.record_to_dictionary() for req in reqs]
-    
-    return record_dict
   
   def update_record(self, permission, raw_schema):
+    if permission.permission not in ['owner', 'coworker']:
+      return {"permission": "Invalid permission."}
+    
+    if permission.permission != 'owner' and self.project.status == 'locked':
+      return {"permission": "Invalid permission."}
+    
     schema = filter_valid(self.__class__, raw_schema)
     changed = False
-    status_changed = False
     
-    # If title is in schema AND different
-    if 'title' in schema and self.title != schema['title']:
-      # If coworker/owner is updating pending OR client is updated requested
-      if (self.status == 'pending' and permission.permission in ['coworker', 'owner']) or (self.status == 'requested' and permission.permission == 'client'):
-        self.title = schema['title']
+    for prop in ['title', 'index', 'method', 'uri']:
+      if prop in schema and getattr(self, prop) != schema[prop]:
+        setattr(self, prop, schema[prop])
         changed = True
-    
-    # If index is in schema AND different
-    if 'index' in schema and self.index != schema['index']:
-      self.index = schema['index']
-      changed = True
-    
-    # If status is in schema AND different
-    if 'status' in schema and self.status != schema['status']:
-      proceed = False
-      revert = False
-      
-      if permission.permission == 'owner' and self.status in ['approved', 'rejected'] and schema['status'] == 'pending':
-        proceed = True
-        revert = True
-      elif permission.permission in ['coworker', 'owner'] and self.status == 'requested' and schema['status'] in ['approved', 'rejected']:
-        proceed = True
-      elif permission.permission == 'client':
-        if self.status == 'pending' and schema['status'] in ['approved', 'rejected']:
-          proceed = True
-        
-        elif self.status == 'approved' and schema['status'] in ['requested', 'rejected']:
-          proceed = True
-          revert = True
-        
-        # This condition differs from the corresponding code in Requirement
-        elif self.status == 'rejected' and schema['status'] in ['requested', 'approved']:
-          proceed = True
-          revert = True
-      
-      if proceed is True:
-        self.status = schema['status']
-        changed = True
-        status_changed = True
-        
-        project = self.project
-        if revert is True and project.status == 'started':
-          project.status = 'pending'
-          project.save()
     
     if changed:
       self.save()
       
-    if status_changed is True and self.status == 'rejected':
-      self.reject_children()
-    
     return self
   
-  def reject_children(self):
-    try:
-      Requirement.objects.filter(group=self).update(status='rejected')
-    except Requirement.DoesNotExist:
-      pass
-    return True
-  
   def delete_record(self, permission):
-    if permission.permission == 'client' and self.status == 'requested':
-      self.delete()
-      return True
-      
-    elif permission.permission == 'coworker' and self.status == 'pending':
-      self.delete()
-      return True
+    if permission.permission not in ['owner', 'coworker']:
+      return {"permission": "Invalid permission."}
     
-    elif permission.permission == 'owner':
-      self.delete()
-      project = self.project
-      if project.status == 'approved':
-        project.status = 'pending'
-        project.save()
-      return True
-      
-    return False
-  
+    if permission.permission != 'owner' and self.project.status == 'locked':
+      return {"permission": "Invalid permission."}
+    
+    self.delete()
+    return self
+
 class Requirement(models.Model):
   group = models.ForeignKey(RequirementGroup)
-  title = models.CharField(max_length=100)
+  title = models.CharField(max_length=255)
+  description = models.TextField()
   index = models.PositiveIntegerField()
   status = models.CharField(max_length=20)
   hours = models.FloatField(null=True, blank=True)
   hours_worked = models.FloatField()
+  requester = models.ForeignKey(Account, blank=True)
   date_updated = models.DateTimeField(auto_now=True)
   date_created = models.DateTimeField(auto_now_add=True)
   
-  statuses = ['pending', 'requested', 'approved', 'rejected']
+  statuses = ['pending', 'working', 'completed', 'approved', 'rejected']
   
   validation = {
-    'title': ('string', (0, 100)),
+    'title': ('string', (0, 255)),
+    'description': 'string',
     'index': ('integer', (0, None)),
     'status': lambda x: x in Requirement.statuses,
     'hours': ('float', (0, None)),
@@ -388,6 +294,7 @@ class Requirement(models.Model):
   def get_dummy_schema():
     return {
       "title": '',
+      "description": '',
       "index": 0,
       "status": '',
       "hours": None,
@@ -396,35 +303,53 @@ class Requirement(models.Model):
   
   @classmethod
   def create_record(cls, permission, group, raw_schema):
+    if permission.permission not in ['owner', 'coworker']:
+      return {"permission": "Invalid permission."}
+    
+    if permission.permission != 'owner' and group.project.status == 'locked':
+      return {"project": "Project is locked."}
+    
     schema = shim_schema(cls, raw_schema)
     
-    if permission.permission == 'client':
-      status = cls.statuses[1]
-      hours = None
-    elif permission.permission in ['coworker', 'owner']:
-      status = cls.statuses[0]
-      hours = schema['hours']
+    requester = None
+    if 'requester_id' in raw_schema:
+      try:
+        perm = Permission.objects.get(account_id=int(raw_schema['requester_id']), project=group.project)
+      except Permission.DoesNotExist:
+        pass
+      else:
+        requester = perm.account
     
     record = cls(
       group=group,
       title=schema['title'],
+      description=schema['description'],
       index=schema['index'],
-      status=status,
-      hours=hours,
+      status=cls.statuses[0],
+      hours=schema['hours'],
       hours_worked=0,
+      requester=requester,
     )
+    
     record.save()
     return record
     
-  def record_to_dictionary(self, children=True):
+  def read_record(self):
+    if self.requester is None:
+      requester_id = None
+    else:
+      requester_id = self.requester.id
+    
     return {
       "id": self.id,
-      "account": self.group.project.account,
+      "account_id": self.group.project.account.id,
       "project_id": self.group.project.id,
       "group_id": self.group.id,
       "index": self.index,
       "title": self.title,
+      "description": self.description,
       "status": self.status,
+      "requester_id": requester_id,
       "hours": self.hours,
       "hours_worked": self.hours_worked,
       "date_updated": self.date_updated,
@@ -432,65 +357,731 @@ class Requirement(models.Model):
     }
   
   def update_record(self, permission, raw_schema):
+    if permission.permission not in ['owner', 'coworker']:
+      return {"permission": "Invalid permission."}
+    
+    if self.group.project.status == 'locked' and permission.permission != 'owner':
+      return {"permission": "Invalid permission."}
+    
     schema = filter_valid(self.__class__, raw_schema)
-    
-    if 'hours' in raw_schema and 'hours' not in schema:
-      schema['hours'] = None
-    
     changed = False
-    hours_updated = False
     
-    # If index is in schema AND different
-    if 'index' in schema and self.index != schema['index']:
-      self.index = schema['index']
-      changed = True
-    
-    # If title is in schema AND different
-    if 'title' in schema and self.title != schema['title']:
-      # If coworker/owner is updating pending OR client is updated requested
-      if (self.status == 'pending' and permission.permission in ['coworker', 'owner']) or (self.status == 'requested' and permission.permission == 'client'):
-        self.title = schema['title']
+    if 'requester_id' in schema and self.requester.id != schema['requester_id']:
+      try:
+        perm = Permission.objects.get(account_id=int(schema['requester_id']), project=self.group.project)
+      except Permission.DoesNotExist:
+        pass
+      else:
+        self.requester = perm.account
         changed = True
-    
-    # If hours is in schema AND different AND pending/requested AND coworker/owner
-    if 'hours' in schema and self.hours != schema['hours'] and self.status in ['pending', 'requested'] and permission.permission in ['coworker', 'owner']:
-      self.hours = schema['hours']
-      hours_updated = True
-      changed = True
     
     # If status is in schema AND different
     if 'status' in schema and self.status != schema['status']:
-      proceed = False
-      revert = False
+      status_changed = True
       
-      if permission.permission == 'owner' and self.status in ['approved', 'rejected'] and schema['status'] == 'pending':
-        proceed = True
-        revert = True
-      elif permission.permission in ['coworker', 'owner'] and self.status == 'requested' and schema['status'] in ['approved', 'rejected']:
-        proceed = True
-      elif permission.permission == 'client':
-        if self.status == 'pending' and schema['status'] in ['approved', 'rejected']:
-          proceed = True
-        elif self.status == 'approved' and schema['status'] in ['requested', 'rejected']:
-          proceed = True
-          revert = True
-        elif self.status == 'rejected' and ((schema['status'] == 'approved' and self.hours >= 0) or schema['status'] == 'requested'):
-          proceed = True
-          revert = True
+      if self.status == 'pending' and schema['status'] == 'working':
+        WorkLog.create_record({
+          "account": permission.account,
+          "requirement": self,
+          "action": "start",
+        })
+        
+      elif self.status == 'working' and schema['status'] == 'pending':
+        WorkLog.create_record({
+          "account": permission.account,
+          "requirement": self,
+          "action": "stop",
+        })
+        
+        self.hours_worked = self.calculate_hours_worked()
       
-      if proceed is True:
+      elif self.status == 'working' and schema['status'] == 'completed':
+        WorkLog.create_record({
+          "account": permission.account,
+          "requirement": self,
+          "action": "stop",
+        })
+        
+        WorkLog.create_record({
+          "account": permission.account,
+          "requirement": self,
+          "action": "complete",
+        })
+        
+        self.hours_worked = self.calculate_hours_worked()
+        
+        if self.requester is not None:
+          if self.type == 'front-end':
+            subject = "Front-End Story Completed"
+          else:
+            subject = "Back-End Story Completed"
+          
+          full_name = ''
+          if permission.account.first_name != '':
+            full_name += permission.account.first_name
+            if permission.account.last_name != '':
+              full_name += ' ' + permission.account.last_name
+          else:
+            full_name = permission.account.email
+          
+          AccountEmail.create_and_send({
+            "recipient": self.requester.email,
+            "subject": subject,
+            "template": "requirement-completed",
+            "context": {
+              "full_name": full_name,
+              "requirement_type": self.type,
+              "requirement_title": self.title,
+              "hours": self.hours,
+              "hours_worked": self.hours_worked,
+              "hours_percent": str(round(self.hours_worked / float(self.hours) * 100, 1)) + '%'
+            }
+          })
+        
+      elif self.status == 'pending' and schema['status'] == 'completed':
+        WorkLog.create_record({
+          "account": permission.account,
+          "requirement": self,
+          "action": "complete",
+        })
+        
+        if self.requester is not None:
+          if self.type == 'front-end':
+            subject = "Front-End Story Completed"
+          else:
+            subject = "Back-End Story Completed"
+          
+          full_name = ''
+          if permission.account.first_name != '':
+            full_name += permission.account.first_name
+            if permission.account.last_name != '':
+              full_name += ' ' + permission.account.last_name
+          else:
+            full_name = permission.account.email
+          
+          AccountEmail.create_and_send({
+            "recipient": self.requester.email,
+            "subject": subject,
+            "template": "requirement-completed",
+            "context": {
+              "full_name": full_name,
+              "requirement_type": self.type,
+              "requirement_title": self.title,
+              "hours": self.hours,
+              "hours_worked": self.hours_worked,
+              "hours_percent": str(round(self.hours_worked / float(self.hours) * 100, 1)) + '%'
+            }
+          })
+        
+      elif self.status == 'completed' and schema['status'] == 'approved':
+        WorkLog.create_record({
+          "account": permission.account,
+          "requirement": self,
+          "action": "approve",
+        })
+        
+        try:
+          log = WorkLog.objects.filter(requirement=self, action='completed').order_by('-date_updated').reverse()[0]
+        except WorkLog.DoesNotExist:
+          pass
+        else:
+          if self.type == 'front-end':
+            subject = "Front-End Story Approved"
+          else:
+            subject = "Back-End Story Approved"
+          
+          full_name = ''
+          if permission.account.first_name != '':
+            full_name += permission.account.first_name
+            if permission.account.last_name != '':
+              full_name += ' ' + permission.account.last_name
+          else:
+            full_name = permission.account.email
+          
+          AccountEmail.create_and_send({
+            "recipient": log.account.email,
+            "subject": subject,
+            "template": "requirement-approved",
+            "context": {
+              "full_name": full_name,
+              "requirement_type": self.type,
+              "requirement_title": self.title,
+              "hours": self.hours,
+              "hours_worked": self.hours_worked,
+              "hours_percent": str(round(self.hours_worked / float(self.hours) * 100, 1)) + '%'
+            }
+          })
+        
+      elif self.status == 'completed' and schema['status'] == 'rejected':
+        if 'note' in raw_schema:
+          log_note = raw_schema['note']
+        else:
+          log_note = None
+        
+        WorkLog.create_record({
+          "account": permission.account,
+          "requirement": self,
+          "action": "reject",
+          "note": log_note
+        })
+        
+        try:
+          log = WorkLog.objects.filter(requirement=self, action='completed').order_by('-date_updated').reverse()[0]
+        except WorkLog.DoesNotExist:
+          pass
+        else:
+          if self.type == 'front-end':
+            subject = "Front-End Story Rejected"
+          else:
+            subject = "Back-End Story Rejected"
+          
+          full_name = ''
+          if permission.account.first_name != '':
+            full_name += permission.account.first_name
+            if permission.account.last_name != '':
+              full_name += ' ' + permission.account.last_name
+          else:
+            full_name = permission.account.email
+          
+          AccountEmail.create_and_send({
+            "recipient": log.account.email,
+            "subject": subject,
+            "template": "requirement-rejected",
+            "context": {
+              "full_name": full_name,
+              "requirement_type": self.type,
+              "requirement_title": self.title,
+              "note": log_note,
+              "hours": self.hours,
+              "hours_worked": self.hours_worked,
+              "hours_percent": str(round(self.hours_worked / float(self.hours) * 100, 1)) + '%'
+            }
+          })
+        
+      elif self.status in ['approved', 'rejected', 'completed'] and schema['status'] == 'pending':
+        if 'note' in raw_schema:
+          log_note = raw_schema['note']
+        else:
+          log_note = None
+        
+        WorkLog.create_record({
+          "account": permission.account,
+          "requirement": self,
+          "action": "revert",
+          "note": log_note
+        })
+        
+        if self.requester is not None and self.requester.id != permission.account.id:
+          if self.type == 'front-end':
+            subject = "Front-End Story Reverted"
+          else:
+            subject = "Back-End Story Reverted"
+          
+          full_name = ''
+          if permission.account.first_name != '':
+            full_name += permission.account.first_name
+            if permission.account.last_name != '':
+              full_name += ' ' + permission.account.last_name
+          else:
+            full_name = permission.account.email
+          
+          AccountEmail.create_and_send({
+            "recipient": self.requester.email,
+            "subject": subject,
+            "template": "requirement-reverted",
+            "context": {
+              "full_name": full_name,
+              "requirement_type": self.type,
+              "requirement_title": self.title,
+              "note": log_note,
+              "hours": self.hours,
+              "hours_worked": self.hours_worked,
+              "hours_percent": str(round(self.hours_worked / float(self.hours) * 100, 1)) + '%'
+            }
+          })
+        
+      else:
+        status_changed = False
+      
+      if status_changed is True:
         self.status = schema['status']
         changed = True
-        
-        group = self.group
-        if self.status == 'approved' and group.status != 'approved':
-          group.status = 'approved'
-          group.save()
+  
+    for prop in ['title', 'description', 'index', 'hours']:
+      if prop in schema and getattr(self, prop) != schema[prop]:
+        setattr(self, prop, schema[prop])
+        changed = True
     
-        project = self.group.project
-        if revert is True and project.status == 'started':
-          project.status = 'pending'
-          project.save()
+    if changed:
+      self.save()
+    
+    return self
+  
+  def calculate_hours_worked(self):
+    hours_worked = 0
+    try:
+      logs = list(WorkLog.objects.filter(requirement=self, action__in=['start', 'stop']).order_by('-date_created'))
+    except WorkLog.DoesNotExist:
+      return hours_worked
+    else:
+      num_logs = len(logs)
+      for i in range(num_logs):
+        if logs[i].action == 'start' and i < num_logs - 1 and logs[i+1].action == 'stop':
+          hours_worked += (logs[i+1].date_created - logs[i].date_created).seconds / 3600.0
+      return hours_worked
+  
+  def delete_record(self, permission):
+    if permission.permission not in ['owner', 'coworker']:
+      return {"permission": "Invalid permission."}
+    
+    if permission.permission != 'owner' and self.group.project.status == 'locked':
+      return {"permission": "Invalid permission."}
+    
+    if self.hours_worked > 0:
+      self.status = 'deleted'
+      self.save()
+    else:
+      self.delete()
+    
+    return True
+
+class ProjectAsset(models.Model):
+  project = models.ForeignKey(RequirementGroup)
+  title = models.CharField(max_length=255)
+  description = models.TextField()
+  index = models.PositiveIntegerField()
+  status = models.CharField(max_length=20)
+  asset = models.FileField(upload_to='/', blank=True)
+  hours = models.FloatField(null=True, blank=True)
+  hours_worked = models.FloatField()
+  requester = models.ForeignKey(Account, blank=True)
+  date_updated = models.DateTimeField(auto_now=True)
+  date_created = models.DateTimeField(auto_now_add=True)
+  
+  statuses = ['pending', 'working', 'completed', 'approved', 'rejected']
+  
+  validation = {
+    'title': ('string', (0, 255)),
+    'description': 'string',
+    'index': ('integer', (0, None)),
+    'status': lambda x: x in ProjectAsset.statuses,
+    'hours': ('float', (0, None)),
+    'hours_worked': ('float', (0, None)),
+  }
+  
+  @staticmethod
+  def get_dummy_schema():
+    return {
+      "title": '',
+      "description": '',
+      "index": 0,
+      "status": '',
+      "hours": None,
+      "hours_worked": 0,
+    }
+  
+  @classmethod
+  def create_record(cls, permission, project, raw_schema):
+    if permission.permission not in ['owner', 'coworker']:
+      return {"permission": "Invalid permission."}
+    
+    if permission.permission != 'owner' and project.status == 'locked':
+      return {"project": "Project is locked."}
+    
+    schema = shim_schema(cls, raw_schema)
+    
+    requester = None
+    if 'requester_id' in raw_schema:
+      try:
+        perm = Permission.objects.get(account_id=int(raw_schema['requester_id']), project=project)
+      except Permission.DoesNotExist:
+        pass
+      else:
+        requester = perm.account
+    
+    record = cls(
+      project=project,
+      title=schema['title'],
+      description=schema['description'],
+      index=schema['index'],
+      status=cls.statuses[0],
+      hours=schema['hours'],
+      hours_worked=0,
+      requester=requester,
+    )
+    
+    record.save()
+    return record
+    
+  def read_record(self):
+    if self.requester is None:
+      requester_id = None
+    else:
+      requester_id = self.requester.id
+    
+    return {
+      "id": self.id,
+      "account_id": self.project.account.id,
+      "project_id": self.project.id,
+      "index": self.index,
+      "title": self.title,
+      "description": self.description,
+      "asset": self.asset.url,
+      "status": self.status,
+      "requester_id": requester_id,
+      "hours": self.hours,
+      "hours_worked": self.hours_worked,
+      "date_updated": self.date_updated,
+      "date_created": self.date_created,
+    }
+  
+  def update_record(self, permission, raw_schema):
+    if permission.permission not in ['owner', 'coworker']:
+      return {"permission": "Invalid permission."}
+    
+    if self.project.status == 'locked' and permission.permission != 'owner':
+      return {"permission": "Invalid permission."}
+    
+    schema = filter_valid(self.__class__, raw_schema)
+    changed = False
+    
+    if 'requester_id' in schema and self.requester.id != schema['requester_id']:
+      try:
+        perm = Permission.objects.get(account_id=int(schema['requester_id']), project=self.project)
+      except Permission.DoesNotExist:
+        pass
+      else:
+        self.requester = perm.account
+        changed = True
+    
+    # If status is in schema AND different
+    if 'status' in schema and self.status != schema['status']:
+      status_changed = True
+      
+      if self.status == 'pending' and schema['status'] == 'working':
+        WorkLog.create_record({
+          "account": permission.account,
+          "asset": self,
+          "action": "start",
+        })
+        
+      elif self.status == 'working' and schema['status'] == 'pending':
+        WorkLog.create_record({
+          "account": permission.account,
+          "asset": self,
+          "action": "stop",
+        })
+        
+        self.hours_worked = self.calculate_hours_worked()
+        
+      elif self.status == 'working' and self.asset is not None and schema['status'] == 'completed':
+        WorkLog.create_record({
+          "account": permission.account,
+          "asset": self,
+          "action": "stop",
+        })
+        
+        WorkLog.create_record({
+          "account": permission.account,
+          "asset": self,
+          "action": "complete",
+        })
+        
+        self.hours_worked = self.calculate_hours_worked()
+        
+        if self.requester is not None:
+          full_name = ''
+          if permission.account.first_name != '':
+            full_name += permission.account.first_name
+            if permission.account.last_name != '':
+              full_name += ' ' + permission.account.last_name
+          else:
+            full_name = permission.account.email
+          
+          AccountEmail.create_and_send({
+            "recipient": self.requester.email,
+            "subject": "Project Asset Completed",
+            "template": "requirement-completed",
+            "context": {
+              "full_name": full_name,
+              "requirement_type": "project asset",
+              "requirement_title": self.title,
+              "hours": self.hours,
+              "hours_worked": self.hours_worked,
+              "hours_percent": str(round(self.hours_worked / float(self.hours) * 100, 1)) + '%'
+            }
+          })
+        
+      elif self.status == 'pending' and self.asset is not None and schema['status'] == 'completed':
+        WorkLog.create_record({
+          "account": permission.account,
+          "asset": self,
+          "action": "complete",
+        })
+        
+        if self.requester is not None:
+          full_name = ''
+          if permission.account.first_name != '':
+            full_name += permission.account.first_name
+            if permission.account.last_name != '':
+              full_name += ' ' + permission.account.last_name
+          else:
+            full_name = permission.account.email
+          
+          AccountEmail.create_and_send({
+            "recipient": self.requester.email,
+            "subject": "Project Asset Completed",
+            "template": "requirement-completed",
+            "context": {
+              "full_name": full_name,
+              "requirement_type": "project asset",
+              "requirement_title": self.title,
+              "hours": self.hours,
+              "hours_worked": self.hours_worked,
+              "hours_percent": str(round(self.hours_worked / float(self.hours) * 100, 1)) + '%'
+            }
+          })
+        
+      elif self.status == 'completed' and schema['status'] == 'approved':
+        WorkLog.create_record({
+          "account": permission.account,
+          "asset": self,
+          "action": "approve",
+        })
+        
+        try:
+          log = WorkLog.objects.filter(asset=self, action='completed').order_by('-date_updated').reverse()[0]
+        except WorkLog.DoesNotExist:
+          pass
+        else:
+          full_name = ''
+          if permission.account.first_name != '':
+            full_name += permission.account.first_name
+            if permission.account.last_name != '':
+              full_name += ' ' + permission.account.last_name
+          else:
+            full_name = permission.account.email
+          
+          AccountEmail.create_and_send({
+            "recipient": log.account.email,
+            "subject": "Project Asset Approved",
+            "template": "requirement-approved",
+            "context": {
+              "full_name": full_name,
+              "requirement_type": "project asset",
+              "requirement_title": self.title,
+              "hours": self.hours,
+              "hours_worked": self.hours_worked,
+              "hours_percent": str(round(self.hours_worked / float(self.hours) * 100, 1)) + '%'
+            }
+          })
+        
+      elif self.status == 'completed' and schema['status'] == 'rejected':
+        if 'note' in raw_schema:
+          log_note = raw_schema['note']
+        else:
+          log_note = None
+        
+        WorkLog.create_record({
+          "account": permission.account,
+          "asset": self,
+          "action": "reject",
+          "note": log_note
+        })
+        
+        try:
+          log = WorkLog.objects.filter(asset=self, action='completed').order_by('-date_updated').reverse()[0]
+        except WorkLog.DoesNotExist:
+          pass
+        else:
+          full_name = ''
+          if permission.account.first_name != '':
+            full_name += permission.account.first_name
+            if permission.account.last_name != '':
+              full_name += ' ' + permission.account.last_name
+          else:
+            full_name = permission.account.email
+          
+          AccountEmail.create_and_send({
+            "recipient": log.account.email,
+            "subject": "Project Asset Rejected",
+            "template": "requirement-rejected",
+            "context": {
+              "full_name": full_name,
+              "requirement_type": "project asset",
+              "requirement_title": self.title,
+              "note": log_note,
+              "hours": self.hours,
+              "hours_worked": self.hours_worked,
+              "hours_percent": str(round(self.hours_worked / float(self.hours) * 100, 1)) + '%'
+            }
+          })
+        
+      elif self.status in ['approved', 'rejected', 'completed'] and schema['status'] == 'pending':
+        if 'note' in raw_schema:
+          log_note = raw_schema['note']
+        else:
+          log_note = None
+        
+        WorkLog.create_record({
+          "account": permission.account,
+          "asset": self,
+          "action": "revert",
+          "note": log_note
+        })
+        
+        if self.requester is not None and self.requester.id != permission.account.id:
+          full_name = ''
+          if permission.account.first_name != '':
+            full_name += permission.account.first_name
+            if permission.account.last_name != '':
+              full_name += ' ' + permission.account.last_name
+          else:
+            full_name = permission.account.email
+          
+          AccountEmail.create_and_send({
+            "recipient": self.requester.email,
+            "subject": "Project Asset Reverted",
+            "template": "requirement-reverted",
+            "context": {
+              "full_name": full_name,
+              "requirement_type": "project asset",
+              "requirement_title": self.title,
+              "note": log_note,
+              "hours": self.hours,
+              "hours_worked": self.hours_worked,
+              "hours_percent": str(round(self.hours_worked / float(self.hours) * 100, 1)) + '%'
+            }
+          })
+        
+      else:
+        status_changed = False
+      
+      if status_changed is True:
+        self.status = schema['status']
+        changed = True
+  
+    for prop in ['title', 'index', 'hours', 'description']:
+      if prop in schema and getattr(self, prop) != schema[prop]:
+        setattr(self, prop, schema[prop])
+        changed = True
+    
+    if changed:
+      self.save()
+    
+    return self
+  
+  def calculate_hours_worked(self):
+    hours_worked = 0
+    try:
+      logs = list(WorkLog.objects.filter(asset=self, action__in=['start', 'stop']).order_by('-date_created'))
+    except WorkLog.DoesNotExist:
+      return hours_worked
+    else:
+      num_logs = len(logs)
+      for i in range(num_logs):
+        if logs[i].action == 'start' and i < num_logs - 1 and logs[i+1].action == 'stop':
+          hours_worked += (logs[i+1].date_created - logs[i].date_created).seconds / 3600.0
+      return hours_worked
+  
+  def delete_record(self, permission):
+    if permission.permission not in ['owner', 'coworker']:
+      return {"permission": "Invalid permission."}
+    
+    if permission.permission != 'owner' and self.project.status == 'locked':
+      return {"permission": "Invalid permission."}
+    
+    if self.hours_worked > 0:
+      self.status = 'deleted'
+      self.save()
+    else:
+      self.delete()
+    
+    return True
+  
+  def update_asset(self, asset):
+    if permission.permission not in ['owner', 'coworker']:
+      return {"permission": "Invalid permission."}
+    
+    if self.project.status == 'locked' and permission.permission != 'owner':
+      return {"permission": "Invalid permission."}
+    
+    if self.status in ['pending', 'working']:
+      self.asset = asset
+      self.save()
+    
+    return self
+
+class ProjectFile(models.Model):
+  project = models.ForeignKey(RequirementGroup)
+  title = models.CharField(max_length=255)
+  description = models.TextField()
+  index = models.PositiveIntegerField()
+  asset = models.FileField(upload_to='/', blank=True)
+  date_updated = models.DateTimeField(auto_now=True)
+  date_created = models.DateTimeField(auto_now_add=True)
+  
+  validation = {
+    'title': ('string', (0, 255)),
+    'description': 'string',
+    'index': ('integer', (0, None)),
+  }
+  
+  @staticmethod
+  def get_dummy_schema():
+    return {
+      "title": '',
+      "description": '',
+      "index": 0,
+    }
+  
+  @classmethod
+  def create_record(cls, permission, project, raw_schema):
+    if permission.permission not in ['owner', 'coworker']:
+      return {"permission": "Invalid permission."}
+    
+    if permission.permission != 'owner' and project.status == 'locked':
+      return {"project": "Project is locked."}
+    
+    schema = shim_schema(cls, raw_schema)
+    
+    record = cls(
+      project=project,
+      title=schema['title'],
+      description=schema['description'],
+      index=schema['index'],
+    )
+    
+    record.save()
+    return record
+    
+  def read_record(self):
+    return {
+      "id": self.id,
+      "account_id": self.project.account.id,
+      "project_id": self.project.id,
+      "index": self.index,
+      "title": self.title,
+      "description": self.description,
+      "asset": self.asset.url,
+      "date_updated": self.date_updated,
+      "date_created": self.date_created,
+    }
+  
+  def update_record(self, permission, raw_schema):
+    if permission.permission not in ['owner', 'coworker']:
+      return {"permission": "Invalid permission."}
+    
+    if self.project.status == 'locked' and permission.permission != 'owner':
+      return {"permission": "Invalid permission."}
+    
+    schema = filter_valid(self.__class__, raw_schema)
+    changed = False
+    
+    for prop in ['title', 'index', 'description']:
+      if prop in schema and getattr(self, prop) != schema[prop]:
+        setattr(self, prop, schema[prop])
+        changed = True
     
     if changed:
       self.save()
@@ -498,24 +1089,26 @@ class Requirement(models.Model):
     return self
   
   def delete_record(self, permission):
-    if permission.permission == 'client' and self.status == 'requested':
-      self.delete()
-      return True
-      
-    elif permission.permission == 'coworker' and self.status == 'pending':
-      self.delete()
-      return True
+    if permission.permission not in ['owner', 'coworker']:
+      return {"permission": "Invalid permission."}
     
-    elif permission.permission == 'owner':
-      self.delete()
-      project = self.group.project
-      if project.status == 'started':
-        project.status = 'pending'
-        project.save()
-      return True
-      
-    return False
+    if permission.permission != 'owner' and self.project.status == 'locked':
+      return {"permission": "Invalid permission."}
+    
+    self.delete()
+    return True
   
+  def update_asset(self, asset):
+    if permission.permission not in ['owner', 'coworker']:
+      return {"permission": "Invalid permission."}
+    
+    if self.project.status == 'locked' and permission.permission != 'owner':
+      return {"permission": "Invalid permission."}
+    
+    self.asset = asset
+    self.save
+    return self
+
 class Permission(models.Model):
   account = models.ForeignKey(Account)
   project = models.ForeignKey(Project)
@@ -557,10 +1150,11 @@ class Permission(models.Model):
     self.save()
     return self
   
-  def record_to_dictionary(self):
+  def read_record(self):
     return {
       "id" : self.id,
-      "account": self.account.record_to_dictionary(),
+      "account_id": self.account.user_id,
+      "email": self.account.email,
       "project_id": self.project.id,
       "permission": self.permission,
       "date_updated": self.date_updated,
@@ -570,13 +1164,49 @@ class Permission(models.Model):
   def delete_record(self, account):
     # Owner cannot remove self from account permissions, unless project is deleted
     if self.project.account.id is self.account.id:
-      return self
+      return {"permission": "Invalid permissions."}
     
     self.delete()
     return True
 
-
-
-
-
+class WorkLog(models.Model):
+  account = models.ForeignKey(Account)
+  asset = models.ForeignKey(ProjectAsset, blank=True)
+  requirement = models.ForeignKey(Requirement, blank=True)
+  action = models.CharField(max_length=20)
+  note = models.TextField(blank=True)
+  date_created = models.DateTimeField(auto_now_add=True)
+  
+  actions = ['start', 'stop', 'complete', 'approve', 'reject', 'revert']
+  
+  @classmethod
+  def create_record(cls, schema):
+    log_dict = {
+      "account": schema['account'],
+      "action": schema['action']
+    }
+    
+    for prop in ['requirement', 'asset', 'note']:
+      if prop in schema:
+        log_dict[prop] = schema[prop]
+    
+    record = cls(**log_dict)
+    record.save()
+    return record
+  
+  def read_record(self):
+    record_dict = {
+      "account_id": self.account.id,
+      "action": self.action,
+      "note": self.note,
+      "date_created": self.date_created,
+    }
+    
+    if self.asset is not None:
+      record_dict['asset_id'] = self.asset.id
+    
+    if self.requirement is not None:
+      record_dict['requirement_id'] = self.requirement.id
+    
+    return record_dict
 

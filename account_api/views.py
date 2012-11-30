@@ -1,872 +1,357 @@
-from djangorestframework.views import View
-from djangorestframework.response import Response
-from djangorestframework import status
-from django.contrib.auth import authenticate, login
+from rest_framework.views import APIView
+from rest_framework.response import Response
+from rest_framework import status
+from django.contrib.auth import authenticate, login, logout
 from account_api.models import Account, Contact
 
-class SessionManager(View):
-    """
-    Handles HTTP requests to endpoint URL/api/sessions/ with optional querystring
-    Allow: GET, POST
-    """
-    def put(self, request):
-        #################
-        # Setup
-        #################
+class SessionManager(APIView):
+  """
+  Handles HTTP requests to endpoint URL/api/sessions/ with optional querystring
+  Allow: GET, POST
+  """
+  def get(self, request):
+    if request.user.is_authenticated():
+      return Response(data=[{"id": request.user.id}], status=status.HTTP_200_OK)
+    else:
+      return Response(status=status.HTTP_204_NO_CONTENT)
+  
+  def post(self, request):
+    if request.user.is_authenticated():
+      return Response(data={"id": request.user.id}, status=status.HTTP_200_OK)
 
-        headers = {
-            "Content-Type": "application/json",
-            "Allow": "GET, POST",
-        }
+    if 'email' not in request.DATA:
+      error = {"email": "Missing email address field."}
+      return Response(data=error, status=status.HTTP_400_BAD_REQUEST)
 
-        errors = {"header_request_method": "This endpoint only supports GET and POST requests."}
-        return Response(content=errors, headers=headers, status=status.HTTP_405_METHOD_NOT_ALLOWED)
+    if 'password' not in request.DATA:
+      error = {"password": "Missing password field."}
+      return Response(data=error, status=status.HTTP_400_BAD_REQUEST)
     
-    def delete(self, request):
-        #################
-        # Setup
-        #################
-
-        headers = {
-            "Content-Type": "application/json",
-            "Allow": "GET, POST",
-        }
-
-        errors = {"header_request_method": "This endpoint only supports GET and POST requests."}
-        return Response(content=errors, headers=headers, status=status.HTTP_405_METHOD_NOT_ALLOWED)
+    email = str(request.DATA['email'])
+    password = str(request.DATA['password'])
     
-    def get(self, request):
-        #################
-        # Setup
-        #################
+    try:
+      account = Account.objects.get(email=email)
+    except Account.DoesNotExist:
+      error = {"email": "Email address is not in use."}
+      return Response(data=error, status=status.HTTP_404_NOT_FOUND)
 
-        headers = {
-            "Content-Type": "application/json",
-            "Allow": "GET, POST",
-        }
+    if account.status != 'active':
+      error = {"email": "Email address belongs to an invalid account."}
+      return Response(data=error, status=status.HTTP_400_BAD_REQUEST)
 
-        try:
-            session_id = int(request.session["_auth_user_id"])
-        except KeyError:
-            return Response(content=[{"id": None}], headers=headers, status=status.HTTP_200_OK)
-        else:
-            return Response(content=[{"id": session_id}], headers=headers, status=status.HTTP_200_OK)
+    user = authenticate(username=account.user.username, password=password)
+    if user is None:
+      error = {"password": "Invalid password for email address."}
+      return Response(data=error, status=status.HTTP_400_BAD_REQUEST)
+
+    login(request, user)
+    return Response(data={"id": user.id}, status=status.HTTP_201_CREATED)
+
+class SessionEditor(APIView):
+  """
+  Handles HTTP requests to endpoint URL/api/sessions/:session_id with optional querystring
+  Allow: GET, DELETE
+  """
+  def delete(self, request, session_id):
+    if request.user.is_authenticated():
+      logout(request)
+    return Response(status=status.HTTP_204_NO_CONTENT)
+  
+  def get(self, request, session_id):
+    if request.user.is_authenticated():
+      return Response(data={"id": request.user.id}, status=status.HTTP_200_OK)
+    else:
+      return Response(status=status.HTTP_204_NO_CONTENT)
+
+class AccountManager(APIView):
+  """
+  Handles HTTP requests to endpoint URL/api/accounts/ with optional querystring
+  Allow: PUT, POST
+  """
+  def put(self, request):
+    try:
+      action = request.DATA['action']
+    except KeyError:
+      error = {"action": "Missing action."}
+      return Response(data=error, status=status.HTTP_400_BAD_REQUEST)
+
+    # Request to reset user's password
+    if action == 'request_password_reset':
+      try:
+        email = request.DATA['email']
+      except KeyError:
+        error = {"email": "Missing email address."}
+        return Response(data=error, status=status.HTTP_400_BAD_REQUEST)
+
+      result = Account.request_reset_password(email)
+
+    else:
+      result = {"action": "Invalid action."}
+
+    if isinstance(result, dict):
+      return Response(data=result, status=status.HTTP_400_BAD_REQUEST)
+
+    return Response(status=status.HTTP_204_NO_CONTENT)
+
+  def get(self, request):
+    if not request.user.is_authenticated():
+      return Response(status=status.HTTP_401_UNAUTHORIZED)
+
+    account = request.user.account
+    if account.type is 'standard':
+      return Response(data=account.read_record(), status=status.HTTP_200_OK)
+      
+    else:
+      try:
+        accounts = Account.objects.all()
+      except Account.DoesNotExist:
+        accounts = []
+      
+      account_list = [dict(acc.read_record(), **{"projects": list(acc.project_set.all())}) for acc in accounts]
+      return Response(data=account_list, status=status.HTTP_200_OK)
+
+  def post(self, request):
+    if request.user.is_authenticated():
+      error = {"session": "Unable to create new account with a valid session."}
+      return Response(data=error, status=status.HTTP_400_BAD_REQUEST)
+
+    try:
+      email = request.DATA['email']
+    except KeyError:
+      error = {"email": "Missing email address field."}
+      return Response(data=error, status=status.HTTP_400_BAD_REQUEST)
+
+    try:
+      password = request.DATA['password']
+    except KeyError:
+      error = {"password": "Missing password field."}
+      return Response(data=error, status=status.HTTP_400_BAD_REQUEST)
+
+    try:
+      code = request.DATA['code']
+    except KeyError:
+      code = None
+
+    account = Account.create_account(email, password, code=code)
+    if not isinstance(account, Account):
+      return Response(data=account, status=status.HTTP_400_BAD_REQUEST)
+
+    return Response(data=account.read_record(), status=status.HTTP_200_OK)
+
+class AccountEditor(APIView):
+  """
+  Handles HTTP requests to endpoint URL/api/accounts/:account_id/ with optional querystring
+  Allow: GET, PUT, DELETE
+  """
+  def delete(self, request, account_id):
+    if not request.user.is_authenticated():
+      return Response(status=status.HTTP_401_UNAUTHORIZED)
+    account = request.user.account
+    account.status = 'terminated'
+    account.save()
+    return Response(status=status.HTTP_204_NO_CONTENT)
+  
+  def get(self, request, account_id):
+    if not request.user.is_authenticated():
+      return Response(status=status.HTTP_401_UNAUTHORIZED)
     
-    def post(self, request):
-        #################
-        # Setup
-        #################
+    user_account = request.user.account
+    if user_account.type == 'standard':
+      if user_account.user_id == int(account_id):
+        return Response(data=user_account.read_record(), status=status.HTTP_200_OK)
+      else:
+        return Response(status=status.HTTP_404_NOT_FOUND)
+    else:
+      try:
+        account = Account.objects.get(id=account_id)
+      except Account.DoesNotExist:
+        errors = {"account_id": "Invalid account ID."}
+        return Response(data=errors, status=status.HTTP_400_BAD_REQUEST)
+      else:
+        return Response(data=account.read_record(), status=status.HTTP_200_OK)
+  
+  def put(self, request, account_id):
+    try:
+      action = request.DATA['action']
+    except KeyError:
+      action = None
 
-        headers = {
-            "Content-Type": "application/json",
-            "Allow": "GET, POST",
-        }
+    if action not in ['verify_email', 'verify_invitation', 'reset_password']:
+      if not request.user.is_authenticated():
+        return Response(status=status.HTTP_401_UNAUTHORIZED)
+      else:
+        account = request.user.account
+    
+    elif not request.user.is_authenticated():
+      try:
+        account = Account.objects.get(user_id=int(account_id))
+      except Account.DoesNotExist:
+        errors = {"account_id": "Invalid account ID."}
+        return Response(data=errors, status=status.HTTP_400_BAD_REQUEST)
 
-        # Check content-type header
-        if not self.content_type.startswith('application/json'):
-            errors = {"header_content_type": "Content-Type must be 'application/json'. Your Content-Type is " + str(self.content_type)}
-            return Response(content=errors, headers=headers, status=status.HTTP_400_BAD_REQUEST)
+    # Request to prove that the user owns the email address
+    if action == 'verify_email':
+      try:
+        code = request.DATA['code']
+      except KeyError:
+        error = {"code": "Missing verification code."}
+        return Response(data=error, status=status.HTTP_400_BAD_REQUEST)
 
-        try:
-            session_id = int(request.session["_auth_user_id"])
-        except KeyError:
-            pass
-        else:
-            return Response(content={"id": session_id}, headers=headers, status=status.HTTP_200_OK)
+      result = account.verify_email(code)
 
-        try:
-            email = self.CONTENT['email']
-        except KeyError:
-            error = {"email": "Missing email address field."}
-            return Response(content=error, headers=headers, status=status.HTTP_400_BAD_REQUEST)
+    # Request to prove that the user owns the email address
+    elif action == 'verify_invitation':
+      try:
+        code = request.DATA['code']
+      except KeyError:
+        error = {"code": "Missing verification code."}
+        return Response(data=error, status=status.HTTP_400_BAD_REQUEST)
 
-        try:
-            password = self.CONTENT['password']
-        except KeyError:
-            error = {"password": "Missing password field."}
-            return Response(content=error, headers=headers, status=status.HTTP_400_BAD_REQUEST)
+      try:
+        password = request.DATA['password']
+      except KeyError:
+        error = {"password": "Missing password."}
+        return Response(data=error, status=status.HTTP_400_BAD_REQUEST)
 
-        try:
-            account = Account.objects.get(email=email)
-        except Account.DoesNotExist:
-            error = {"email": "Email address is not in use."}
-            return Response(content=error, headers=headers, status=status.HTTP_400_BAD_REQUEST)
-
-        if account.status != 'active':
-            error = {"email": "Email address belongs to an invalid account."}
-            return Response(content=error, headers=headers, status=status.HTTP_400_BAD_REQUEST)
-
+      result = account.verify_invitation(code, password)
+      if not isinstance(result, dict):
         user = authenticate(username=account.user.username, password=password)
-        if user is None:
-            error = {"password": "Invalid password for email address."}
-            return Response(content=error, headers=headers, status=status.HTTP_400_BAD_REQUEST)
-
         login(request, user)
 
-        return Response(content={"id": account.id}, headers=headers, status=status.HTTP_200_OK)
+    # Request to change user's email address
+    elif action == 'change_email':
+      if account.status != 'active':
+        error = {"account": "This account is inactive."}
+        return Response(data=error, status=status.HTTP_400_BAD_REQUEST)
 
-class SessionEditor(View):
-    """
-    Handles HTTP requests to endpoint URL/api/sessions/:session_id with optional querystring
-    Allow: GET, DELETE
-    """
-    def put(self, request, session_id):
-        #################
-        # Setup
-        #################
+      try:
+        password = request.DATA['password']
+      except KeyError:
+        error = {"password": "Missing password."}
+        return Response(data=error, status=status.HTTP_400_BAD_REQUEST)
 
-        headers = {
-            "Content-Type": "application/json",
-            "Allow": "GET, DELETE",
-        }
+      try:
+        email = request.DATA['email']
+      except KeyError:
+        error = {"email": "Missing email address."}
+        return Response(data=error, status=status.HTTP_400_BAD_REQUEST)
 
-        errors = {"header_request_method": "This endpoint only supports GET and DELETE requests."}
-        return Response(content=errors, headers=headers, status=status.HTTP_405_METHOD_NOT_ALLOWED)
+      result = account.request_email_change(password, email)
+
+    # Request to change a user's password
+    elif action == 'change_password':
+      if account.status != 'active':
+        error = {"account": "This account is inactive."}
+        return Response(data=error, status=status.HTTP_400_BAD_REQUEST)
+
+      try:
+        old_password = request.DATA['old_password']
+      except KeyError:
+        error = {"old_password": "Missing old password."}
+        return Response(data=error, status=status.HTTP_400_BAD_REQUEST)
+
+      try:
+        new_password = request.DATA['new_password']
+      except KeyError:
+        error = {"new_password": "Missing new password."}
+        return Response(data=error, status=status.HTTP_400_BAD_REQUEST)
+
+      result = account.change_password(old_password, new_password)
+
+    elif action == 'reset_password':
+      if account.status != 'active':
+        error = {"account": "This account is inactive."}
+        return Response(data=error, status=status.HTTP_400_BAD_REQUEST)
+
+      try:
+        code = request.DATA['code']
+      except KeyError:
+        error = {"code": "Missing code."}
+        return Response(data=error, status=status.HTTP_400_BAD_REQUEST)
+
+      try:
+        password = request.DATA['password']
+      except KeyError:
+        error = {"password": "Missing new password."}
+        return Response(data=error, status=status.HTTP_400_BAD_REQUEST)
+
+      result = account.reset_password(code, password)
+      if not isinstance(result, dict):
+        user = authenticate(username=account.user.username, password=password)
+        login(request, user)
+
+    else:
+      if account.status != 'active':
+        error = {"account": "This account is inactive."}
+        return Response(data=error, status=status.HTTP_400_BAD_REQUEST)
+
+      result = account.update_account(request.DATA)
+
+    if isinstance(result, dict):
+      return Response(data=result, status=status.HTTP_400_BAD_REQUEST)
+
+    return Response(data=account.read_record(), status=status.HTTP_200_OK)
+
+class ContactManager(APIView):
+  """
+  Handles HTTP requests to endpoint URL/api/contacts/ with optional querystring
+  Allow: PUT, GET, POST
+  """
+  def get(self, request):
+    if not request.user.is_authenticated() or request.user.account.type != 'administrator':
+      return Response(status=status.HTTP_401_UNAUTHORIZED)
     
-    def post(self, request, session_id):
-        #################
-        # Setup
-        #################
-
-        headers = {
-            "Content-Type": "application/json",
-            "Allow": "GET, DELETE",
-        }
-
-        errors = {"header_request_method": "This endpoint only supports GET and DELETE requests."}
-        return Response(content=errors, headers=headers, status=status.HTTP_405_METHOD_NOT_ALLOWED)
+    try:
+      contacts = Contact.objects.all()
+    except Contact.DoesNotExist:
+      contacts = []
     
-    def delete(self, request, session_id):
-        #################
-        # Setup
-        #################
-
-        headers = {
-            "Content-Type": "application/json",
-            "Allow": "GET, DELETE",
-        }
-
-        try:
-            request.session["_auth_user_id"]
-        except KeyError:
-            pass
-        else:
-            del request.session["_auth_user_id"]
-        
-        return Response(content={"id": None}, headers=headers, status=status.HTTP_200_OK)
+    contact_list = [contact.read_record() for contact in contacts]
+    return Response(data=contact_list, status=status.HTTP_200_OK)
+  
+  def post(self, request):
+    if request.user.is_authenticated():
+      account = request.user.account
+    else:
+      account = None
     
-    def get(self, request, session_id):
-        #################
-        # Setup
-        #################
-
-        headers = {
-            "Content-Type": "application/json",
-            "Allow": "GET, DELETE",
-        }
-
-        try:
-            request.session["_auth_user_id"]
-        except KeyError:
-            return Response(content={"id": None}, headers=headers, status=status.HTTP_400_BAD_REQUEST)
-        else:
-            return Response(content={"id": int(session_id)}, headers=headers, status=status.HTTP_200_OK)
-
-class AccountManager(View):
-    """
-    Handles HTTP requests to endpoint URL/api/accounts/ with optional querystring
-    Allow: PUT, POST
-    """
-    def put(self, request):
-        #################
-        # Setup
-        #################
-
-        headers = {
-            "Content-Type": "application/json",
-            "Allow": "GET, POST",
-        }
-
-        # Check content-type header
-        if not self.content_type.startswith('application/json'):
-            errors = {"header_content_type": "Content-Type must be 'application/json'. Your Content-Type is " + str(self.content_type)}
-            return Response(content=errors, headers=headers, status=status.HTTP_400_BAD_REQUEST)
-
-        try:
-            action = self.CONTENT['action']
-        except KeyError:
-            error = {"action": "Missing action."}
-            return Response(content=error, headers=headers, status=status.HTTP_400_BAD_REQUEST)
-
-        #################
-        # Validation
-        #################
-
-        # Request to reset user's password
-        if action == 'request_password_reset':
-            try:
-                email = self.CONTENT['email']
-            except KeyError:
-                error = {"email": "Missing email address."}
-                return Response(content=error, headers=headers, status=status.HTTP_400_BAD_REQUEST)
-
-            result = Account.request_reset_password(email)
-
-        else:
-            result = {"action": "Invalid action."}
-
-        if isinstance(result, dict):
-            return Response(content=result, headers=headers, status=status.HTTP_400_BAD_REQUEST)
-
-        return Response(content={}, headers=headers, status=status.HTTP_200_OK)
-
-    def delete(self, request):
-        #################
-        # Setup
-        #################
-
-        headers = {
-            "Content-Type": "application/json",
-            "Allow": "GET, POST",
-        }
-
-        try:
-            request.session["_auth_user_id"]
-        except KeyError:
-            return Response(status=status.HTTP_401_UNAUTHORIZED)
-
-        #################
-        # Validation
-        #################
-
-        errors = {"header_request_method": "This endpoint only supports POST requests."}
-        return Response(content=errors, headers=headers, status=status.HTTP_405_METHOD_NOT_ALLOWED)
-
-    def get(self, request):
-        #################
-        # Setup
-        #################
-
-        headers = {
-            "Content-Type": "application/json",
-            "Allow": "GET, POST",
-            }
-
-        try:
-            account_id = int(request.session["_auth_user_id"])
-        except KeyError:
-            return Response(status=status.HTTP_401_UNAUTHORIZED)
-
-        try:
-            account = Account.objects.get(user_id=account_id)
-        except Account.DoesNotExist:
-            errors = {"account_id": "Invalid account ID."}
-            return Response(content=errors, headers=headers, status=status.HTTP_404_NOT_FOUND)
-
-        #################
-        # Operation
-        #################
-
-        if account.type is 'standard':
-            return Response(content=account.record_to_dictionary(), headers=headers, status=status.HTTP_200_OK)
-          
-        else:
-            try:
-                accounts = Account.objects.all()
-            except Account.DoesNotExist:
-                accounts = []
-            
-            account_list = [dict(acc.record_to_dictionary(), **{"projects": list(acc.project_set.all())}) for acc in accounts]
-            return Response(content=account_list, headers=headers, status=status.HTTP_200_OK)
-
-    def post(self, request):
-        #################
-        # Setup
-        #################
-
-        headers = {
-            "Content-Type": "application/json",
-            "Allow": "GET, POST",
-        }
-
-        # Check content-type header
-        if not self.content_type.startswith('application/json'):
-            errors = {"header_content_type": "Content-Type must be 'application/json'. Your Content-Type is " + str(self.content_type)}
-            return Response(content=errors, headers=headers, status=status.HTTP_400_BAD_REQUEST)
-
-        try:
-            request.session["_auth_user_id"]
-        except KeyError:
-            pass
-        else:
-            error = {"session": "Unable to create new account with a valid session."}
-            return Response(content=error, headers=headers, status=status.HTTP_400_BAD_REQUEST)
-
-        try:
-            email = self.CONTENT['email']
-        except KeyError:
-            error = {"email": "Missing email address field."}
-            return Response(content=error, headers=headers, status=status.HTTP_400_BAD_REQUEST)
-
-        try:
-            password = self.CONTENT['password']
-        except KeyError:
-            error = {"password": "Missing password field."}
-            return Response(content=error, headers=headers, status=status.HTTP_400_BAD_REQUEST)
-
-        try:
-            code = self.CONTENT['code']
-        except KeyError:
-            code = None
-
-        account = Account.create_account(email, password, code=code)
-        if not isinstance(account, Account):
-            return Response(content=account, headers=headers, status=status.HTTP_400_BAD_REQUEST)
-
-        return Response(content=account.record_to_dictionary(), headers=headers, status=status.HTTP_200_OK)
-
-class AccountEditor(View):
-    """
-    Handles HTTP requests to endpoint URL/api/accounts/:account_id/ with optional querystring
-    Allow: GET, PUT, DELETE
-    """
-    def post(self, request, account_id):
-        #################
-        # Setup
-        #################
-
-        headers = {
-            "Content-Type": "application/json",
-            "Allow": "GET, PUT, DELETE",
-        }
-
-        #################
-        # Validation
-        #################
-
-        try:
-            request.session["_auth_user_id"]
-        except KeyError:
-            return Response(status=status.HTTP_401_UNAUTHORIZED)
-
-        errors = {"header_request_method": "This endpoint only supports GET, PUT and DELETE requests."}
-        return Response(content=errors, headers=headers, status=status.HTTP_405_METHOD_NOT_ALLOWED)
-
-    def delete(self, request, account_id):
-        #################
-        # Setup
-        #################
-
-        headers = {
-            "Content-Type": "application/json",
-            "Allow": "GET, PUT, DELETE",
-        }
-
-        query_dict = dict([(k,v) for k,v in request.GET.iteritems()])
-
-        #################
-        # Validation
-        #################
-
-        try:
-            request.session["_auth_user_id"]
-        except KeyError:
-            return Response(status=status.HTTP_401_UNAUTHORIZED)
-
-        if int(account_id) is not int(request.session["_auth_user_id"]):
-            errors = {"account_id": "Your session does not match your API endpoint account ID."}
-            return Response(content=errors, headers=headers, status=status.HTTP_400_BAD_REQUEST)
-
-        try:
-            account = Account.objects.get(user_id=account_id)
-        except Account.DoesNotExist:
-            errors = {"account_id": "Invalid account ID."}
-            return Response(content=errors, headers=headers, status=status.HTTP_400_BAD_REQUEST)
-
-        #################
-        # Operation
-        #################
-
-        if 'password' not in query_dict:
-            errors = {"password": "Password is required to delete account."}
-            return Response(content=errors, headers=headers, status=status.HTTP_400_BAD_REQUEST)
-
-        if query_dict['password'] == '':
-            errors = {"password": "Password cannot be an empty string."}
-            return Response(content=errors, headers=headers, status=status.HTTP_400_BAD_REQUEST)
-
-        user = authenticate(username=account.user.username, password=query_dict['password'])
-        if user is None:
-            errors = {"password": "Invalid password."}
-            return Response(content=errors, headers=headers, status=status.HTTP_400_BAD_REQUEST)
-
-        account.status = 'terminated'
-        account.save()
-
-        return Response(content={}, headers=headers, status=status.HTTP_200_OK)
-
-    def get(self, request, account_id):
-        #################
-        # Setup
-        #################
-
-        headers = {
-            "Content-Type": "application/json",
-            "Allow": "GET, PUT, DELETE",
-        }
-
-        query_dict = dict([(k,v) for k,v in request.GET.iteritems()])
-
-        #################
-        # Validation
-        #################
-
-        try:
-            request.session["_auth_user_id"]
-        except KeyError:
-            return Response(status=status.HTTP_401_UNAUTHORIZED)
-
-        if int(account_id) is not int(request.session["_auth_user_id"]):
-            errors = {"account_id": "Your session does not match your API endpoint account ID."}
-            return Response(content=errors, headers=headers, status=status.HTTP_400_BAD_REQUEST)
-
-        try:
-            account = Account.objects.get(user_id=account_id)
-        except Account.DoesNotExist:
-            errors = {"account_id": "Invalid account ID."}
-            return Response(content=errors, headers=headers, status=status.HTTP_400_BAD_REQUEST)
-
-        #################
-        # Operation
-        #################
-
-        return Response(content=account.record_to_dictionary(), headers=headers, status=status.HTTP_200_OK)
-
-    def put(self, request, account_id):
-        #################
-        # Setup
-        #################
-
-        headers = {
-            "Content-Type": "application/json",
-            "Allow": "GET, PUT, DELETE",
-        }
-
-        #################
-        # Validation
-        #################
-
-        try:
-            action = self.CONTENT['action']
-        except KeyError:
-            action = None
-
-        if action not in ['verify_email', 'verify_invitation', 'reset_password']:
-            try:
-                request.session["_auth_user_id"]
-            except KeyError:
-                return Response(status=status.HTTP_401_UNAUTHORIZED)
-
-        # Check content-type header
-        if not self.content_type.startswith('application/json'):
-            errors = {"header_content_type": "Content-Type must be 'application/json'. Your Content-Type is " + str(self.content_type)}
-            return Response(content=errors, headers=headers, status=status.HTTP_400_BAD_REQUEST)
-
-        if action not in ['verify_email', 'verify_invitation', 'reset_password']:
-            if int(account_id) is not int(request.session["_auth_user_id"]):
-                errors = {"account_id": "Your session does not match your API endpoint account ID."}
-                return Response(content=errors, headers=headers, status=status.HTTP_400_BAD_REQUEST)
-
-        # Check content-type header
-        if not self.content_type.startswith('application/json'):
-            errors = {"header_content_type": "Content-Type must be 'application/json'. Your Content-Type is " + str(self.content_type)}
-            return Response(content=errors, headers=headers, status=status.HTTP_400_BAD_REQUEST)
-
-        try:
-            account = Account.objects.get(id=account_id)
-        except Account.DoesNotExist:
-            errors = {"account_id": "Invalid account ID."}
-            return Response(content=errors, headers=headers, status=status.HTTP_400_BAD_REQUEST)
-
-        #################
-        # Operation
-        #################
-
-        # Request to prove that the user owns the email address
-        if action == 'verify_email':
-            try:
-                code = self.CONTENT['code']
-            except KeyError:
-                error = {"code": "Missing verification code."}
-                return Response(content=error, headers=headers, status=status.HTTP_400_BAD_REQUEST)
-
-            result = account.verify_email(code)
-
-        # Request to prove that the user owns the email address
-        elif action == 'verify_invitation':
-            try:
-                code = self.CONTENT['code']
-            except KeyError:
-                error = {"code": "Missing verification code."}
-                return Response(content=error, headers=headers, status=status.HTTP_400_BAD_REQUEST)
-
-            try:
-                password = self.CONTENT['password']
-            except KeyError:
-                error = {"password": "Missing password."}
-                return Response(content=error, headers=headers, status=status.HTTP_400_BAD_REQUEST)
-
-            result = account.verify_invitation(code, password)
-            if not isinstance(result, dict):
-              user = authenticate(username=account.user.username, password=password)
-              login(request, user)
-
-        # Request to change user's email address
-        elif action == 'change_email':
-            if account.status != 'active':
-                error = {"account": "This account is inactive."}
-                return Response(content=error, headers=headers, status=status.HTTP_400_BAD_REQUEST)
-
-            try:
-                password = self.CONTENT['password']
-            except KeyError:
-                error = {"password": "Missing password."}
-                return Response(content=error, headers=headers, status=status.HTTP_400_BAD_REQUEST)
-
-            try:
-                email = self.CONTENT['email']
-            except KeyError:
-                error = {"email": "Missing email address."}
-                return Response(content=error, headers=headers, status=status.HTTP_400_BAD_REQUEST)
-
-            result = account.request_email_change(password, email)
-
-        # Request to change a user's password
-        elif action == 'change_password':
-            if account.status != 'active':
-                error = {"account": "This account is inactive."}
-                return Response(content=error, headers=headers, status=status.HTTP_400_BAD_REQUEST)
-
-            try:
-                old_password = self.CONTENT['old_password']
-            except KeyError:
-                error = {"old_password": "Missing old password."}
-                return Response(content=error, headers=headers, status=status.HTTP_400_BAD_REQUEST)
-
-            try:
-                new_password = self.CONTENT['new_password']
-            except KeyError:
-                error = {"new_password": "Missing new password."}
-                return Response(content=error, headers=headers, status=status.HTTP_400_BAD_REQUEST)
-
-            result = account.change_password(old_password, new_password)
-
-        elif action == 'reset_password':
-            if account.status != 'active':
-                error = {"account": "This account is inactive."}
-                return Response(content=error, headers=headers, status=status.HTTP_400_BAD_REQUEST)
-
-            try:
-                code = self.CONTENT['code']
-            except KeyError:
-                error = {"code": "Missing code."}
-                return Response(content=error, headers=headers, status=status.HTTP_400_BAD_REQUEST)
-
-            try:
-                password = self.CONTENT['password']
-            except KeyError:
-                error = {"password": "Missing new password."}
-                return Response(content=error, headers=headers, status=status.HTTP_400_BAD_REQUEST)
-
-            result = account.reset_password(code, password)
-            if not isinstance(result, dict):
-              user = authenticate(username=account.user.username, password=password)
-              login(request, user)
-
-        else:
-            if account.status != 'active':
-                error = {"account": "This account is inactive."}
-                return Response(content=error, headers=headers, status=status.HTTP_400_BAD_REQUEST)
-
-            result = account.update_account(self.CONTENT)
-
-        if isinstance(result, dict):
-            return Response(content=result, headers=headers, status=status.HTTP_400_BAD_REQUEST)
-
-        return Response(content=account.record_to_dictionary(), headers=headers, status=status.HTTP_200_OK)
-
-class ContactManager(View):
-    """
-    Handles HTTP requests to endpoint URL/api/contacts/ with optional querystring
-    Allow: PUT, POST
-    """
-    def put(self, request):
-        #################
-        # Setup
-        #################
-
-        headers = {
-            "Content-Type": "application/json",
-            "Allow": "POST",
-        }
-
-        try:
-            request.session["_auth_user_id"]
-        except KeyError:
-            return Response(status=status.HTTP_401_UNAUTHORIZED)
-
-        #################
-        # Validation
-        #################
-
-        errors = {"header_request_method": "This endpoint only supports POST requests."}
-        return Response(content=errors, headers=headers, status=status.HTTP_405_METHOD_NOT_ALLOWED)
-
-    def delete(self, request):
-        #################
-        # Setup
-        #################
-
-        headers = {
-            "Content-Type": "application/json",
-            "Allow": "POST",
-        }
-
-        try:
-            request.session["_auth_user_id"]
-        except KeyError:
-            return Response(status=status.HTTP_401_UNAUTHORIZED)
-
-        #################
-        # Validation
-        #################
-
-        errors = {"header_request_method": "This endpoint only supports POST requests."}
-        return Response(content=errors, headers=headers, status=status.HTTP_405_METHOD_NOT_ALLOWED)
-
-    def get(self, request):
-        #################
-        # Setup
-        #################
-
-        headers = {
-            "Content-Type": "application/json",
-            "Allow": "POST",
-        }
-
-        try:
-            account_id = int(request.session["_auth_user_id"])
-        except KeyError:
-            return Response(status=status.HTTP_401_UNAUTHORIZED)
-
-        try:
-            account = Account.objects.get(user_id=account_id)
-        except Account.DoesNotExist:
-            return Response(status=status.HTTP_401_UNAUTHORIZED)
-          
-        if account.type is not 'administrator':
-            return Response(status=status.HTTP_401_UNAUTHORIZED)
-
-        #################
-        # Operation
-        #################
-        
-        try:
-            contacts = Contact.objects.all()
-        except Contact.DoesNotExist:
-            contacts = []
-
-        contact_list = [contact.record_to_dictionary() for contact in contacts]
-        return Response(content=contact_list, headers=headers, status=status.HTTP_200_OK)
-
-    def post(self, request):
-        #################
-        # Setup
-        #################
-
-        headers = {
-            "Content-Type": "application/json",
-            "Allow": "POST",
-        }
-
-        # Check content-type header
-        if not self.content_type.startswith('application/json'):
-            errors = {"header_content_type": "Content-Type must be 'application/json'. Your Content-Type is " + str(self.content_type)}
-            return Response(content=errors, headers=headers, status=status.HTTP_400_BAD_REQUEST)
-
-        try:
-            account_id = int(request.session["_auth_user_id"])
-        except KeyError:
-            pass
-        else:
-            try:
-                account = Account.objects.get(user_id=account_id)
-            except Account.DoesNotExist:
-                account = None
-
-        contact = Contact.create_record(account, self.CONTENT)
-        if not isinstance(contact, Contact):
-            return Response(content=contact, headers=headers, status=status.HTTP_400_BAD_REQUEST)
-
-        return Response(content=contact.record_to_dictionary(), headers=headers, status=status.HTTP_200_OK)
-
-class ContactEditor(View):
-    """
-    Handles HTTP requests to endpoint URL/api/contacts/:contact_id/ with optional querystring
-    Allow: GET, PUT, DELETE
-    """
-    def post(self, request, contact_id):
-        #################
-        # Setup
-        #################
-
-        headers = {
-            "Content-Type": "application/json",
-            "Allow": "",
-        }
-
-        #################
-        # Validation
-        #################
-
-        try:
-            account_id = int(request.session["_auth_user_id"])
-        except KeyError:
-            return Response(status=status.HTTP_401_UNAUTHORIZED)
-
-        try:
-            account = Account.objects.get(user_id=account_id)
-        except Account.DoesNotExist:
-            return Response(status=status.HTTP_401_UNAUTHORIZED)
-          
-        if account.type is not 'administrator':
-            return Response(status=status.HTTP_401_UNAUTHORIZED)
-
-        errors = {"header_request_method": "This endpoint only supports GET, PUT and DELETE requests."}
-        return Response(content=errors, headers=headers, status=status.HTTP_405_METHOD_NOT_ALLOWED)
-
-    def delete(self, request, contact_id):
-        #################
-        # Setup
-        #################
-
-        headers = {
-            "Content-Type": "application/json",
-            "Allow": "",
-        }
-
-        query_dict = dict([(k,v) for k,v in request.GET.iteritems()])
-
-        #################
-        # Validation
-        #################
-
-        try:
-            account_id = int(request.session["_auth_user_id"])
-        except KeyError:
-            return Response(status=status.HTTP_401_UNAUTHORIZED)
-
-        try:
-            account = Account.objects.get(user_id=account_id)
-        except Account.DoesNotExist:
-            return Response(status=status.HTTP_401_UNAUTHORIZED)
-          
-        if account.type is not 'administrator':
-            return Response(status=status.HTTP_401_UNAUTHORIZED)
-
-        #################
-        # Operation
-        #################
-
-        errors = {"header_request_method": "This endpoint only supports GET and PUT requests."}
-        return Response(content=errors, headers=headers, status=status.HTTP_405_METHOD_NOT_ALLOWED)
-
-    def get(self, request, contact_id):
-        #################
-        # Setup
-        #################
-
-        headers = {
-            "Content-Type": "application/json",
-            "Allow": "GET, PUT, DELETE",
-        }
-
-        query_dict = dict([(k,v) for k,v in request.GET.iteritems()])
-
-        #################
-        # Validation
-        #################
-
-        try:
-            account_id = int(request.session["_auth_user_id"])
-        except KeyError:
-            return Response(status=status.HTTP_401_UNAUTHORIZED)
-
-        try:
-            account = Account.objects.get(user_id=account_id)
-        except Account.DoesNotExist:
-            return Response(status=status.HTTP_401_UNAUTHORIZED)
-          
-        if account.type is not 'administrator':
-            return Response(status=status.HTTP_401_UNAUTHORIZED)
-
-        #################
-        # Operation
-        #################
-        
-        try:
-            contact = Contact.objects.get(id=int(contact_id))
-        except Contact.DoesNotExist:
-            errors = {"contact_id": "Invalid contact ID."}
-            return Response(content=errors, headers=headers, status=status.HTTP_404_NOT_FOUND)
-
-        return Response(content=contact.record_to_dictionary(), headers=headers, status=status.HTTP_200_OK)
-
-    def put(self, request, contact_id):
-        #################
-        # Setup
-        #################
-
-        headers = {
-            "Content-Type": "application/json",
-            "Allow": "",
-        }
-
-        #################
-        # Validation
-        #################
-
-        try:
-            account_id = int(request.session["_auth_user_id"])
-        except KeyError:
-            return Response(status=status.HTTP_401_UNAUTHORIZED)
-
-        try:
-            account = Account.objects.get(user_id=account_id)
-        except Account.DoesNotExist:
-            return Response(status=status.HTTP_401_UNAUTHORIZED)
-          
-        if account.type is not 'administrator':
-            return Response(status=status.HTTP_401_UNAUTHORIZED)
-
-        # Check content-type header
-        if not self.content_type.startswith('application/json'):
-            errors = {"header_content_type": "Content-Type must be 'application/json'. Your Content-Type is " + str(self.content_type)}
-            return Response(content=errors, headers=headers, status=status.HTTP_400_BAD_REQUEST)
-
-        #################
-        # Operation
-        #################
-
-        try:
-            contact = Contact.objects.get(id=int(contact_id))
-        except Contact.DoesNotExist:
-            errors = {"contact_id": "Invalid contact ID."}
-            return Response(content=errors, headers=headers, status=status.HTTP_404_NOT_FOUND)
-
-        result = contact.update_record(self.CONTENT)
-        if isinstance(result, dict):
-            return Response(content=result, headers=headers, status=status.HTTP_400_BAD_REQUEST)
-
-        return Response(content=contact.record_to_dictionary(), headers=headers, status=status.HTTP_200_OK)
+    contact = Contact.create_record(account, request.DATA)
+    if not isinstance(contact, Contact):
+        return Response(data=contact, status=status.HTTP_400_BAD_REQUEST)
+    
+    return Response(data=contact.read_record(), status=status.HTTP_200_OK)
+
+class ContactEditor(APIView):
+  """
+  Handles HTTP requests to endpoint URL/api/contacts/:contact_id/ with optional querystring
+  Allow: GET, PUT
+  """
+  def get(self, request, contact_id):
+    if not request.user.is_authenticated() or request.user.account.type != 'administrator':
+      return Response(status=status.HTTP_401_UNAUTHORIZED)
+
+    try:
+      contact = Contact.objects.get(id=int(contact_id))
+    except Contact.DoesNotExist:
+      errors = {"contact_id": "Invalid contact ID."}
+      return Response(data=errors, status=status.HTTP_404_NOT_FOUND)
+
+    return Response(data=contact.read_record(), status=status.HTTP_200_OK)
+
+  def put(self, request, contact_id):
+    if not request.user.is_authenticated() or request.user.account.type != 'administrator':
+      return Response(status=status.HTTP_401_UNAUTHORIZED)
+    
+    try:
+      contact = Contact.objects.get(id=int(contact_id))
+    except Contact.DoesNotExist:
+      errors = {"contact_id": "Invalid contact ID."}
+      return Response(data=errors, status=status.HTTP_404_NOT_FOUND)
+    
+    result = contact.update_record(request.DATA)
+    if isinstance(result, dict):
+      return Response(data=result, status=status.HTTP_400_BAD_REQUEST)
+    
+    return Response(data=contact.read_record(), status=status.HTTP_200_OK)
 

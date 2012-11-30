@@ -3,11 +3,11 @@ from django.contrib.auth.models import User
 from utilities import *
 from django.contrib.auth import authenticate
 from django.conf import settings
-import re, uuid
+import re, uuid, stripe
 from django.template.loader import render_to_string
 
 class Account(models.Model):
-  user = models.OneToOneField(User)
+  user = models.OneToOneField(User, related_name='account', primary_key=True)
   first_name = models.CharField(max_length=50)
   last_name = models.CharField(max_length=50)
   email = models.EmailField(max_length=128)
@@ -17,9 +17,9 @@ class Account(models.Model):
   date_created = models.DateTimeField(auto_now_add=True)
 
   statuses = ['pending', 'active', 'terminated']
-  types = ['standard', 'administrator']
+  types = ['user', 'administrator']
   
-  def record_to_dictionary(self, children=True):
+  def read_record(self):
     return {
       "id": self.user_id,
       "first_name": self.first_name,
@@ -72,7 +72,7 @@ class Account(models.Model):
     if code is not None and code in settings.ADMIN_CODES:
       type = settings.ADMIN_CODES[code]
     else:
-      type = 'standard'
+      type = 'user'
 
     account = cls(
       user=user,
@@ -93,7 +93,16 @@ class Account(models.Model):
     )
     ar.save()
 
-    AccountEmail.create_and_send(account, 'account-created', request=ar)
+    AccountEmail.create_and_send({
+      "recipient": account.email,
+      "subject": "Verify your email address",
+      "template": "account-created",
+      "context": {
+        "account_id": account.user_id,
+        "code": ar.code,
+      }
+    })
+    
     return account
 
   @classmethod
@@ -131,7 +140,16 @@ class Account(models.Model):
     )
     ar.save()
 
-    AccountEmail.create_and_send(account, 'invitation-account-created', request=ar)
+    AccountEmail.create_and_send({
+      "recipient": account.email,
+      "subject": "Verify your invitation",
+      "template": "invitation-account-created",
+      "context": {
+        "account_id": account.user_id,
+        "code": ar.code,
+      }
+    })
+    
     return account
 
   def verify_email(self, code):
@@ -153,7 +171,6 @@ class Account(models.Model):
 
     self.save()
 
-    AccountEmail.create_and_send(self, 'email-verified', request=ar)
     return True
 
   def verify_invitation(self, code, password):
@@ -173,7 +190,6 @@ class Account(models.Model):
     user.set_password(password)
     user.save()
 
-    AccountEmail.create_and_send(self, 'invitation-verified', request=ar)
     return True
 
   def request_email_change(self, password, email):
@@ -199,7 +215,16 @@ class Account(models.Model):
     )
     ar.save()
 
-    AccountEmail.create_and_send(self, 'email-change-requested', request=ar)
+    AccountEmail.create_and_send({
+      "recipient": self.email,
+      "subject": "Verify your email address",
+      "template": "email-change-requested",
+      "context": {
+        "account_id": self.id,
+        "code": ar.code,
+      }
+    })
+    
     return True
 
   @classmethod
@@ -217,7 +242,16 @@ class Account(models.Model):
     )
     ar.save()
 
-    AccountEmail.create_and_send(account, 'password-reset-requested', request=ar)
+    AccountEmail.create_and_send({
+      "recipient": account.email,
+      "subject": "Set a new password",
+      "template": "password-reset-requested",
+      "context": {
+        "account_id": account.user_id,
+        "code": ar.code,
+      }
+    })
+    
     return True
 
   def reset_password(self, code, password):
@@ -293,85 +327,35 @@ class AccountEmail(models.Model):
   statuses = ['pending', 'sent']
   
   @classmethod
-  def create_and_send(cls, account, action, request=None, project=None):
-    email = cls.create_email(account, action, request=request, project=project)
+  def create_and_send(cls, data_dict):
+    email = cls.create_email(data_dict)
     if isinstance(email, AccountEmail) and settings.ENVIRONMENT != 'local':
       email.send()
     return email
 
   @classmethod
-  def create_email(cls, account, action, request=None, project=None):
-    if action == 'contact-created':
-      contact = account
-      recipient = contact.reply_to
-      subject = "Reciept of your contact"
-    
-    elif action == 'account-created' and request is not None:
-      recipient = account.email
-      subject = "Verify your email address"
-
-    elif action == 'invitation-account-created' and request is not None:
-      recipient = account.email
-      subject = "Verify your invitation"
-
-    elif action == 'email-change-requested':
-      recipient = account.email
-      subject = "Verify your email address"
-
-    elif action == 'password-reset-requested':
-      recipient = account.email
-      subject = "Set a new password"
-
-    elif action == 'project-started':
-      recipient = account.email
-      subject = "Your Project has been Started"
-
-    elif action == 'client-enabled':
-      recipient = account.email
-      subject = "Your Project has been Enabled for Clients"
-
-    else:
-      return False
-    
+  def create_email(cls, data_dict):
     sender = settings.EMAIL_HOST_USER
 
-    context = {
+    context = dict({
       "url": settings.BASE_URL,
-      "subject": subject,
+      "subject": data_dict['subject'],
       "site_name": settings.SITE_NAME,
-    }
+    }, **data_dict['context'])
     
-    if action == 'contact-created':
-      context['reply_to'] = contact.reply_to
-      context['subject'] = contact.subject
-      context['message'] = contact.message
-      
-    else:
-      context['account_id'] = account.id
-    
-    if request is not None:
-      context['code'] = request.code
-    
-    if project is not None:
-      context['project_title'] = project.title
-    
-    html = render_to_string(action + '.html', context)
-    text = render_to_string(action + '.txt', context)
+    html = render_to_string(data_dict['template'] + '.html', context)
+    text = render_to_string(data_dict['template'] + '.txt', context)
     
     email_dictionary = {
       "sender": sender,
-      "recipient": recipient,
-      "subject": subject,
+      "recipient": data_dict['recipient'],
+      "subject": data_dict['subject'],
       "html": html,
       "text": text,
     }
     
-    if action == 'contact-created':
-      if contact.account is not None:
-        email_dictionary['account'] = contact.account
-      
-    else:
-      email_dictionary['account'] = account
+    if 'account' in data_dict:
+      email_dictionary['account'] = data_dict['account']
 
     email = cls(**email_dictionary)
     email.save()
@@ -407,10 +391,15 @@ class Contact(models.Model):
   
   statuses = ['pending', 'complete', 'archived']
   
-  def record_to_dictionary(self):
+  def read_record(self):
+    if self.account is None:
+      account_id = None
+    else:
+      account_id = self.account.user_id
+      
     return {
       "id": self.id,
-      "account_id": self.account_id,
+      "account_id": account_id,
       "reply_to": self.reply_to,
       "subject": self.subject,
       "message": self.message,
@@ -459,7 +448,69 @@ class Contact(models.Model):
     contact.save()
     
     AccountEmail.create_and_send(contact, 'contact-created')
+    AccountEmail.create_and_send({
+      "account": contact.account,
+      "recipient": contact.reply_to,
+      "subject": "Receipt of your contact",
+      "template": "contact-created",
+      "context": {
+        "reply_to": contact.reply_to,
+        "subject": contact.subject,
+        "message": contact.message,
+      }
+    })
+    
     return contact
 
-
-
+class Subscription(models.Model):
+  account = models.ForeignKey(Account)
+  customer_id = models.CharField(max_length=100)
+  subscription_id = models.CharField(max_length=100)
+  plan = models.CharField(max_length=20)
+  status = models.CharField(max_length=20)
+  date_updated = models.DateTimeField(auto_now=True)
+  date_created = models.DateTimeField(auto_now_add=True)
+  
+  plans = ['startup', 'freelancer', 'agency']
+  statuses = ['paid', 'unpaid']
+  
+  @classmethod
+  def create_record(cls, account, plan, stripe_token):
+    if plan not in cls.plans:
+      return {"plan": "Invalid plan."}
+    
+    # Set it up with Stripe
+    customer = stripe.Customer.create(
+      card=stripe_token,
+      plan=plan,
+      email=account.email
+    )
+    
+    record = cls(
+      account=account,
+      plan=plan,
+      customer_id=customer['id']
+    )
+    record.save()
+    
+    return record
+  
+  def read_record(self):
+    return {
+      "account_id": self.account.user_id,
+      "plan": self.plan,
+      "date_updated": self.date_updated,
+      "date_created": self.date_created,
+    }
+  
+  def update_record(self, plan):
+    if plan not in self.__class__.plans:
+      return {"plan": "Invalid plan."}
+    
+    if self.plan != plan:
+      self.plan = plan
+      self.save()
+      
+      # Set it up with Stripe
+    
+    return self

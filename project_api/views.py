@@ -1,1127 +1,160 @@
-from djangorestframework.views import View
-from djangorestframework.response import Response
-from djangorestframework import status
-from project_api.models import Project, RequirementGroup, Requirement, Permission
+from rest_framework.views import APIView
+from rest_framework.response import Response
+from rest_framework import status
+from project_api.models import Project, RequirementGroup, Requirement, Permission, ProjectAsset, ProjectFile
 from account_api.models import Account
 from django.conf import settings
-import datetime, json
 
-class ProjectManager(View):
+
+class ProjectManager(APIView):
   """
   Handles HTTP requests to endpoint URL/api/projects/ with optional querystring
-  Allow: GET, POST
   """
-  def put(self, request):
-    #################
-    # Setup
-    #################
-
-    headers = {
-      "Content-Type": "application/json",
-      "Allow": "GET, POST",
-    }
-
-    #################
-    # Validation
-    #################
-
-    try:
-      request.session["_auth_user_id"]
-    except KeyError:
-      return Response(status=status.HTTP_401_UNAUTHORIZED)
-
-    errors = {"header_request_method": "This endpoint only supports GET and POST requests."}
-    return Response(content=errors, headers=headers, status=status.HTTP_405_METHOD_NOT_ALLOWED)
-
-  def delete(self, request):
-    #################
-    # Setup
-    #################
-
-    headers = {
-      "Content-Type": "application/json",
-      "Allow": "GET, POST",
-    }
-
-    #################
-    # Validation
-    #################
-
-    try:
-      request.session["_auth_user_id"]
-    except KeyError:
-      return Response(status=status.HTTP_401_UNAUTHORIZED)
-
-    errors = {"header_request_method": "This endpoint only supports GET and POST requests."}
-    return Response(content=errors, headers=headers, status=status.HTTP_405_METHOD_NOT_ALLOWED)
-
   def get(self, request):
-    #################
-    # Setup
-    #################
-
-    headers = {
-      "Content-Type": "application/json",
-      "Allow": "GET, POST",
-    }
-
-    query_dict = dict([(k,v) for k,v in request.GET.iteritems()])
-
-    #################
-    # Validation
-    #################
-
-    try:
-      account_id = int(request.session["_auth_user_id"])
-    except KeyError:
+    if not request.user.is_authenticated():
       return Response(status=status.HTTP_401_UNAUTHORIZED)
-
-    try:
-      account = Account.objects.get(user_id=account_id)
-    except Account.DoesNotExist:
-      errors = {"account_id": "Invalid account ID."}
-      return Response(content=errors, headers=headers, status=status.HTTP_404_NOT_FOUND)
-
-    # No content-type to check, because there's no payload
-
-    #################
-    # Operation
-    #################
+    
+    account = request.user.account
 
     try:
       permissions = Permission.objects.filter(account=account)
     except Permission.DoesNotExist:
       errors = {"permission": "Invalid permissions."}
-      return Response(content=errors, headers=headers, status=status.HTTP_400_BAD_REQUEST)
+      return Response(data=errors, status=status.HTTP_400_BAD_REQUEST)
 
-    project_list = [perm.project.record_to_dictionary(account=account, children=False) for perm in permissions]
-
-    return Response(content=project_list, headers=headers, status=status.HTTP_200_OK)
+    project_list = [permission.project.read_record(permission=permission) for permission in permissions]
+    return Response(data=project_list, status=status.HTTP_200_OK)
 
   def post(self, request):
-    #################
-    # Setup
-    #################
-
-    headers = {
-      "Content-Type": "application/json",
-      "Allow": "GET, POST",
-    }
-
-    #################
-    # Validation
-    #################
-
-    try:
-      account_id = int(request.session["_auth_user_id"])
-    except KeyError:
+    if not request.user.is_authenticated():
       return Response(status=status.HTTP_401_UNAUTHORIZED)
-
-    try:
-      account = Account.objects.get(user_id=account_id)
-    except Account.DoesNotExist:
-      errors = {"account_id": "Invalid account ID."}
-      return Response(content=errors, headers=headers, status=status.HTTP_404_NOT_FOUND)
-
-    # Check content-type header
-    if not self.content_type.startswith('application/json'):
-      errors = {"header_content_type": "Content-Type must be 'application/json'. Your Content-Type is " + str(self.content_type)}
-      return Response(content=errors, headers=headers, status=status.HTTP_400_BAD_REQUEST)
-
-    #################
-    # Operation
-    #################
-
-    project = Project.create_record(account, self.CONTENT)
-    if not isinstance(project, Project):
-      # HTTP status 422: Unprocessable Entity (WebDAV; RFC 4918)
-      return Response(content=project, headers=headers, status=422)
     
-    return Response(content=project.record_to_dictionary(account=account), headers=headers, status=status.HTTP_200_OK)
+    account = request.user.account
 
-class ProjectEditor(View):
+    project = Project.create_record(account, request.DATA)
+    if not isinstance(project, Project):
+      return Response(data=project, status=status.HTTP_400_BAD_REQUEST)
+    
+    try:
+      permission = Permission.objects.get(account=account, project=project)
+    except Permission.DoesNotExist:
+      errors = {"permission": "Failed to create permission."}
+      return Response(data=errors, status=status.HTTP_400_BAD_REQUEST)
+    
+    return Response(data=project.read_record(permission=permission), status=status.HTTP_200_OK)
+
+
+class ProjectEditor(APIView):
   """
   Handles HTTP requests to endpoint URL/api/projects/:project_id/ with optional querystring
-  Allow: GET, PUT, DELETE
   """
-  def post(self, request, project_id):
-    #################
-    # Setup
-    #################
-
-    headers = {
-      "Content-Type": "application/json",
-      "Allow": "GET, PUT, DELETE",
-    }
-
-    #################
-    # Validation
-    #################
-
-    try:
-      request.session["_auth_user_id"]
-    except KeyError:
-      return Response(status=status.HTTP_401_UNAUTHORIZED)
-
-    errors = {"header_request_method": "This endpoint only supports GET, PUT and DELETE requests."}
-    return Response(content=errors, headers=headers, status=status.HTTP_405_METHOD_NOT_ALLOWED)
-
   def delete(self, request, project_id):
-    #################
-    # Setup
-    #################
-
-    headers = {
-      "Content-Type": "application/json",
-      "Allow": "GET, PUT, DELETE",
-    }
-
-    #################
-    # Validation
-    #################
-
-    try:
-      account_id = int(request.session["_auth_user_id"])
-    except KeyError:
+    if not request.user.is_authenticated():
       return Response(status=status.HTTP_401_UNAUTHORIZED)
-
-    try:
-      account = Account.objects.get(user_id=account_id)
-    except Account.DoesNotExist:
-      errors = {"account_id": "Invalid account ID."}
-      return Response(content=errors, headers=headers, status=status.HTTP_404_NOT_FOUND)
-
+    
+    account = request.user.account
+    
     # test if id is a valid project identifier
     try:
       p = Project.objects.get(id=int(project_id), account=account)
     except Project.DoesNotExist:
       errors = {"id": "Invalid project ID."}
-      return Response(content=errors, headers=headers, status=status.HTTP_404_NOT_FOUND)
-
-    #################
-    # Operation
-    #################
-
-    result = p.delete_record(account)
-    if isinstance(result, dict):
-      return Response(content=result, headers=headers, status=status.HTTP_400_BAD_REQUEST)
+      return Response(data=errors, status=status.HTTP_404_NOT_FOUND)
     
-    return Response(content={}, headers=headers, status=status.HTTP_200_OK)
+    try:
+      permission = Permission.objects.get(account=account, project=project)
+    except Permission.DoesNotExist:
+      errors = {"permission": "Invalid permission."}
+      return Response(data=errors, status=status.HTTP_404_NOT_FOUND)
+
+    result = p.delete_record(permission)
+    if isinstance(result, dict):
+      return Response(data=result, status=status.HTTP_400_BAD_REQUEST)
+    
+    return Response(status=status.HTTP_204_NO_CONTENT)
 
   def get(self, request, project_id):
-    #################
-    # Setup
-    #################
-
-    headers = {
-      "Content-Type": "application/json",
-      "Allow": "GET, PUT, DELETE",
-    }
-
-    query_dict = dict([(k,v) for k,v in request.GET.iteritems()])
-
-    #################
-    # Validation
-    #################
-
-    try:
-      account_id = int(request.session["_auth_user_id"])
-    except KeyError:
+    if not request.user.is_authenticated():
       return Response(status=status.HTTP_401_UNAUTHORIZED)
-
+    
+    account = request.user.account
+    
     try:
-      account = Account.objects.get(user_id=account_id)
-    except Account.DoesNotExist:
-      errors = {"account_id": "Invalid account ID."}
-      return Response(content=errors, headers=headers, status=status.HTTP_404_NOT_FOUND)
-
-    try:
-      permissions = Permission.objects.get(account=account, project_id=int(project_id))
+      permission = Permission.objects.get(account=account, project_id=int(project_id))
     except Permission.DoesNotExist:
       errors = {"permission": "Invalid permissions."}
-      return Response(content=errors, headers=headers, status=status.HTTP_400_BAD_REQUEST)
-
-    #################
-    # Operation
-    #################
-
-    return Response(content=permissions.project.record_to_dictionary(account=account, children=False), headers=headers, status=status.HTTP_200_OK)
+      return Response(data=errors, status=status.HTTP_400_BAD_REQUEST)
+    else:
+      return Response(data=permission.project.read_record(permission=permission), status=status.HTTP_200_OK)
 
   def put(self, request, project_id):
-    #################
-    # Setup
-    #################
-
-    headers = {
-      "Content-Type": "application/json",
-      "Allow": "GET, PUT, DELETE",
-    }
-
-    #################
-    # Validation
-    #################
-
-    try:
-      account_id = int(request.session["_auth_user_id"])
-    except KeyError:
+    if not request.user.is_authenticated():
       return Response(status=status.HTTP_401_UNAUTHORIZED)
-
-    # Check content-type header
-    if not self.content_type.startswith('application/json'):
-      errors = {"header_content_type": "Content-Type must be 'application/json'. Your Content-Type is " + str(self.content_type)}
-      return Response(content=errors, headers=headers, status=status.HTTP_400_BAD_REQUEST)
+    
+    account = request.user.account
 
     try:
-      account = Account.objects.get(user_id=account_id)
-    except Account.DoesNotExist:
-      errors = {"account_id": "Invalid account ID."}
-      return Response(content=errors, headers=headers, status=status.HTTP_404_NOT_FOUND)
-
-    try:
-      project = Project.objects.get(id=project_id)
+      project = Project.objects.get(id=int(project_id))
     except Project.DoesNotExist:
       errors = {"project_id": "Invalid project ID."}
-      return Response(content=errors, headers=headers, status=status.HTTP_404_NOT_FOUND)
+      return Response(data=errors, status=status.HTTP_404_NOT_FOUND)
     
-    try:
-      permission = Permission.objects.get(
-        account=account,
-        project=project,
-        permission__in=([Permission.permissions[0]] + [Permission.permissions[-1]])
-      )
-    except Permission.DoesNotExist:
-      errors = {"permission": "Invalid permissions."}
-      return Response(content=errors, headers=headers, status=status.HTTP_400_BAD_REQUEST)
-
-    #################
-    # Operation
-    #################
-
-    project = project.update_record(permission, self.CONTENT)
-    if not project or not isinstance(project, Project):
-      # HTTP status 422: Unprocessable Entity (WebDAV; RFC 4918)
-      return Response(content=project, headers=headers, status=422)
-    
-    return Response(content=project.record_to_dictionary(account=account), headers=headers, status=status.HTTP_200_OK)
-
-class GroupManager(View):
-  """
-  Handles HTTP requests to endpoint URL/api/groups/ with optional querystring
-  Allow: GET, POST
-  """
-  def put(self, request):
-    #################
-    # Setup
-    #################
-
-    headers = {
-      "Content-Type": "application/json",
-      "Allow": "GET, POST",
-    }
-
-    #################
-    # Validation
-    #################
-
-    try:
-      request.session["_auth_user_id"]
-    except KeyError:
-      return Response(status=status.HTTP_401_UNAUTHORIZED)
-
-    errors = {"header_request_method": "This endpoint only supports GET and POST requests."}
-    return Response(content=errors, headers=headers, status=status.HTTP_405_METHOD_NOT_ALLOWED)
-
-  def delete(self, request):
-    #################
-    # Setup
-    #################
-
-    headers = {
-      "Content-Type": "application/json",
-      "Allow": "GET, POST",
-    }
-
-    #################
-    # Validation
-    #################
-
-    try:
-      request.session["_auth_user_id"]
-    except KeyError:
-      return Response(status=status.HTTP_401_UNAUTHORIZED)
-
-    errors = {"header_request_method": "This endpoint only supports GET and POST requests."}
-    return Response(content=errors, headers=headers, status=status.HTTP_405_METHOD_NOT_ALLOWED)
-
-  def get(self, request):
-    #################
-    # Setup
-    #################
-
-    headers = {
-      "Content-Type": "application/json",
-      "Allow": "GET, POST",
-    }
-
-    query_dict = dict([(k,v) for k,v in request.GET.iteritems()])
-
-    #################
-    # Validation
-    #################
-
-    try:
-      account_id = int(request.session["_auth_user_id"])
-    except KeyError:
-      return Response(status=status.HTTP_401_UNAUTHORIZED)
-
-    try:
-      account = Account.objects.get(user_id=account_id)
-    except Account.DoesNotExist:
-      errors = {"account_id": "Invalid account ID."}
-      return Response(content=errors, headers=headers, status=status.HTTP_404_NOT_FOUND)
-
-    # No content-type to check, because there's no payload
-
-    #################
-    # Operation
-    #################
-    
-    try:
-      groups = RequirementGroup.objects.filter(project__permission__account=account)
-    except RequirementGroup.DoesNotExist:
-      groups = []
-
-    groups_list = [group.record_to_dictionary() for group in groups]
-
-    return Response(content=groups_list, headers=headers, status=status.HTTP_200_OK)
-
-  def post(self, request):
-    #################
-    # Setup
-    #################
-
-    headers = {
-      "Content-Type": "application/json",
-      "Allow": "GET, POST",
-    }
-
-    #################
-    # Validation
-    #################
-
-    try:
-      account_id = int(request.session["_auth_user_id"])
-    except KeyError:
-      return Response(status=status.HTTP_401_UNAUTHORIZED)
-
-    # Check content-type header
-    if not self.content_type.startswith('application/json'):
-      errors = {"header_content_type": "Content-Type must be 'application/json'. Your Content-Type is " + str(self.content_type)}
-      return Response(content=errors, headers=headers, status=status.HTTP_400_BAD_REQUEST)
-
-    try:
-      account = Account.objects.get(user_id=account_id)
-    except Account.DoesNotExist:
-      errors = {"account_id": "Invalid account ID."}
-      return Response(content=errors, headers=headers, status=status.HTTP_404_NOT_FOUND)
-
-    #################
-    # Operation
-    #################
-    
-    try:
-      project_id = int(self.CONTENT["project_id"])
-    except KeyError:
-      errors = {"project_id": "Missing project ID."}
-      return Response(content=errors, headers=headers, status=status.HTTP_404_NOT_FOUND)
-    
-    try:
-      project = Project.objects.get(id=project_id)
-    except Project.DoesNotExist:
-      errors = {"project_id": "Invalid project ID."}
-      return Response(content=errors, headers=headers, status=status.HTTP_404_NOT_FOUND)
-    
-    if project.status == Project.statuses[2]:
-      errors = {"project": "Project is locked."}
-      return Response(content=errors, headers=headers, status=status.HTTP_400_BAD_REQUEST)
-      
     try:
       permission = Permission.objects.get(account=account, project=project)
     except Permission.DoesNotExist:
       errors = {"permission": "Invalid permissions."}
-      return Response(content=errors, headers=headers, status=status.HTTP_400_BAD_REQUEST)
+      return Response(data=errors, status=status.HTTP_400_BAD_REQUEST)
 
-    group = RequirementGroup.create_record(permission, project, self.CONTENT)
-    if not isinstance(group, RequirementGroup):
-      # HTTP status 422: Unprocessable Entity (WebDAV; RFC 4918)
-      return Response(content=group, headers=headers, status=422)
+    project = project.update_record(permission, request.DATA)
+    if not project or not isinstance(project, Project):
+      return Response(data=project, status=status.HTTP_400_BAD_REQUEST)
     
-    return Response(content=group.record_to_dictionary(), headers=headers, status=status.HTTP_200_OK)
+    return Response(data=project.read_record(permission=permission), status=status.HTTP_200_OK)
 
-class GroupEditor(View):
-  """
-  Handles HTTP requests to endpoint URL/api/groups/:group_id/ with optional querystring
-  Allow: GET, PUT, DELETE
-  """
-  def post(self, request, group_id):
-    #################
-    # Setup
-    #################
 
-    headers = {
-      "Content-Type": "application/json",
-      "Allow": "GET, PUT, DELETE",
-    }
-
-    #################
-    # Validation
-    #################
-
-    try:
-      request.session["_auth_user_id"]
-    except KeyError:
-      return Response(status=status.HTTP_401_UNAUTHORIZED)
-
-    errors = {"header_request_method": "This endpoint only supports GET, PUT and DELETE requests."}
-    return Response(content=errors, headers=headers, status=status.HTTP_405_METHOD_NOT_ALLOWED)
-
-  def delete(self, request, group_id):
-    #################
-    # Setup
-    #################
-
-    headers = {
-      "Content-Type": "application/json",
-      "Allow": "GET, PUT, DELETE",
-    }
-
-    #################
-    # Validation
-    #################
-
-    try:
-      account_id = int(request.session["_auth_user_id"])
-    except KeyError:
-      return Response(status=status.HTTP_401_UNAUTHORIZED)
-
-    try:
-      account = Account.objects.get(user_id=account_id)
-    except Account.DoesNotExist:
-      errors = {"account_id": "Invalid account ID."}
-      return Response(content=errors, headers=headers, status=status.HTTP_404_NOT_FOUND)
-
-    try:
-      group = RequirementGroup.objects.get(id=int(group_id))
-    except RequirementGroup.DoesNotExist:
-      errors = {"id": "Invalid group ID."}
-      return Response(content=errors, headers=headers, status=status.HTTP_404_NOT_FOUND)
-    
-    if group.project.status == Project.statuses[2]:
-      errors = {"project": "Project is locked."}
-      return Response(content=errors, headers=headers, status=status.HTTP_400_BAD_REQUEST)
-
-    try:
-      permission = Permission.objects.get(account=account, project=group.project)
-    except Permission.DoesNotExist:
-      errors = {"permission": "Invalid permissions."}
-      return Response(content=errors, headers=headers, status=status.HTTP_400_BAD_REQUEST)
-
-    #################
-    # Operation
-    #################
-
-    result = group.delete_record(permission)
-    if isinstance(result, dict):
-      return Response(content=result, headers=headers, status=status.HTTP_400_BAD_REQUEST)
-    
-    return Response(content={}, headers=headers, status=status.HTTP_200_OK)
-
-  def get(self, request, group_id):
-    #################
-    # Setup
-    #################
-
-    headers = {
-      "Content-Type": "application/json",
-      "Allow": "GET, PUT, DELETE",
-    }
-
-    query_dict = dict([(k,v) for k,v in request.GET.iteritems()])
-
-    #################
-    # Validation
-    #################
-
-    try:
-      account_id = int(request.session["_auth_user_id"])
-    except KeyError:
-      return Response(status=status.HTTP_401_UNAUTHORIZED)
-
-    try:
-      account = Account.objects.get(user_id=account_id)
-    except Account.DoesNotExist:
-      errors = {"account_id": "Invalid account ID."}
-      return Response(content=errors, headers=headers, status=status.HTTP_404_NOT_FOUND)
-
-    try:
-      group = RequirementGroup.objects.get(id=int(group_id))
-    except RequirementGroup.DoesNotExist:
-      errors = {"group_id": "Invalid group ID."}
-      return Response(content=errors, headers=headers, status=status.HTTP_404_NOT_FOUND)
-
-    try:
-      permissions = Permission.objects.get(account=account, project_id=group.project)
-    except Permission.DoesNotExist:
-      errors = {"permission": "Invalid permissions."}
-      return Response(content=errors, headers=headers, status=status.HTTP_400_BAD_REQUEST)
-
-    #################
-    # Operation
-    #################
-
-    return Response(content=group.record_to_dictionary(), headers=headers, status=status.HTTP_200_OK)
-
-  def put(self, request, group_id):
-    #################
-    # Setup
-    #################
-
-    headers = {
-      "Content-Type": "application/json",
-      "Allow": "GET, PUT, DELETE",
-    }
-
-    #################
-    # Validation
-    #################
-
-    try:
-      account_id = int(request.session["_auth_user_id"])
-    except KeyError:
-      return Response(status=status.HTTP_401_UNAUTHORIZED)
-
-    # Check content-type header
-    if not self.content_type.startswith('application/json'):
-      errors = {"header_content_type": "Content-Type must be 'application/json'. Your Content-Type is " + str(self.content_type)}
-      return Response(content=errors, headers=headers, status=status.HTTP_400_BAD_REQUEST)
-
-    try:
-      account = Account.objects.get(user_id=account_id)
-    except Account.DoesNotExist:
-      errors = {"account_id": "Invalid account ID."}
-      return Response(content=errors, headers=headers, status=status.HTTP_404_NOT_FOUND)
-
-    try:
-      group = RequirementGroup.objects.get(id=int(group_id))
-    except RequirementGroup.DoesNotExist:
-      errors = {"project_id": "Invalid project ID."}
-      return Response(content=errors, headers=headers, status=status.HTTP_404_NOT_FOUND)
-    
-    if group.project.status == Project.statuses[2]:
-      errors = {"project": "Project is locked."}
-      return Response(content=errors, headers=headers, status=status.HTTP_400_BAD_REQUEST)
-    
-    try:
-      permission = Permission.objects.get(account=account, project=group.project)
-    except Permission.DoesNotExist:
-      errors = {"permission": "Invalid permissions."}
-      return Response(content=errors, headers=headers, status=status.HTTP_400_BAD_REQUEST)
-
-    #################
-    # Operation
-    #################
-
-    result = group.update_record(permission, self.CONTENT)
-    if isinstance(result, dict):
-      # HTTP status 422: Unprocessable Entity (WebDAV; RFC 4918)
-      return Response(content=result, headers=headers, status=422)
-    
-    return Response(content=result.record_to_dictionary(), headers=headers, status=status.HTTP_200_OK)
-
-class RequirementManager(View):
-  """
-  Handles HTTP requests to endpoint URL/api/requirements/ with optional querystring
-  Allow: GET, POST
-  """
-  def put(self, request):
-    #################
-    # Setup
-    #################
-
-    headers = {
-      "Content-Type": "application/json",
-      "Allow": "GET, POST",
-    }
-
-    #################
-    # Validation
-    #################
-
-    try:
-      request.session["_auth_user_id"]
-    except KeyError:
-      return Response(status=status.HTTP_401_UNAUTHORIZED)
-
-    errors = {"header_request_method": "This endpoint only supports GET and POST requests."}
-    return Response(content=errors, headers=headers, status=status.HTTP_405_METHOD_NOT_ALLOWED)
-
-  def delete(self, request):
-    #################
-    # Setup
-    #################
-
-    headers = {
-      "Content-Type": "application/json",
-      "Allow": "GET, POST",
-    }
-
-    #################
-    # Validation
-    #################
-
-    try:
-      request.session["_auth_user_id"]
-    except KeyError:
-      return Response(status=status.HTTP_401_UNAUTHORIZED)
-
-    errors = {"header_request_method": "This endpoint only supports GET and POST requests."}
-    return Response(content=errors, headers=headers, status=status.HTTP_405_METHOD_NOT_ALLOWED)
-
-  def get(self, request):
-    #################
-    # Setup
-    #################
-
-    headers = {
-      "Content-Type": "application/json",
-      "Allow": "GET, POST",
-    }
-
-    query_dict = dict([(k,v) for k,v in request.GET.iteritems()])
-
-    #################
-    # Validation
-    #################
-
-    try:
-      account_id = int(request.session["_auth_user_id"])
-    except KeyError:
-      return Response(status=status.HTTP_401_UNAUTHORIZED)
-
-    try:
-      account = Account.objects.get(user_id=account_id)
-    except Account.DoesNotExist:
-      errors = {"account_id": "Invalid account ID."}
-      return Response(content=errors, headers=headers, status=status.HTTP_404_NOT_FOUND)
-
-    # No content-type to check, because there's no payload
-
-    #################
-    # Operation
-    #################
-      
-    try:
-      reqs = Requirement.objects.filter(group__project__permission__account=account)
-    except Requirement.DoesNotExist:
-      reqs = []
-
-    req_list = [req.record_to_dictionary() for req in reqs]
-
-    return Response(content=req_list, headers=headers, status=status.HTTP_200_OK)
-
-  def post(self, request):
-    #################
-    # Setup
-    #################
-
-    headers = {
-      "Content-Type": "application/json",
-      "Allow": "GET, POST",
-    }
-
-    #################
-    # Validation
-    #################
-
-    try:
-      account_id = int(request.session["_auth_user_id"])
-    except KeyError:
-      return Response(status=status.HTTP_401_UNAUTHORIZED)
-
-    try:
-      account = Account.objects.get(user_id=account_id)
-    except Account.DoesNotExist:
-      errors = {"account_id": "Invalid account ID."}
-      return Response(content=errors, headers=headers, status=status.HTTP_404_NOT_FOUND)
-
-    # Check content-type header
-    if not self.content_type.startswith('application/json'):
-      errors = {"header_content_type": "Content-Type must be 'application/json'. Your Content-Type is " + str(self.content_type)}
-      return Response(content=errors, headers=headers, status=status.HTTP_400_BAD_REQUEST)
-
-    #################
-    # Operation
-    #################
-    
-    try:
-      group_id = int(self.CONTENT["group_id"])
-    except KeyError:
-      errors = {"group_id": "Missing group ID."}
-      return Response(content=errors, headers=headers, status=status.HTTP_404_NOT_FOUND)
-    
-    try:
-      group = RequirementGroup.objects.get(id=group_id)
-    except RequirementGroup.DoesNotExist:
-      errors = {"group_id": "Invalid group ID."}
-      return Response(content=errors, headers=headers, status=status.HTTP_404_NOT_FOUND)
-    
-    if group.project.status == Project.statuses[2]:
-      errors = {"project": "Project is locked."}
-      return Response(content=errors, headers=headers, status=status.HTTP_400_BAD_REQUEST)
-
-    try:
-      permission = Permission.objects.get(account=account, project=group.project)
-    except Permission.DoesNotExist:
-      errors = {"permission": "Invalid permissions."}
-      return Response(content=errors, headers=headers, status=status.HTTP_400_BAD_REQUEST)
-
-    req = Requirement.create_record(permission, group, self.CONTENT)
-    if not isinstance(req, Requirement):
-      # HTTP status 422: Unprocessable Entity (WebDAV; RFC 4918)
-      return Response(content=req, headers=headers, status=422)
-    
-    return Response(content=req.record_to_dictionary(), headers=headers, status=status.HTTP_200_OK)
-
-class RequirementEditor(View):
-  """
-  Handles HTTP requests to endpoint URL/api/requirements/:req_id/ with optional querystring
-  Allow: GET, PUT, DELETE
-  """
-  def post(self, request, req_id):
-    #################
-    # Setup
-    #################
-
-    headers = {
-      "Content-Type": "application/json",
-      "Allow": "GET, PUT, DELETE",
-    }
-
-    #################
-    # Validation
-    #################
-
-    try:
-      request.session["_auth_user_id"]
-    except KeyError:
-      return Response(status=status.HTTP_401_UNAUTHORIZED)
-
-    errors = {"header_request_method": "This endpoint only supports GET, PUT and DELETE requests."}
-    return Response(content=errors, headers=headers, status=status.HTTP_405_METHOD_NOT_ALLOWED)
-
-  def delete(self, request, req_id):
-    #################
-    # Setup
-    #################
-
-    headers = {
-      "Content-Type": "application/json",
-      "Allow": "GET, PUT, DELETE",
-    }
-
-    #################
-    # Validation
-    #################
-
-    try:
-      account_id = int(request.session["_auth_user_id"])
-    except KeyError:
-      return Response(status=status.HTTP_401_UNAUTHORIZED)
-
-    try:
-      account = Account.objects.get(user_id=account_id)
-    except Account.DoesNotExist:
-      errors = {"account_id": "Invalid account ID."}
-      return Response(content=errors, headers=headers, status=status.HTTP_404_NOT_FOUND)
-
-    try:
-      req = Requirement.objects.get(id=int(req_id))
-    except Requirement.DoesNotExist:
-      errors = {"requirement_id": "Invalid requirement ID."}
-      return Response(content=errors, headers=headers, status=status.HTTP_404_NOT_FOUND)
-    
-    if req.group.project.status == Project.statuses[2]:
-      errors = {"project": "Project is locked."}
-      return Response(content=errors, headers=headers, status=status.HTTP_400_BAD_REQUEST)
-
-    try:
-      permission = Permission.objects.get(account=account, project=req.group.project)
-    except Permission.DoesNotExist:
-      errors = {"permission": "Invalid permissions."}
-      return Response(content=errors, headers=headers, status=status.HTTP_400_BAD_REQUEST)
-
-    #################
-    # Operation
-    #################
-
-    result = req.delete_record(permission)
-    if isinstance(result, dict):
-      return Response(content=result, headers=headers, status=status.HTTP_400_BAD_REQUEST)
-    
-    return Response(content={}, headers=headers, status=status.HTTP_200_OK)
-
-  def get(self, request, req_id):
-    #################
-    # Setup
-    #################
-
-    headers = {
-      "Content-Type": "application/json",
-      "Allow": "GET, PUT, DELETE",
-    }
-
-    query_dict = dict([(k,v) for k,v in request.GET.iteritems()])
-
-    #################
-    # Validation
-    #################
-
-    try:
-      account_id = int(request.session["_auth_user_id"])
-    except KeyError:
-      return Response(status=status.HTTP_401_UNAUTHORIZED)
-
-    try:
-      account = Account.objects.get(user_id=account_id)
-    except Account.DoesNotExist:
-      errors = {"account_id": "Invalid account ID."}
-      return Response(content=errors, headers=headers, status=status.HTTP_404_NOT_FOUND)
-
-    try:
-      req = Requirement.objects.get(id=int(req_id))
-    except Requirement.DoesNotExist:
-      errors = {"group_id": "Invalid group ID."}
-      return Response(content=errors, headers=headers, status=status.HTTP_404_NOT_FOUND)
-
-    try:
-      permissions = Permission.objects.get(account=account, project_id=req.group.project)
-    except Permission.DoesNotExist:
-      errors = {"permission": "Invalid permissions."}
-      return Response(content=errors, headers=headers, status=status.HTTP_400_BAD_REQUEST)
-
-    #################
-    # Operation
-    #################
-
-    return Response(content=req.record_to_dictionary(), headers=headers, status=status.HTTP_200_OK)
-
-  def put(self, request, req_id):
-    #################
-    # Setup
-    #################
-
-    headers = {
-      "Content-Type": "application/json",
-      "Allow": "GET, PUT, DELETE",
-    }
-
-    #################
-    # Validation
-    #################
-
-    try:
-      account_id = int(request.session["_auth_user_id"])
-    except KeyError:
-      return Response(status=status.HTTP_401_UNAUTHORIZED)
-
-    # Check content-type header
-    if not self.content_type.startswith('application/json'):
-      errors = {"header_content_type": "Content-Type must be 'application/json'. Your Content-Type is " + str(self.content_type)}
-      return Response(content=errors, headers=headers, status=status.HTTP_400_BAD_REQUEST)
-    
-    try:
-      account = Account.objects.get(user_id=account_id)
-    except Account.DoesNotExist:
-      errors = {"account_id": "Invalid account ID."}
-      return Response(content=errors, headers=headers, status=status.HTTP_404_NOT_FOUND)
-
-    try:
-      req = Requirement.objects.get(id=int(req_id))
-    except Requirement.DoesNotExist:
-      errors = {"requirement_id": "Invalid requirement ID."}
-      return Response(content=errors, headers=headers, status=status.HTTP_404_NOT_FOUND)
-    
-    if req.group.project.status == Project.statuses[2]:
-      errors = {"project": "Project is locked."}
-      return Response(content=errors, headers=headers, status=status.HTTP_400_BAD_REQUEST)
-      
-    try:
-      permission = Permission.objects.get(account=account, project=req.group.project)
-    except Permission.DoesNotExist:
-      errors = {"permission": "Invalid permissions."}
-      return Response(content=errors, headers=headers, status=status.HTTP_400_BAD_REQUEST)
-
-    #################
-    # Operation
-    #################
-    
-    result = req.update_record(permission, self.CONTENT)
-    if isinstance(result, dict):
-      # HTTP status 422: Unprocessable Entity (WebDAV; RFC 4918)
-      return Response(content=result, headers=headers, status=422)
-    
-    return Response(content=result.record_to_dictionary(), headers=headers, status=status.HTTP_200_OK)
-
-class PermissionManager(View):
+class PermissionManager(APIView):
   """
   Handles HTTP requests to endpoint URL/api/permissions/ with optional querystring
-  Allow: GET, POST
   """
-  def put(self, request):
-    #################
-    # Setup
-    #################
-
-    headers = {
-      "Content-Type": "application/json",
-      "Allow": "GET, POST",
-    }
-
-    #################
-    # Validation
-    #################
-
-    try:
-      request.session["_auth_user_id"]
-    except KeyError:
-      return Response(status=status.HTTP_401_UNAUTHORIZED)
-
-    errors = {"header_request_method": "This endpoint only supports GET and POST requests."}
-    return Response(content=errors, headers=headers, status=status.HTTP_405_METHOD_NOT_ALLOWED)
-
-  def delete(self, request):
-    #################
-    # Setup
-    #################
-
-    headers = {
-      "Content-Type": "application/json",
-      "Allow": "GET, POST",
-    }
-
-    #################
-    # Validation
-    #################
-
-    try:
-      request.session["_auth_user_id"]
-    except KeyError:
-      return Response(status=status.HTTP_401_UNAUTHORIZED)
-
-    errors = {"header_request_method": "This endpoint only supports GET and POST requests."}
-    return Response(content=errors, headers=headers, status=status.HTTP_405_METHOD_NOT_ALLOWED)
-
   def get(self, request):
-    #################
-    # Setup
-    #################
-
-    headers = {
-      "Content-Type": "application/json",
-      "Allow": "GET, POST",
-    }
-
-    query_dict = dict([(k,v) for k,v in request.GET.iteritems()])
-
-    #################
-    # Validation
-    #################
-
-    try:
-      account_id = int(request.session["_auth_user_id"])
-    except KeyError:
+    if not request.user.is_authenticated():
       return Response(status=status.HTTP_401_UNAUTHORIZED)
-
-    try:
-      account = Account.objects.get(user_id=account_id)
-    except Account.DoesNotExist:
-      errors = {"account_id": "Invalid account ID."}
-      return Response(content=errors, headers=headers, status=status.HTTP_404_NOT_FOUND)
-
-    # No content-type to check, because there's no payload
-
-    #################
-    # Operation
-    #################
+    
+    account = request.user.account
       
     try:
       permissions = Permission.objects.filter(project__account=account)
     except Permission.DoesNotExist:
       permissions = []
 
-    permission_list = [permission.record_to_dictionary() for permission in permissions]
-
-    return Response(content=permission_list, headers=headers, status=status.HTTP_200_OK)
+    permission_list = [permission.read_record() for permission in permissions]
+    return Response(data=permission_list, status=status.HTTP_200_OK)
 
   def post(self, request):
-    #################
-    # Setup
-    #################
-
-    headers = {
-      "Content-Type": "application/json",
-      "Allow": "GET, POST",
-    }
-
-    #################
-    # Validation
-    #################
-
-    try:
-      account_id = int(request.session["_auth_user_id"])
-    except KeyError:
+    if not request.user.is_authenticated():
       return Response(status=status.HTTP_401_UNAUTHORIZED)
-
-    try:
-      account = Account.objects.get(user_id=account_id)
-    except Account.DoesNotExist:
-      errors = {"account_id": "Invalid account ID."}
-      return Response(content=errors, headers=headers, status=status.HTTP_404_NOT_FOUND)
-
-    # Check content-type header
-    if not self.content_type.startswith('application/json'):
-      errors = {"header_content_type": "Content-Type must be 'application/json'. Your Content-Type is " + str(self.content_type)}
-      return Response(content=errors, headers=headers, status=status.HTTP_400_BAD_REQUEST)
-
-    #################
-    # Operation
-    #################
     
-    try:
-      project_id = int(self.CONTENT["project_id"])
-    except KeyError:
-      errors = {"project_id": "Missing project ID."}
-      return Response(content=errors, headers=headers, status=status.HTTP_404_NOT_FOUND)
+    account = request.user.account
     
     # Must be project owner to create a permission
     try:
-      project = Project.objects.get(id=project_id, account=account)
-    except Project.DoesNotExist:
+      project = Project.objects.get(id=int(request.DATA["project_id"]), account=account)
+    except (Project.DoesNotExist, KeyError):
       errors = {"project_id": "Invalid project ID."}
-      return Response(content=errors, headers=headers, status=status.HTTP_404_NOT_FOUND)
+      return Response(data=errors, status=status.HTTP_404_NOT_FOUND)
 
     try:
-      email = str(self.CONTENT['email']).lower().strip()
+      email = str(request.DATA['email']).lower().strip()
     except KeyError:
       errors = {"email": "Missing email address."}
-      return Response(content=errors, headers=headers, status=status.HTTP_400_BAD_REQUEST)
+      return Response(data=errors, status=status.HTTP_400_BAD_REQUEST)
     
     try:
       p_account = Account.objects.get(email=email)
     except Account.DoesNotExist:
       p_account = Account.create_invitation_account(email)
       if isinstance(p_account, dict):
-        return Response(content=p_account, headers=headers, status=status.HTTP_400_BAD_REQUEST)
+        return Response(data=p_account, status=status.HTTP_400_BAD_REQUEST)
     else:
       try:
         Permission.objects.get(project=project, account=p_account)
@@ -1130,483 +163,579 @@ class PermissionManager(View):
       else:
         # Send a 30X response instead for PUT to correct endpoint?
         errors = {"email": "This email address already has a permission."}
-        return Response(content=errors, headers=headers, status=status.HTTP_400_BAD_REQUEST)
+        return Response(data=errors, status=status.HTTP_400_BAD_REQUEST)
 
     try:
-      permission = str(self.CONTENT['permission'])
+      permission = str(request.DATA['permission'])
     except KeyError:
       permission = 'client'
     else:
       if permission not in ['client', 'coworker']:
         permission = 'client'
     
-    perm = Permission.create_record(account, project, p_account, self.CONTENT)
+    perm = Permission.create_record(account, project, p_account, request.DATA)
     if not isinstance(perm, Permission):
-      # HTTP status 422: Unprocessable Entity (WebDAV; RFC 4918)
-      return Response(content=perm, headers=headers, status=422)
+      return Response(data=perm, status=status.HTTP_400_BAD_REQUEST)
     
-    return Response(content=perm.record_to_dictionary(), headers=headers, status=status.HTTP_200_OK)
+    return Response(data=perm.read_record(), status=status.HTTP_200_OK)
 
-class PermissionEditor(View):
+
+class PermissionEditor(APIView):
   """
   Handles HTTP requests to endpoint URL/api/permissions/:permission_id/ with optional querystring
-  Allow: GET, DELETE
   """
-  def post(self, request, permission_id):
-    #################
-    # Setup
-    #################
-
-    headers = {
-      "Content-Type": "application/json",
-      "Allow": "GET, PUT, DELETE",
-    }
-
-    #################
-    # Validation
-    #################
-
-    try:
-      request.session["_auth_user_id"]
-    except KeyError:
-      return Response(status=status.HTTP_401_UNAUTHORIZED)
-
-    errors = {"header_request_method": "This endpoint only supports GET, PUT, and DELETE requests."}
-    return Response(content=errors, headers=headers, status=status.HTTP_405_METHOD_NOT_ALLOWED)
-
   def delete(self, request, permission_id):
-    #################
-    # Setup
-    #################
-
-    headers = {
-      "Content-Type": "application/json",
-      "Allow": "GET, PUT, DELETE",
-    }
-
-    #################
-    # Validation
-    #################
-
-    try:
-      account_id = int(request.session["_auth_user_id"])
-    except KeyError:
+    if not request.user.is_authenticated():
       return Response(status=status.HTTP_401_UNAUTHORIZED)
-
-    try:
-      account = Account.objects.get(user_id=account_id)
-    except Account.DoesNotExist:
-      errors = {"account_id": "Invalid account ID."}
-      return Response(content=errors, headers=headers, status=status.HTTP_404_NOT_FOUND)
+    
+    account = request.user.account
 
     try:
       permission = Permission.objects.get(id=int(permission_id))
     except Permission.DoesNotExist:
       errors = {"permission_id": "Invalid permission ID."}
-      return Response(content=errors, headers=headers, status=status.HTTP_404_NOT_FOUND)
+      return Response(data=errors, status=status.HTTP_404_NOT_FOUND)
 
     # Only admins can delete permissions
     if permission.project.account.id is not account_id:
       errors = {"permission": "Invalid permissions."}
-      return Response(content=errors, headers=headers, status=status.HTTP_400_BAD_REQUEST)
-
-    #################
-    # Operation
-    #################
+      return Response(data=errors, status=status.HTTP_400_BAD_REQUEST)
 
     result = permission.delete_record(account)
     if isinstance(result, dict):
-      return Response(content=result, headers=headers, status=status.HTTP_400_BAD_REQUEST)
+      return Response(data=result, status=status.HTTP_400_BAD_REQUEST)
     
-    return Response(content={}, headers=headers, status=status.HTTP_200_OK)
+    return Response(data={}, status=status.HTTP_204_NO_CONTENT)
 
   def get(self, request, permission_id):
-    #################
-    # Setup
-    #################
-
-    headers = {
-      "Content-Type": "application/json",
-      "Allow": "GET, PUT, DELETE",
-    }
-
-    query_dict = dict([(k,v) for k,v in request.GET.iteritems()])
-
-    #################
-    # Validation
-    #################
-
-    try:
-      account_id = int(request.session["_auth_user_id"])
-    except KeyError:
+    if not request.user.is_authenticated():
       return Response(status=status.HTTP_401_UNAUTHORIZED)
-
-    try:
-      account = Account.objects.get(user_id=account_id)
-    except Account.DoesNotExist:
-      errors = {"account_id": "Invalid account ID."}
-      return Response(content=errors, headers=headers, status=status.HTTP_404_NOT_FOUND)
+    
+    account = request.user.account
 
     try:
       permission = Permission.objects.get(id=int(permission_id))
     except Permission.DoesNotExist:
       errors = {"permission_id": "Invalid permission ID."}
-      return Response(content=errors, headers=headers, status=status.HTTP_404_NOT_FOUND)
+      return Response(data=errors, status=status.HTTP_404_NOT_FOUND)
 
     if permission.project.account.id is not account_id:
       errors = {"permission": "Invalid permissions."}
-      return Response(content=errors, headers=headers, status=status.HTTP_400_BAD_REQUEST)
+      return Response(data=errors, status=status.HTTP_400_BAD_REQUEST)
 
-    #################
-    # Operation
-    #################
-
-    return Response(content=permission.record_to_dictionary(), headers=headers, status=status.HTTP_200_OK)
+    return Response(data=permission.read_record(), status=status.HTTP_200_OK)
 
   def put(self, request, permission_id):
-    #################
-    # Setup
-    #################
-
-    headers = {
-      "Content-Type": "application/json",
-      "Allow": "GET, DELETE",
-    }
-
-    #################
-    # Validation
-    #################
-
-    try:
-      account_id = int(request.session["_auth_user_id"])
-    except KeyError:
+    if not request.user.is_authenticated():
       return Response(status=status.HTTP_401_UNAUTHORIZED)
-
-    try:
-      account = Account.objects.get(user_id=account_id)
-    except Account.DoesNotExist:
-      errors = {"account_id": "Invalid account ID."}
-      return Response(content=errors, headers=headers, status=status.HTTP_404_NOT_FOUND)
+    
+    account = request.user.account
 
     try:
       permission = Permission.objects.get(id=int(permission_id))
     except Permission.DoesNotExist:
       errors = {"permission_id": "Invalid permission ID."}
-      return Response(content=errors, headers=headers, status=status.HTTP_404_NOT_FOUND)
+      return Response(data=errors, status=status.HTTP_404_NOT_FOUND)
 
     if permission.project.account.id is not account_id:
       errors = {"permission": "Invalid permissions."}
-      return Response(content=errors, headers=headers, status=status.HTTP_400_BAD_REQUEST)
+      return Response(data=errors, status=status.HTTP_400_BAD_REQUEST)
     
-    result = permission.update_record(account, self.CONTENT)
+    result = permission.update_record(account, request.DATA)
     if isinstance(result, dict):
-      return Response(content=result, headers=headers, status=status.HTTP_400_BAD_REQUEST)
+      return Response(data=result, status=status.HTTP_400_BAD_REQUEST)
     
-    return Response(content=result, headers=headers, status=status.HTTP_200_OK)
+    return Response(data=result, status=status.HTTP_200_OK)
 
 
-class PaymentManager(View):
+class GroupManager(APIView):
   """
-  Handles HTTP requests to endpoint URL/api/payments/ with optional querystring
-  Allow: GET, POST
+  Handles HTTP requests to endpoint URL/api/groups/ with optional querystring
   """
-  def put(self, request):
-    #################
-    # Setup
-    #################
-
-    headers = {
-      "Content-Type": "application/json",
-      "Allow": "GET, POST",
-    }
-
-    #################
-    # Validation
-    #################
-
-    try:
-      request.session["_auth_user_id"]
-    except KeyError:
-      return Response(status=status.HTTP_401_UNAUTHORIZED)
-
-    errors = {"header_request_method": "This endpoint only supports GET and POST requests."}
-    return Response(content=errors, headers=headers, status=status.HTTP_405_METHOD_NOT_ALLOWED)
-
-  def delete(self, request):
-    #################
-    # Setup
-    #################
-
-    headers = {
-      "Content-Type": "application/json",
-      "Allow": "GET, POST",
-    }
-
-    #################
-    # Validation
-    #################
-
-    try:
-      request.session["_auth_user_id"]
-    except KeyError:
-      return Response(status=status.HTTP_401_UNAUTHORIZED)
-
-    errors = {"header_request_method": "This endpoint only supports GET and POST requests."}
-    return Response(content=errors, headers=headers, status=status.HTTP_405_METHOD_NOT_ALLOWED)
-
   def get(self, request):
-    #################
-    # Setup
-    #################
-
-    headers = {
-      "Content-Type": "application/json",
-      "Allow": "GET, POST",
-    }
-
-    query_dict = dict([(k,v) for k,v in request.GET.iteritems()])
-
-    #################
-    # Validation
-    #################
-
-    try:
-      account_id = int(request.session["_auth_user_id"])
-    except KeyError:
+    if not request.user.is_authenticated():
       return Response(status=status.HTTP_401_UNAUTHORIZED)
-
+    
+    account = request.user.account
+    
     try:
-      account = Account.objects.get(user_id=account_id)
-    except Account.DoesNotExist:
-      errors = {"account_id": "Invalid account ID."}
-      return Response(content=errors, headers=headers, status=status.HTTP_404_NOT_FOUND)
+      groups = RequirementGroup.objects.filter(project__permission__account=account)
+    except RequirementGroup.DoesNotExist:
+      groups = []
 
-    # No content-type to check, because there's no payload
-
-    #################
-    # Operation
-    #################
-      
-    try:
-      payments = Payment.objects.filter(account=account)
-    except Payment.DoesNotExist:
-      payments = []
-
-    payment_list = [payment.record_to_dictionary() for payment in payments]
-
-    return Response(content=payment_list, headers=headers, status=status.HTTP_200_OK)
+    groups_list = [group.read_record() for group in groups]
+    return Response(data=groups_list, status=status.HTTP_200_OK)
 
   def post(self, request):
-    #################
-    # Setup
-    #################
-
-    headers = {
-      "Content-Type": "application/json",
-      "Allow": "GET, POST",
-    }
-
-    #################
-    # Validation
-    #################
-
-    try:
-      account_id = int(request.session["_auth_user_id"])
-    except KeyError:
+    if not request.user.is_authenticated():
       return Response(status=status.HTTP_401_UNAUTHORIZED)
-
-    try:
-      account = Account.objects.get(user_id=account_id)
-    except Account.DoesNotExist:
-      errors = {"account_id": "Invalid account ID."}
-      return Response(content=errors, headers=headers, status=status.HTTP_404_NOT_FOUND)
-
-    # Check content-type header
-    if not self.content_type.startswith('application/json'):
-      errors = {"header_content_type": "Content-Type must be 'application/json'. Your Content-Type is " + str(self.content_type)}
-      return Response(content=errors, headers=headers, status=status.HTTP_400_BAD_REQUEST)
-
-    #################
-    # Operation
-    #################
+    
+    account = request.user.account
     
     try:
-      payment_type = str(self.CONTENT["type"])
-    except KeyError:
-      errors = {"type": "Missing payment type."}
-      return Response(content=errors, headers=headers, status=status.HTTP_404_NOT_FOUND)
-    
-    try:
-      project_id = int(self.CONTENT["project_id"])
-    except KeyError:
-      errors = {"project_id": "Missing project ID."}
-      return Response(content=errors, headers=headers, status=status.HTTP_404_NOT_FOUND)
-    
-    # Must be project owner to create a payment
-    try:
-      project = Project.objects.get(id=project_id, account=account)
-    except Project.DoesNotExist:
+      project = Project.objects.get(id=int(request.DATA["project_id"]))
+    except (Project.DoesNotExist, KeyError):
       errors = {"project_id": "Invalid project ID."}
-      return Response(content=errors, headers=headers, status=status.HTTP_404_NOT_FOUND)
+      return Response(data=errors, status=status.HTTP_404_NOT_FOUND)
     
-    return Response(content={'endpoint': 'Endpoint not yet support.'}, headers=headers, status=status.HTTP_200_OK)
+    try:
+      permission = Permission.objects.get(account=account, project=project)
+    except Permission.DoesNotExist:
+      errors = {"permission": "Invalid permissions."}
+      return Response(data=errors, status=status.HTTP_400_BAD_REQUEST)
 
-class PaymentEditor(View):
+    group = RequirementGroup.create_record(permission, project, request.DATA)
+    if not isinstance(group, RequirementGroup):
+      return Response(data=group, status=status.HTTP_400_BAD_REQUEST)
+    
+    return Response(data=group.read_record(), status=status.HTTP_200_OK)
+
+
+class GroupEditor(APIView):
   """
-  Handles HTTP requests to endpoint URL/api/payments/:payment_id/ with optional querystring
-  Allow: GET, DELETE
+  Handles HTTP requests to endpoint URL/api/groups/:group_id/ with optional querystring
   """
-  def post(self, request, permission_id):
-    #################
-    # Setup
-    #################
-
-    headers = {
-      "Content-Type": "application/json",
-      "Allow": "GET, PUT, DELETE",
-    }
-
-    #################
-    # Validation
-    #################
-
-    try:
-      request.session["_auth_user_id"]
-    except KeyError:
+  def delete(self, request, group_id):
+    if not request.user.is_authenticated():
       return Response(status=status.HTTP_401_UNAUTHORIZED)
-
-    errors = {"header_request_method": "This endpoint only supports GET, PUT, and DELETE requests."}
-    return Response(content=errors, headers=headers, status=status.HTTP_405_METHOD_NOT_ALLOWED)
-
-  def delete(self, request, permission_id):
-    #################
-    # Setup
-    #################
-
-    headers = {
-      "Content-Type": "application/json",
-      "Allow": "GET, PUT, DELETE",
-    }
-
-    #################
-    # Validation
-    #################
+    
+    account = request.user.account
 
     try:
-      account_id = int(request.session["_auth_user_id"])
-    except KeyError:
-      return Response(status=status.HTTP_401_UNAUTHORIZED)
+      group = RequirementGroup.objects.get(id=int(group_id))
+    except RequirementGroup.DoesNotExist:
+      errors = {"id": "Invalid group ID."}
+      return Response(data=errors, status=status.HTTP_404_NOT_FOUND)
+    
+    if group.project.status == Project.statuses[2]:
+      errors = {"project": "Project is locked."}
+      return Response(data=errors, status=status.HTTP_400_BAD_REQUEST)
 
     try:
-      account = Account.objects.get(user_id=account_id)
-    except Account.DoesNotExist:
-      errors = {"account_id": "Invalid account ID."}
-      return Response(content=errors, headers=headers, status=status.HTTP_404_NOT_FOUND)
-
-    try:
-      permission = Permission.objects.get(id=int(permission_id))
+      permission = Permission.objects.get(account=account, project=group.project)
     except Permission.DoesNotExist:
-      errors = {"permission_id": "Invalid permission ID."}
-      return Response(content=errors, headers=headers, status=status.HTTP_404_NOT_FOUND)
-
-    # Only admins can delete permissions
-    if permission.project.account.id is not account_id:
       errors = {"permission": "Invalid permissions."}
-      return Response(content=errors, headers=headers, status=status.HTTP_400_BAD_REQUEST)
+      return Response(data=errors, status=status.HTTP_400_BAD_REQUEST)
 
-    #################
-    # Operation
-    #################
-
-    result = permission.delete_record(account)
+    result = group.delete_record(permission)
     if isinstance(result, dict):
-      return Response(content=result, headers=headers, status=status.HTTP_400_BAD_REQUEST)
+      return Response(data=result, status=status.HTTP_400_BAD_REQUEST)
     
-    return Response(content={}, headers=headers, status=status.HTTP_200_OK)
+    return Response(data={}, status=status.HTTP_204_NO_CONTENT)
 
-  def get(self, request, permission_id):
-    #################
-    # Setup
-    #################
-
-    headers = {
-      "Content-Type": "application/json",
-      "Allow": "GET, PUT, DELETE",
-    }
-
-    query_dict = dict([(k,v) for k,v in request.GET.iteritems()])
-
-    #################
-    # Validation
-    #################
-
-    try:
-      account_id = int(request.session["_auth_user_id"])
-    except KeyError:
+  def get(self, request, group_id):
+    if not request.user.is_authenticated():
       return Response(status=status.HTTP_401_UNAUTHORIZED)
-
-    try:
-      account = Account.objects.get(user_id=account_id)
-    except Account.DoesNotExist:
-      errors = {"account_id": "Invalid account ID."}
-      return Response(content=errors, headers=headers, status=status.HTTP_404_NOT_FOUND)
-
-    try:
-      permission = Permission.objects.get(id=int(permission_id))
-    except Permission.DoesNotExist:
-      errors = {"permission_id": "Invalid permission ID."}
-      return Response(content=errors, headers=headers, status=status.HTTP_404_NOT_FOUND)
-
-    if permission.project.account.id is not account_id:
-      errors = {"permission": "Invalid permissions."}
-      return Response(content=errors, headers=headers, status=status.HTTP_400_BAD_REQUEST)
-
-    #################
-    # Operation
-    #################
-
-    return Response(content=permission.record_to_dictionary(), headers=headers, status=status.HTTP_200_OK)
-
-  def put(self, request, permission_id):
-    #################
-    # Setup
-    #################
-
-    headers = {
-      "Content-Type": "application/json",
-      "Allow": "GET, DELETE",
-    }
-
-    #################
-    # Validation
-    #################
-
-    try:
-      account_id = int(request.session["_auth_user_id"])
-    except KeyError:
-      return Response(status=status.HTTP_401_UNAUTHORIZED)
-
-    try:
-      account = Account.objects.get(user_id=account_id)
-    except Account.DoesNotExist:
-      errors = {"account_id": "Invalid account ID."}
-      return Response(content=errors, headers=headers, status=status.HTTP_404_NOT_FOUND)
-
-    try:
-      permission = Permission.objects.get(id=int(permission_id))
-    except Permission.DoesNotExist:
-      errors = {"permission_id": "Invalid permission ID."}
-      return Response(content=errors, headers=headers, status=status.HTTP_404_NOT_FOUND)
-
-    if permission.project.account.id is not account_id:
-      errors = {"permission": "Invalid permissions."}
-      return Response(content=errors, headers=headers, status=status.HTTP_400_BAD_REQUEST)
     
-    result = permission.update_record(account, self.CONTENT)
+    account = request.user.account
+
+    try:
+      group = RequirementGroup.objects.get(id=int(group_id))
+    except RequirementGroup.DoesNotExist:
+      errors = {"group_id": "Invalid group ID."}
+      return Response(data=errors, status=status.HTTP_404_NOT_FOUND)
+
+    try:
+      permissions = Permission.objects.get(account=account, project_id=group.project)
+    except Permission.DoesNotExist:
+      errors = {"permission": "Invalid permissions."}
+      return Response(data=errors, status=status.HTTP_400_BAD_REQUEST)
+
+    return Response(data=group.read_record(), status=status.HTTP_200_OK)
+
+  def put(self, request, group_id):
+    if not request.user.is_authenticated():
+      return Response(status=status.HTTP_401_UNAUTHORIZED)
+    
+    account = request.user.account
+
+    try:
+      group = RequirementGroup.objects.get(id=int(group_id))
+    except RequirementGroup.DoesNotExist:
+      errors = {"project_id": "Invalid project ID."}
+      return Response(data=errors, status=status.HTTP_404_NOT_FOUND)
+    
+    if group.project.status == Project.statuses[2]:
+      errors = {"project": "Project is locked."}
+      return Response(data=errors, status=status.HTTP_400_BAD_REQUEST)
+    
+    try:
+      permission = Permission.objects.get(account=account, project=group.project)
+    except Permission.DoesNotExist:
+      errors = {"permission": "Invalid permissions."}
+      return Response(data=errors, status=status.HTTP_400_BAD_REQUEST)
+
+    result = group.update_record(permission, request.DATA)
     if isinstance(result, dict):
-      return Response(content=result, headers=headers, status=status.HTTP_400_BAD_REQUEST)
+      return Response(data=result, status=status.HTTP_400_BAD_REQUEST)
     
-    return Response(content=result, headers=headers, status=status.HTTP_200_OK)
+    return Response(data=result.read_record(), status=status.HTTP_200_OK)
+
+
+class RequirementManager(APIView):
+  """
+  Handles HTTP requests to endpoint URL/api/requirements/ with optional querystring
+  """
+  def get(self, request):
+    if not request.user.is_authenticated():
+      return Response(status=status.HTTP_401_UNAUTHORIZED)
+    
+    account = request.user.account
+      
+    try:
+      reqs = Requirement.objects.filter(group__project__permission__account=account)
+    except Requirement.DoesNotExist:
+      reqs = []
+
+    req_list = [req.read_record() for req in reqs]
+    return Response(data=req_list, status=status.HTTP_200_OK)
+
+  def post(self, request):
+    if not request.user.is_authenticated():
+      return Response(status=status.HTTP_401_UNAUTHORIZED)
+    
+    account = request.user.account
+
+    try:
+      group = RequirementGroup.objects.get(id=int(request.DATA["group_id"]))
+    except (RequirementGroup.DoesNotExist, KeyError):
+      errors = {"group_id": "Invalid group ID."}
+      return Response(data=errors, status=status.HTTP_404_NOT_FOUND)
+    
+    try:
+      permission = Permission.objects.get(account=account, project=group.project)
+    except Permission.DoesNotExist:
+      errors = {"permission": "Invalid permissions."}
+      return Response(data=errors, status=status.HTTP_400_BAD_REQUEST)
+
+    req = Requirement.create_record(permission, group, request.DATA)
+    if not isinstance(req, Requirement):
+      return Response(data=req, status=status.HTTP_400_BAD_REQUEST)
+    
+    return Response(data=req.read_record(), status=status.HTTP_200_OK)
+
+
+class RequirementEditor(APIView):
+  """
+  Handles HTTP requests to endpoint URL/api/requirements/:req_id/ with optional querystring
+  """
+  def delete(self, request, req_id):
+    if not request.user.is_authenticated():
+      return Response(status=status.HTTP_401_UNAUTHORIZED)
+    
+    account = request.user.account
+
+    try:
+      req = Requirement.objects.get(id=int(req_id))
+    except Requirement.DoesNotExist:
+      errors = {"requirement_id": "Invalid requirement ID."}
+      return Response(data=errors, status=status.HTTP_404_NOT_FOUND)
+    
+    try:
+      permission = Permission.objects.get(account=account, project=req.group.project)
+    except Permission.DoesNotExist:
+      errors = {"permission": "Invalid permissions."}
+      return Response(data=errors, status=status.HTTP_400_BAD_REQUEST)
+
+    result = req.delete_record(permission)
+    if isinstance(result, dict):
+      return Response(data=result, status=status.HTTP_400_BAD_REQUEST)
+    
+    return Response(data={}, status=status.HTTP_204_NO_CONTENT)
+
+  def get(self, request, req_id):
+    if not request.user.is_authenticated():
+      return Response(status=status.HTTP_401_UNAUTHORIZED)
+    
+    account = request.user.account
+
+    try:
+      req = Requirement.objects.get(id=int(req_id))
+    except Requirement.DoesNotExist:
+      errors = {"requirement_id": "Invalid requirement ID."}
+      return Response(data=errors, status=status.HTTP_404_NOT_FOUND)
+
+    try:
+      permissions = Permission.objects.get(account=account, project=req.group.project)
+    except Permission.DoesNotExist:
+      errors = {"permission": "Invalid permissions."}
+      return Response(data=errors, status=status.HTTP_400_BAD_REQUEST)
+
+    return Response(data=req.read_record(), status=status.HTTP_200_OK)
+
+  def put(self, request, req_id):
+    if not request.user.is_authenticated():
+      return Response(status=status.HTTP_401_UNAUTHORIZED)
+    
+    account = request.user.account
+
+    try:
+      req = Requirement.objects.get(id=int(req_id))
+    except Requirement.DoesNotExist:
+      errors = {"requirement_id": "Invalid requirement ID."}
+      return Response(data=errors, status=status.HTTP_404_NOT_FOUND)
+    
+    if req.group.project.status == Project.statuses[2]:
+      errors = {"project": "Project is locked."}
+      return Response(data=errors, status=status.HTTP_400_BAD_REQUEST)
+      
+    try:
+      permission = Permission.objects.get(account=account, project=req.group.project)
+    except Permission.DoesNotExist:
+      errors = {"permission": "Invalid permissions."}
+      return Response(data=errors, status=status.HTTP_400_BAD_REQUEST)
+    
+    result = req.update_record(permission, request.DATA)
+    if isinstance(result, dict):
+      return Response(data=result, status=status.HTTP_400_BAD_REQUEST)
+    
+    return Response(data=result.read_record(), status=status.HTTP_200_OK)
+
+
+class AssetManager(APIView):
+  """
+  Handles HTTP requests to endpoint URL/api/assets/ with optional querystring
+  """
+  def get(self, request):
+    if not request.user.is_authenticated():
+      return Response(status=status.HTTP_401_UNAUTHORIZED)
+    
+    account = request.user.account
+    projects = [permission.project for permission in account.permission_set.all()]
+    try:
+      assets = ProjectAsset.objects.filter(project__in=projects)
+    except ProjectAsset.DoesNotExist:
+      assets = []
+
+    assets_list = [asset.read_record() for asset in assets]
+    return Response(data=assets_list, status=status.HTTP_200_OK)
+
+  def post(self, request):
+    if not request.user.is_authenticated():
+      return Response(status=status.HTTP_401_UNAUTHORIZED)
+    
+    account = request.user.account
+    
+    try:
+      project = Project.objects.get(id=int(request.DATA["project_id"]))
+    except (Project.DoesNotExist, KeyError):
+      errors = {"project_id": "Invalid project ID."}
+      return Response(data=errors, status=status.HTTP_404_NOT_FOUND)
+    
+    try:
+      permission = Permission.objects.get(account=account, project=project)
+    except Permission.DoesNotExist:
+      errors = {"permission": "Invalid permissions."}
+      return Response(data=errors, status=status.HTTP_400_BAD_REQUEST)
+
+    asset = ProjectAsset.create_record(permission, project, request.DATA)
+    if not isinstance(asset, ProjectAsset):
+      return Response(data=asset, status=status.HTTP_400_BAD_REQUEST)
+    
+    return Response(data=asset.read_record(), status=status.HTTP_200_OK)
+
+class AssetEditor(APIView):
+  """
+  Handles HTTP requests to endpoint URL/api/assets/:asset_id/ with optional querystring
+  """
+  def delete(self, request, asset_id):
+    if not request.user.is_authenticated():
+      return Response(status=status.HTTP_401_UNAUTHORIZED)
+    
+    account = request.user.account
+
+    try:
+      asset = ProjectAsset.objects.get(id=int(asset_id))
+    except ProjectAsset.DoesNotExist:
+      errors = {"id": "Invalid asset ID."}
+      return Response(data=errors, status=status.HTTP_404_NOT_FOUND)
+    
+    if asset.project.status == Project.statuses[2]:
+      errors = {"project": "Project is locked."}
+      return Response(data=errors, status=status.HTTP_400_BAD_REQUEST)
+
+    try:
+      permission = Permission.objects.get(account=account, project=asset.project)
+    except Permission.DoesNotExist:
+      errors = {"permission": "Invalid permissions."}
+      return Response(data=errors, status=status.HTTP_400_BAD_REQUEST)
+
+    result = asset.delete_record(permission)
+    if isinstance(result, dict):
+      return Response(data=result, status=status.HTTP_400_BAD_REQUEST)
+    
+    return Response(status=status.HTTP_204_NO_CONTENT)
+
+  def get(self, request, asset_id):
+    if not request.user.is_authenticated():
+      return Response(status=status.HTTP_401_UNAUTHORIZED)
+    
+    account = request.user.account
+
+    try:
+      asset = ProjectAsset.objects.get(id=int(asset_id))
+    except ProjectAsset.DoesNotExist:
+      errors = {"id": "Invalid asset ID."}
+      return Response(data=errors, status=status.HTTP_404_NOT_FOUND)
+
+    try:
+      permissions = Permission.objects.get(account=account, project_id=asset.project)
+    except Permission.DoesNotExist:
+      errors = {"permission": "Invalid permissions."}
+      return Response(data=errors, status=status.HTTP_400_BAD_REQUEST)
+
+    return Response(data=asset.read_record(), status=status.HTTP_200_OK)
+
+  def put(self, request, asset_id):
+    if not request.user.is_authenticated():
+      return Response(status=status.HTTP_401_UNAUTHORIZED)
+    
+    account = request.user.account
+
+    try:
+      asset = ProjectAsset.objects.get(id=int(asset_id))
+    except ProjectAsset.DoesNotExist:
+      errors = {"project_id": "Invalid project ID."}
+      return Response(data=errors, status=status.HTTP_404_NOT_FOUND)
+    
+    if asset.project.status == Project.statuses[2]:
+      errors = {"project": "Project is locked."}
+      return Response(data=errors, status=status.HTTP_400_BAD_REQUEST)
+    
+    try:
+      permission = Permission.objects.get(account=account, project=asset.project)
+    except Permission.DoesNotExist:
+      errors = {"permission": "Invalid permissions."}
+      return Response(data=errors, status=status.HTTP_400_BAD_REQUEST)
+
+    result = asset.update_record(permission, request.DATA)
+    if isinstance(result, dict):
+      return Response(data=result, status=status.HTTP_400_BAD_REQUEST)
+    
+    return Response(data=result.read_record(), status=status.HTTP_200_OK)
+
+
+class FileManager(APIView):
+  """
+  Handles HTTP requests to endpoint URL/api/files/ with optional querystring
+  """
+  def get(self, request):
+    if not request.user.is_authenticated():
+      return Response(status=status.HTTP_401_UNAUTHORIZED)
+    
+    account = request.user.account
+    projects = [permission.project for permission in account.permission_set.all()]
+    try:
+      project_files = ProjectFile.objects.filter(project__in=projects)
+    except ProjectFile.DoesNotExist:
+      project_files = []
+
+    project_files_list = [project_file.read_record() for project_file in project_files]
+    return Response(data=project_files_list, status=status.HTTP_200_OK)
+
+  def post(self, request):
+    if not request.user.is_authenticated():
+      return Response(status=status.HTTP_401_UNAUTHORIZED)
+    
+    account = request.user.account
+    
+    try:
+      project = Project.objects.get(id=int(request.DATA["project_id"]))
+    except (Project.DoesNotExist, KeyError):
+      errors = {"project_id": "Invalid project ID."}
+      return Response(data=errors, status=status.HTTP_404_NOT_FOUND)
+    
+    try:
+      permission = Permission.objects.get(account=account, project=project)
+    except Permission.DoesNotExist:
+      errors = {"permission": "Invalid permissions."}
+      return Response(data=errors, status=status.HTTP_400_BAD_REQUEST)
+
+    project_file = ProjectFile.create_record(permission, project, request.DATA)
+    if not isinstance(project_file, ProjectFile):
+      return Response(data=project_file, status=status.HTTP_400_BAD_REQUEST)
+    
+    return Response(data=project_file.read_record(), status=status.HTTP_200_OK)
+
+class FileEditor(APIView):
+  """
+  Handles HTTP requests to endpoint URL/api/files/:project_file_id/ with optional querystring
+  """
+  def delete(self, request, project_file_id):
+    if not request.user.is_authenticated():
+      return Response(status=status.HTTP_401_UNAUTHORIZED)
+    
+    account = request.user.account
+
+    try:
+      project_file = ProjectFile.objects.get(id=int(project_file_id))
+    except ProjectFile.DoesNotExist:
+      errors = {"id": "Invalid file ID."}
+      return Response(data=errors, status=status.HTTP_404_NOT_FOUND)
+    
+    if project_file.project.status == Project.statuses[2]:
+      errors = {"project": "Project is locked."}
+      return Response(data=errors, status=status.HTTP_400_BAD_REQUEST)
+
+    try:
+      permission = Permission.objects.get(account=account, project=project_file.project)
+    except Permission.DoesNotExist:
+      errors = {"permission": "Invalid permissions."}
+      return Response(data=errors, status=status.HTTP_400_BAD_REQUEST)
+
+    result = project_file.delete_record(permission)
+    if isinstance(result, dict):
+      return Response(data=result, status=status.HTTP_400_BAD_REQUEST)
+    
+    return Response(status=status.HTTP_204_NO_CONTENT)
+
+  def get(self, request, project_file_id):
+    if not request.user.is_authenticated():
+      return Response(status=status.HTTP_401_UNAUTHORIZED)
+    
+    account = request.user.account
+
+    try:
+      project_file = ProjectFile.objects.get(id=int(project_file_id))
+    except ProjectFile.DoesNotExist:
+      errors = {"id": "Invalid file ID."}
+      return Response(data=errors, status=status.HTTP_404_NOT_FOUND)
+
+    try:
+      permissions = Permission.objects.get(account=account, project_id=project_file.project)
+    except Permission.DoesNotExist:
+      errors = {"permission": "Invalid permissions."}
+      return Response(data=errors, status=status.HTTP_400_BAD_REQUEST)
+
+    return Response(data=project_file.read_record(), status=status.HTTP_200_OK)
+
+  def put(self, request, project_file_id):
+    if not request.user.is_authenticated():
+      return Response(status=status.HTTP_401_UNAUTHORIZED)
+    
+    account = request.user.account
+
+    try:
+      project_file = ProjectFile.objects.get(id=int(project_file_id))
+    except ProjectFile.DoesNotExist:
+      errors = {"project_id": "Invalid project ID."}
+      return Response(data=errors, status=status.HTTP_404_NOT_FOUND)
+    
+    if project_file.project.status == Project.statuses[2]:
+      errors = {"project": "Project is locked."}
+      return Response(data=errors, status=status.HTTP_400_BAD_REQUEST)
+    
+    try:
+      permission = Permission.objects.get(account=account, project=project_file.project)
+    except Permission.DoesNotExist:
+      errors = {"permission": "Invalid permissions."}
+      return Response(data=errors, status=status.HTTP_400_BAD_REQUEST)
+
+    result = project_file.update_record(permission, request.DATA)
+    if isinstance(result, dict):
+      return Response(data=result, status=status.HTTP_400_BAD_REQUEST)
+    
+    return Response(data=result.read_record(), status=status.HTTP_200_OK)
 
 
 

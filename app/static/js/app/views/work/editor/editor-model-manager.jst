@@ -1,0 +1,20 @@
+
+<% var owner = project.permission === 'owner'; %>
+
+<div class='model-manager-title-row clearfix'>
+  <h3><%= type === 'front' ? 'Front-End' : 'Back-End' %> Models</h3>
+  <a href='#' class='btn btn-projectionable btn-small edit-models-button'>
+    <i class='icon-pencil'></i>
+  </a>
+  <% if (owner) { %>
+  <a href='#' class='btn btn-projectionable btn-small lock-models-button'>
+    <i class='icon-lock'></i>
+  </a>
+  <% } else { %>
+  <span class=''>
+    <i class='icon-lock'></i>
+  </span>
+  <% } %>
+</div>
+
+<ul class='model-manager-list'></ul>

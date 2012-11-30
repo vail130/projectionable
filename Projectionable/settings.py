@@ -17,7 +17,7 @@ SITE_NAME = 'Projectionable'
 
 MANAGERS = ADMINS
 
-ENVIRONMENT = 'heroku'
+ENVIRONMENT = 'local'
 
 if ENVIRONMENT == 'heroku':
   BASE_URL = 'http://projectionable.herokuapp.com/'
@@ -112,7 +112,7 @@ USE_L10N = True
 # If you set this to False, Django will not use timezone-aware datetimes.
 USE_TZ = True
 
-STATIC_URL = BASE_URL + 'static/'
+STATIC_URL = '/static/'
 
 # Absolute filesystem path to the directory that will hold user-uploaded files.
 # Example: "/home/media/media.lawrence.com/media/"
@@ -121,7 +121,7 @@ MEDIA_ROOT = PROJECT_DIR + 'media/'
 # URL that handles the media served from MEDIA_ROOT. Make sure to use a
 # trailing slash.
 # Examples: "http://media.lawrence.com/media/", "http://example.com/media/"
-MEDIA_URL = BASE_URL + 'media/'
+MEDIA_URL = '/media/'
 
 # Absolute path to the directory static files should be collected to.
 # Don't put anything in this directory yourself; store your static files
@@ -204,7 +204,7 @@ INSTALLED_APPS = (
   'django.contrib.staticfiles',
   # Uncomment the next line to enable the admin:
   # 'django.contrib.admin',
-  'djangorestframework',
+  'rest_framework',
   'requests',
   'compressor',
   'subcommand',
@@ -232,34 +232,6 @@ PIPELINE_COMPILERS = (
 )
 
 PIPELINE_JS = {
-  'home_behavior': {
-    'source_filenames': ('js/home/*.coffee',),
-    'output_filename': 'js/home.js',
-  },
-  'signin_behavior': {
-    'source_filenames': ('js/signin/*.coffee',),
-    'output_filename': 'js/signin.js',
-  },
-  'signup_behavior': {
-    'source_filenames': ('js/signup/*.coffee',),
-    'output_filename': 'js/signup.js',
-  },
-  'contact_behavior': {
-    'source_filenames': ('js/contact/*.coffee',),
-    'output_filename': 'js/contact.js',
-  },
-  'reset_password_behavior': {
-    'source_filenames': ('js/reset_password/*.coffee',),
-    'output_filename': 'js/reset_password.js',
-  },
-  'verify_email_behavior': {
-    'source_filenames': ('js/verify_email/*.coffee',),
-    'output_filename': 'js/verify_email.js',
-  },
-  'verify_invitation_behavior': {
-    'source_filenames': ('js/verify_invitation/*.coffee',),
-    'output_filename': 'js/verify_invitation.js',
-  },
   'app_behavior': {
     'source_filenames': (
       'js/spine/spine.coffee',
@@ -273,11 +245,10 @@ PIPELINE_JS = {
       'js/app/lib/*.coffee',
       'js/app/*.coffee',
       'js/app/models/*.coffee',
-      'js/app/controllers/manager.coffee',
-      'js/app/controllers/editor.coffee',
-      'js/app/controllers/dashboard.coffee',
+      'js/app/controllers/home.coffee',
+      'js/app/controllers/pricing.coffee',
+      'js/app/controllers/work.coffee',
       'js/app/controllers/settings.coffee',
-      'js/app/controllers/exit.coffee',
       'js/app/controllers/stack.coffee',
       'js/app/views/*.jst',
       'js/app/views/**/*.jst',

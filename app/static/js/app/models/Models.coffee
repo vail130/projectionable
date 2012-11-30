@@ -1,3 +1,10 @@
+class Projectionable.Session extends Spine.Model
+  @configure "Session",
+    "id"
+    
+  @extend Spine.Model.Ajax
+  @extend url: "/api/sessions"
+
 class Projectionable.Account extends Spine.Model
   @configure "Account",
     "id"
@@ -18,11 +25,19 @@ class Projectionable.Project extends Spine.Model
     "account_id"
     "title"
     "rate"
+    "deadline"
+    "budget"
     "status"
-    "hours"
-    "hours_worked"
-    "client_enabled"
-    "permission"
+    "front_end_hours"
+    "front_end_hours_worked"
+    "back_end_hours"
+    "back_end_hours_worked"
+    "asset_hours"
+    "asset_hours_worked"
+    "owner"
+    "clients"
+    "coworkers"
+    "logs"
     "date_created"
     "date_updated"
     
@@ -32,8 +47,8 @@ class Projectionable.Project extends Spine.Model
 class Projectionable.Permission extends Spine.Model
   @configure "Permission",
     "id"
-    "email"
     "account_id"
+    "email"
     "project_id"
     "permission"
     "date_created"
@@ -49,7 +64,9 @@ class Projectionable.RequirementGroup extends Spine.Model
     "project_id"
     "title"
     "index"
-    "status"
+    "method"
+    "uri"
+    "type"
     "hours"
     "hours_worked"
     "date_created"
@@ -65,8 +82,10 @@ class Projectionable.Requirement extends Spine.Model
     "project_id"
     "group_id"
     "title"
+    "description"
     "index"
     "status"
+    "requester_id"
     "hours"
     "hours_worked"
     "date_created"
@@ -74,5 +93,39 @@ class Projectionable.Requirement extends Spine.Model
     
   @extend Spine.Model.Ajax
   @extend url: "/api/requirements"
+  
+class Projectionable.ProjectAsset extends Spine.Model
+  @configure "ProjectAsset",
+    "id"
+    "account_id"
+    "project_id"
+    "title"
+    "description"
+    "asset"
+    "index"
+    "status"
+    "requester_id"
+    "hours"
+    "hours_worked"
+    "date_created"
+    "date_updated"
+    
+  @extend Spine.Model.Ajax
+  @extend url: "/api/assets"
+  
+class Projectionable.ProjectFile extends Spine.Model
+  @configure "ProjectFile",
+    "id"
+    "account_id"
+    "project_id"
+    "title"
+    "description"
+    "asset"
+    "index"
+    "date_created"
+    "date_updated"
+    
+  @extend Spine.Model.Ajax
+  @extend url: "/api/files"
   
   
