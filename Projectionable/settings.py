@@ -22,12 +22,6 @@ ENVIRONMENT = 'local'
 if ENVIRONMENT == 'heroku':
   BASE_URL = 'http://projectionable.herokuapp.com/'
   BIN_PATH = '/app/bin/'
-  PIPELINE_CSS_COMPRESSOR = None
-  #PIPELINE_JS_COMPRESSOR = None
-  PIPELINE_JS_COMPRESSOR = 'pipeline.compressors.yui.YUICompressor'
-  TEMPLATE_DIRS = (
-    '/app/app/templates'
-  )
   
   EMAIL_HOST_USER = os.environ['SENDGRID_USERNAME']
   EMAIL_HOST = 'smtp.sendgrid.net'
@@ -43,11 +37,6 @@ if ENVIRONMENT == 'heroku':
 elif ENVIRONMENT == 'appfog':
   BASE_URL = 'http://projectionable.aws.us.cm'
   BIN_PATH = '/app/bin/'
-  PIPELINE_CSS_COMPRESSOR = None
-  PIPELINE_JS_COMPRESSOR = 'pipeline.compressors.yui.YUICompressor'
-  TEMPLATE_DIRS = (
-    '/app/app/templates'
-  )
   
   import json
   
@@ -68,11 +57,6 @@ elif ENVIRONMENT == 'appfog':
 else:
   BASE_URL = 'http://127.0.0.1:8000/'
   BIN_PATH = '/usr/local/bin/'
-  PIPELINE_CSS_COMPRESSOR = None
-  PIPELINE_JS_COMPRESSOR = None
-  TEMPLATE_DIRS = (
-    os.path.join(PROJECT_DIR, 'app/templates')
-  )
   
   DATABASES = {
     'default': {
@@ -112,6 +96,11 @@ USE_L10N = True
 # If you set this to False, Django will not use timezone-aware datetimes.
 USE_TZ = True
 
+TEMPLATE_DIRS = (
+  os.path.join(PROJECT_DIR, 'api/templates'),
+  os.path.join(PROJECT_DIR, 'client/templates'),
+)
+  
 STATIC_URL = '/static/'
 
 # Absolute filesystem path to the directory that will hold user-uploaded files.
@@ -127,18 +116,13 @@ MEDIA_URL = '/media/'
 # Don't put anything in this directory yourself; store your static files
 # in apps' "static/" subdirectories and in STATICFILES_DIRS.
 # Example: "/home/media/media.lawrence.com/static/"
-STATIC_ROOT = os.path.join(PROJECT_DIR, 'static/')
-
-COMPRESS_ROOT = STATIC_ROOT
-COMPRESS_URL = STATIC_URL
+STATIC_ROOT = os.path.join(PROJECT_DIR, 'temp/')
 
 # Additional locations of static files
 STATICFILES_DIRS = (
   # Put strings here, like "/home/html/static" or "C:/www/django/static".
   # Always use forward slashes, even on Windows.
   # Don't forget to use absolute paths, not relative paths.
-  os.path.join(PROJECT_DIR, 'app/static/'),
-  os.path.join(PROJECT_DIR, 'resources/'),
 )
 
 # List of finder classes that know how to find static files in
@@ -147,17 +131,6 @@ STATICFILES_FINDERS = (
   'django.contrib.staticfiles.finders.FileSystemFinder',
   'django.contrib.staticfiles.finders.AppDirectoriesFinder',
 #  'django.contrib.staticfiles.finders.DefaultStorageFinder',
-  'compressor.finders.CompressorFinder',
-)
-
-COMPRESS_ENABLED = False
-COMPRESS_OFFLINE = False
-
-COMPRESS_PRECOMPILERS = (
-  ('text/coffeescript', 'coffee --compile --stdio'),
-  ('text/less', 'lessc {infile} {outfile}'),
-  ('text/x-sass', 'sass {infile} {outfile}'),
-  ('text/x-scss', 'sass --scss {infile} {outfile}'),
 )
 
 # Make this unique, and don't share it with anybody.
@@ -178,7 +151,6 @@ MIDDLEWARE_CLASSES = (
   'django.contrib.messages.middleware.MessageMiddleware',
   # Uncomment the next line for simple clickjacking protection:
   # 'django.middleware.clickjacking.XFrameOptionsMiddleware',
-  #'middleware.accepts.AcceptMiddleware',
 )
 
 ROOT_URLCONF = 'Projectionable.urls'
@@ -206,57 +178,12 @@ INSTALLED_APPS = (
   # 'django.contrib.admin',
   'rest_framework',
   'requests',
-  'compressor',
-  'subcommand',
-  'spine',
-  'pipeline',
   'gunicorn',
   ###########
-  'app',
-  'project_api',
-  'account_api',
+  'utilities',
+  'api',
+  'client',
 )
-
-# Pipeline settings
-STATICFILES_STORAGE = 'pipeline.storage.PipelineStorage'
-
-#PIPELINE_YUI_BINARY = BIN_PATH + 'yuicompressor'
-
-PIPELINE = True
-PIPELINE_DISABLE_WRAPPER = True
-PIPELINE_TEMPLATE_EXT = '.jst'
-PIPELINE_TEMPLATE_FUNC = '_.template'
-PIPELINE_COMPILERS = (
-  'pipeline.compilers.coffee.CoffeeScriptCompiler',
-  #'spine.compiler.EcoCompiler',
-)
-
-PIPELINE_JS = {
-  'app_behavior': {
-    'source_filenames': (
-      'js/spine/spine.coffee',
-      'js/spine/spine_attr_events.coffee',
-      'js/spine/ajax.coffee',
-      'js/spine/relation.coffee',
-      'js/spine/route.coffee',
-      'js/spine/manager.coffee',
-      'js/spine/list.coffee',
-      'js/spine/local.coffee',
-      'js/app/lib/*.coffee',
-      'js/app/*.coffee',
-      'js/app/models/*.coffee',
-      'js/app/controllers/home.coffee',
-      'js/app/controllers/pricing.coffee',
-      'js/app/controllers/work.coffee',
-      'js/app/controllers/settings.coffee',
-      'js/app/controllers/stack.coffee',
-      'js/app/views/*.jst',
-      'js/app/views/**/*.jst',
-      'js/app/views/**/**/*.jst',
-   ),
-    'output_filename': 'js/projectionable.js',
-  }
-}
 
 # A sample logging configuration. The only tangible logging
 # performed by this configuration is to send an email to

@@ -1,9 +1,0 @@
-Congratulations!\n
-\n
-Your project "{{ project_title }}" has been enabled for client invitations.\n
-\n
-We hope your project gets approved!\n
-\n
-______________________________\n
-\n
-{% include 'email-footer.txt' %}

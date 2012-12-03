@@ -1,7 +1,0 @@
-We just received your request to change your email address. Please click on the link below to verify this email address.\n
-\n
-{{url}}verify_email/?account_id={{account_id}}&code={{code}}\n
-\n
-______________________________\n
-\n
-{% include 'email-footer.txt' %}

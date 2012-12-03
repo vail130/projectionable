@@ -1,13 +1,11 @@
 # Project-specific files #
 ##########################
 static/
-!app/static/
+temp/
 
 bin/
 include/
-
 lib/
-!app/static/js/app/lib
 
 .Python
 .komodotools/
@@ -21,6 +19,7 @@ lib/
 *.exe
 *.o
 *.so
+*.pyc
 
 # Packages #
 ############
