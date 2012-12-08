@@ -1,0 +1,52 @@
+
+<% var owner = project.permission === 'owner'; %>
+
+<div class='title-row'>
+  
+  <h3 class='pull-left'><%= project.title %></h3>
+  
+  <ul class='editor-button-list pull-right'>
+    <li>
+      <a href='#' class='btn btn-small editor-button reports-button'>
+        <i class='icon-bar-chart'></i>
+        <span>Reports</span>
+      </a>
+    </li>
+    
+    <% if (owner) { %>
+    <li>
+      <a href='#' class='btn btn-small editor-button collaborate-button'>
+        <i class='icon-group'></i>
+        <span>Collaborate</span>
+      </a>
+    </li>
+    
+    <li>
+      <a href='#' class='btn btn-small editor-button configure-button'>
+        <i class='icon-cogs'></i>
+        <span>Configure</span>
+      </a>
+    </li>
+    <% } %>
+  </ul>
+    
+</div>
+
+<div class='clearfix'>
+  
+  <ul class='nav nav-pills section-toggle-link-list'></ul>
+  
+</div>
+
+<div class='clearfix'>
+  
+  <ul class='section-list'></ul>
+  
+</div>
+
+<div class='reports-modal'></div>
+
+<% if (owner) { %>
+<div class='collaborate-modal'></div>
+<div class='configure-modal'></div>
+<% } %>

@@ -1,0 +1,9 @@
+Congratulations!\n
+\n
+Your project "{{ project_title }}" has been started by a client.\n
+\n
+We hope you make a lot of money from the project!\n
+\n
+______________________________\n
+\n
+{% include 'email-footer.txt' %}

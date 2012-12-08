@@ -1,0 +1,8 @@
+{% extends 'base_email.html' %}
+
+{% block body %}
+  <p>{{ full_name }} just completed a {{ requirement_type }} story:</p>
+  <p><b>{{ requirement_title }}</b></p>
+  <p>The story was initially estimated to take {{ hours }} hours, and it has taken
+    {{ hours_worked }} hours, so far, which is {{ hours_percent }}.</p>
+{% endblock %}

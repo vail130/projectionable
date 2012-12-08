@@ -1,0 +1,15 @@
+Thank you for sharing your thoughts with us. We'll review the message you sent as soon as possible and reply if your message warrants one.\n
+\n
+Here's a copy of what you submitted for your records:\n
+\n
+Reply-To: {{ reply_to }}\n
+\n
+Subject: {{ subject }}\n
+\n
+Message:\n
+\n
+{{ message }}\n
+\n
+______________________________\n
+\n
+{% include 'email-footer.txt' %}

@@ -1,0 +1,14 @@
+<div id='navigation' class='clearfix'>
+  <h1>Projectionable</h1>
+  <ul>
+    <li><a href="/home" class="{% if page == 'home' %}active{% endif %}">Home</a></li>
+  {% if valid_session %}
+    <li><a href="/#/manager">Manager</a></li>
+    <li><a href="/#/settings">Settings</a></li>
+    <li><a href="/#/exit">Sign Out</a></li>
+  {% else %}
+    <li><a href="/signup" class="{% if page == 'signup' %}active{% endif %}">Sign Up</a></li>
+    <li><a href="/signin" class="{% if page == 'signin' %}active{% endif %}">Sign In</a></li>
+  {% endif %}
+  </ul>
+</div>

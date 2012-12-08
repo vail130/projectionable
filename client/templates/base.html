@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<!--[if lt IE 7 ]><html class='ie ie6' lang='en'> <![endif]-->
+<!--[if IE 7 ]><html class='ie ie7' lang='en'> <![endif]-->
+<!--[if IE 8 ]><html class='ie ie8' lang='en'> <![endif]-->
+<!--[if (gte IE 9)|!(IE)]><!--><html lang='en'> <!--<![endif]-->
+<head>
+    <!-- Basic Page Needs
+    ================================================== -->
+    <meta http-equiv='Content-Type' content='text/html; charset=UTF-8' />
+    <title>{{ title }}</title>
+    <meta name='author' content='Vail Gold'>
+    <meta name='description' content='{{ description }}' />
+    <meta name='keywords' content='{{ keywords }}' />
+
+    <meta property='og:site_name' content='{{ site_name }}' />
+    <meta property='og:title' content='{{ title }}' />
+    <meta property='og:url' content='{{ site_url }}' />
+    <meta property='og:image' content='{{ static_url }}img/thumbnail.png' />
+    <meta property='og:description' content='{{ description }}' />
+
+    <meta itemprop='name' content='{{ site_name }}'>
+    <meta itemprop='description' content='{{ description }}'>
+    <meta itemprop='image' content='{{ static_url }}img/thumbnail.png'>
+
+    <!-- Mobile Specific Metas
+    ================================================== -->
+    <meta name='viewport' content='width=device-width, initial-scale=1.0'>
+    <meta name='HandheldFriendly' content='true' />
+
+    <!-- Favicons
+    ================================================== -->
+    <link rel='shortcut icon' href='{{ static_url }}img/favicon.ico' />
+    <link rel='icon' href='{{ static_url }}img/favicon.ico' />
+    <link rel='apple-touch-icon' sizes='72x72' href='{{ static_url }}img/apple-icon-72.png'>
+    <link rel='apple-touch-icon' sizes='114x114' href='{{ static_url }}img/apple-icon-114.png'>
+
+    <!-- CSS
+    ================================================== -->
+    {% block style %}{% endblock %}
+
+</head>
+<body>
+  {% block app %}{% endblock %}
+  {% block js %}{% endblock %}
+</body>
+</html>

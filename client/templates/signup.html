@@ -1,0 +1,40 @@
+{% extends 'base.html' %}
+
+{% block style %}
+{% endblock %}
+
+{% block app %}
+<div id='projectionable'>
+  {% include 'header.html' %}
+  
+  <div id='content' class='clearfix'>
+    <a href='#' class='px'></a>
+    
+    <div class='proj-form-wrapper clearfix trial-form signup-page'>
+      <div class="proj-form">
+        <div class='proj-form-head'>
+          <h2>Start your free trial now</h2>
+        </div>
+        <div class='proj-form-body'>
+          <div class="alert"><span></span></div>
+          <input type="text" id='email' placeholder="Email address" />
+          <input type="password" id='password1' placeholder="Password" />
+          <input type="password" id='password2' placeholder="Verify Password" />
+          <input type='text' id='code' />
+          <div class="button-row clearfix">
+            <a href='#' class="btn btn-primary signup-button" data-loading-text="Loading..." autocomplete='off'>Sign Up</a>
+          </div>
+        </div>
+      </div>
+    </div>
+    
+  </div>
+  
+  {% include 'footer.html' %}
+</div>
+
+{% endblock %}
+
+{% block js %}
+    <script type='text/javascript' src='{{ static_url }}js/signup.js'></script>
+{% endblock %}

@@ -1,0 +1,16 @@
+{% extends 'base_email.html' %}
+
+{% block body %}
+  <p>Welcome to {{ site_name }}.</p>
+  <p>You've been invited by another user to see their project. All you
+      need to do now is click on the link below to verify this email address, and then
+      set a password for your account.</p>
+  <p>
+    <a href='{{url}}verify_invitation/?account_id={{account_id}}&code={{code}}'
+      target='_blank' style='color:#222;font-weight:bold;'>Click here to verify your invitation.</a>
+  </p>
+{% endblock %}
+
+{% block footer %}
+  
+{% endblock %}

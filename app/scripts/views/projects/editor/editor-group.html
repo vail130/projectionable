@@ -1,0 +1,45 @@
+
+<div class='group-title-row clearfix'>
+  <h5><%= group.title %></h5>
+  <div class='group-stats pull-right'>
+    <span><%= group.hours_worked %>h / <%= group.hours %>h</span>
+    <a href='#' class='btn btn-mini group-edit-button'>
+      <i class='icon-pencil'></i>
+    </a>
+  </div>
+  
+</div>
+
+<div class='section-item-wrapper'>
+  <ul class='section-item-list'></ul>
+  
+  <div class='group-button-row'>
+    <a href='#' class='btn btn-primary btn-mini new-group-button'><i class='icon-plus'></i> Story</a>
+  </div>
+</div>
+
+<div class='group-edit-form'>
+  <% if (key === 'front') { %>
+    <div class='group-form-row'>
+      <label class='full-row-label'>User View</label>
+      <textarea class='group-title'><%= group.title %></textarea>
+    </div>
+  <% } else if (key === 'back') { %>
+    <div class='group-form-row'>
+      <label class='full-row-label'>API Endpoint</label>
+      <textarea class='group-uri'><%= group.uri %></textarea>
+    </div>
+    <div class='group-form-row'>
+      <label class='inline-label'>Request Method</label>
+      <select class='group-request-method'>
+        <% _.each(['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'HEAD'], function (method) { %>
+          <option value="<%= method %>"><%= method %></option>
+        <% }); %>
+      </select>
+    </div>
+  <% } %>
+  <div class='group-form-row'>
+    <a href='#' class='btn btn-mini btn-success group-save-button pull-right'>Save</a>
+    <a href='#' class='btn btn-mini group-cancel-button pull-right'>Cancel</a>
+  </div>
+</div>

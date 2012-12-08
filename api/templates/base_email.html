@@ -1,0 +1,71 @@
+<table border='0' cellpadding='0' cellspacing='0' width='100%' height='100%' style='height:100% !important;width:100% !important;'>
+<tbody>
+<tr>
+<td align='center' valign='top'>
+  <table border='0' cellpadding='0' cellspacing='0' width='550'
+    style='background-color:white;
+      font-family:arial, sans;
+      border: 1px solid #a88244;'>
+  <tbody>
+  <tr
+    style="background: #eacea0;
+      background: -moz-linear-gradient(top,  #eacea0 0%, #c4a26c 100%);
+      background: -webkit-gradient(linear, left top, left bottom, color-stop(0%,#eacea0), color-stop(100%,#c4a26c));
+      background: -webkit-linear-gradient(top,  #eacea0 0%,#c4a26c 100%);
+      background: -o-linear-gradient(top,  #eacea0 0%,#c4a26c 100%);
+      background: -ms-linear-gradient(top,  #eacea0 0%,#c4a26c 100%);
+      background: linear-gradient(to bottom,  #eacea0 0%,#c4a26c 100%);
+      filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#eacea0', endColorstr='#c4a26c',GradientType=0 );">
+    <td colspan='3' align='left' valign='top' width='380' style=''>
+      <h1
+        style='color: #222;
+          font-size: 14px;
+          line-height: 42px;
+          margin: 0 10px;
+          font-weight: normal;'>{{ subject }}</h1>
+    </td>
+    <td colspan='1' align='right' valign='top' width='170' style=''>
+      <a target='_blank' href='{{url}}'
+        style='color: #222;
+          text-decoration:none;
+          font-size: 20px;
+          line-height: 42px;
+          margin: 0 15px;
+          font-weight: normal;'>Projectionable</a>
+    </td>
+  </tr>
+  <tr>
+    <td colspan='4' align='left' valign='top' width='100%'
+      style='background-color:#F7E4C6;
+        border-top: 1px solid #a88244;
+        box-shadow: 0 1px 2px -1px white inset;
+        -moz-box-shadow: 0 1px 2px -1px white inset;
+        -webkit-box-shadow: 0 1px 2px -1px white inset;
+        -ms-box-shadow: 0 1px 2px -1px white inset;
+        -o-box-shadow: 0 1px 2px -1px white inset;'>
+      <table border='0' cellpadding='0' cellspacing='10' width='100%'>
+      <tbody>
+        <tr>
+          <td style='color:#222;'>{% block body %}{% endblock %}</td>
+        </tr>
+      </tbody>
+      </table>
+    </td>
+  </tr>
+  <tr>
+    <td colspan='4' align='left' valign='top' width='100%' style='background-color:#F7E4C6;border-top: 1px solid #a88244;'>
+      <table border='0' cellpadding='0' cellspacing='10' width='100%'>
+      <tbody>
+      <tr>
+        <td style='font-size:12px;line-height:16px;'>{% include 'email-footer.html' %}</td>
+      </tr>
+      </tbody>
+      </table>
+    </td>
+  </tr>
+  </tbody>
+  </table>
+</td>
+</tr>
+</tbody>
+</table>

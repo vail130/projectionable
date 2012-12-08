@@ -10,6 +10,10 @@ lib/
 .Python
 .komodotools/
 *.komodoproject
+.sass-cache
+.gitattributes
+.jshintrc
+
 
 # Compiled source #
 ###################

@@ -1,0 +1,40 @@
+
+<div class='item-display'>
+  <div class='action-block pull-right'>
+    <div class='btn-group'>
+      <a href='#' class='btn btn-mini btn-info item-work-button'>Start</a>
+      <a href='#' class='btn btn-mini item-edit-button'>
+        <i class='caret'></i>
+      </a>
+    </div>
+
+  </div>
+  <span><%= item.title %></span>
+</div>
+
+<div class='item-edit-form'>
+  <div class='item-form-row'>
+    <label class='full-row-label'><%= key === 'front' ? 'User Story' : 'API Story' %></label>
+    <textarea class='item-title'><%= item.title %></textarea>
+  </div>
+  <div class='item-form-row'>
+    <label class='inline-label'>Estimated Hours</label>
+    <input type='text' class='item-hours-input' value="<%= item.hours %>" />
+  </div>
+  <div class='item-form-row'>
+    <label class='inline-label'>Hours Worked</label>
+    <span class='item-hours-worked'><%= item.hours_worked %></span>
+  </div>
+  <div class='item-form-row'>
+    <label class='inline-label'>Notify</label>
+    <select class='item-requester-select'>
+      <% _.each(permissions, function (p) { %>
+        <option value="<%= p.account_id %>" ><%= p.email %></option>
+      <% }); %>
+    </select>
+  </div>
+  <div class='item-form-row'>
+    <a href='#' class='btn btn-mini btn-success item-save-button pull-right'>Save</a>
+    <a href='#' class='btn btn-mini item-cancel-button pull-right'>Cancel</a>
+  </div>
+</div>

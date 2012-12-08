@@ -1,0 +1,295 @@
+@import "compass_twitter_bootstrap_awesome";
+
+#projectionable {
+  //background: url(/images/low-contrast-linen-65.png) top left repeat;
+  background-color: #eee;
+  
+  #footer {
+    display: none;
+  }
+  
+  & > div {
+    @include clearfix();
+  }
+  
+  .width-980 {
+    width: 980px;
+    margin: 0 auto;
+  }
+  
+  #app-body {
+    
+    & > .main-stack {
+      display: none;
+      width: 980px;
+      margin: 0 auto;
+      min-height: 500px;
+      padding: 0 20px;
+      
+      &.active {
+        display: block;
+      }
+      
+      &.home {
+        
+      }
+      
+      &.pricing {
+        
+      }
+      
+      &.work {
+        & > div {
+          display: none;
+        
+          &.active {
+            display: block;
+          }
+        }
+        
+        .project-manager {
+          width: 910px;
+          margin: 0 auto;
+          
+          & > div {
+            margin: 0;
+            
+            h2 {
+              
+            }
+            
+            .btn {
+              margin: 15px 0;
+            }
+          }
+          
+          .project-list {
+            list-style: none;
+            margin: 0;
+            
+            & > li {
+              margin: 10px 0;
+              padding: 9px 19px;
+              @include border-radius(10px);
+              
+              h3 {
+                margin: 0;
+              }
+              
+              .btn {
+                margin: 5px 0 5px 10px;
+              }
+            }
+          }
+        }
+        
+        .project-editor {
+          
+          .title-row {
+            @include clearfix();
+            text-align: right;
+            
+            .editor-button-list {
+              display: inline-block;
+              list-style: none;
+              padding-top: 16px;
+              
+              & > li {
+                display: inline-block;
+                margin-left: 5px;
+              }
+            }
+          }
+          
+          .section-toggle-link-list {
+            margin: 0;
+            list-style: none;
+            
+            li {
+              margin-right: 10px;
+            }
+          }
+          
+          .section-list {
+            margin: 20px 0 0 0;
+            list-style: none;
+            @include clearfix();
+          
+            & > li {
+              display: none;
+              float: left;
+              width: 237px;
+              margin: 0 10px 0 0;
+              @include border-radius(5px);
+              background-color: #ddd;
+              @include box-shadow(0 0 5px -2px black inset);
+              overflow: hidden;
+              
+              &:last-child {
+                margin: 0;
+              }
+               
+              &.active {
+                display: block;
+              }
+              
+              .section-header {
+                background-color: #222;
+                @include clearfix();
+                padding: 5px;
+                
+                & > h5 {
+                  float: left;
+                  margin: 0;
+                  color: #ccc;
+                }
+                
+                .new-button {
+                  float: right;
+                  padding: 1px 4px;
+                }
+              }
+              
+              .section-group-list {
+                list-style: none;
+                margin: 0;
+                
+                & > li {
+                  display: block;
+                  margin: 0;
+                  padding: 5px;
+                  border-top: 1px solid #ccc;
+                  
+                  .group-title-row {
+                    @include clearfix();
+                    
+                    & > h5 {
+                      float: left;
+                      margin: 0;
+                    }
+                    
+                    span {
+                      font-size: 12px;
+                      line-height: 20px;
+                    }
+                    
+                    .group-edit-button {
+                      padding: 1px 4px;
+                    }
+                  }
+                  
+                  .group-button-row {
+                    text-align: center;
+                    margin: 7px 0;
+                  }
+                  
+                  label.full-row-label {
+                    display: block;
+                    font-weight: bold;
+                    font-size: 12px;
+                    margin: 0;
+                  }
+                  
+                  .group-edit-form {
+                    display: none;
+                    
+                    .group-form-row {
+                      @include clearfix();
+                      
+                      textarea {
+                        display: block;
+                        margin: 0 0 5px 0;
+                        padding: 5px;
+                        border: 1px solid #aaa;
+                        width: 215px;
+                        max-width: 215px;
+                        min-width: 215px;
+                        font-size: 12px;
+                        line-height: 18px;
+                      }
+                      
+                      .group-cancel-button {
+                        margin-right: 5px;
+                      }
+                    }
+                  }
+                  
+                  .section-item-wrapper {
+                    margin: 5px 0;
+                    @include border-radius(5px);
+                    background-color: #eee;
+                    @include box-shadow(0 0 5px -1px black inset);
+                    @include clearfix();
+                  }
+                  
+                  .section-item-list {
+                    margin: 0;
+                    list-style: none;
+                    @include border-radius(5px);
+                    border: 1px solid #aaa;
+                    border-bottom: 1px solid #aaa;
+                    
+                    & > li {
+                      display: block;
+                      margin: 0;
+                      border-bottom: 1px solid #aaa;
+                      
+                      &:last-child {
+                        border: none;
+                      }
+                      
+                      &.no-items {
+                        text-align: center;
+                        
+                        & > span {
+                          font-size: 12px;
+                          font-style: italic;
+                        }
+                      }
+                      
+                      .item-display {
+                        padding: 0 0 3px 5px;
+                        
+                        & > span {
+                          padding: 3px 3px 0 0;
+                          font-size: 12px;
+                          line-height: 27px;
+                        }
+                        
+                        .action-block {
+                          padding: 3px 3px 0 0;
+                          padding-left: 10px;
+                          
+                          .btn-mini {
+                            padding: 1px 6px;
+                          }
+                        }
+                      }
+                      
+                      .item-edit-form {
+                        display: none;
+                        
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+          
+          .collaborate-modal,
+          .configure-modal {
+            display: none;
+          }
+          
+        }
+      }
+      
+      &.settings {
+        
+      }
+      
+    }
+  }
+  
+}

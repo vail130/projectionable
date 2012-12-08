@@ -1,0 +1,9 @@
+Welcome to {{ site_name }}.\n
+\n
+You've been invited by another user to see their project. All you need to do now is click on the link below to verify this email address, and then set a password for your account.\n
+\n
+{{url}}verify_invitation/?account_id={{account_id}}&code={{code}}\n
+\n
+______________________________\n
+\n
+{% include 'email-footer.txt' %}

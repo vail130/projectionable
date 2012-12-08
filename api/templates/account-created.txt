@@ -1,0 +1,9 @@
+Welcome to {{ site_name }}.\n
+\n
+We just received your registration information. All you need to do now is click on the link below to verify this email address.\n
+\n
+{{ url }}verify_email/?account_id={{ account_id }}&code={{ code }}\n
+\n
+______________________________\n
+\n
+{% include 'email-footer.txt' %}
