@@ -43,15 +43,19 @@ define [
             RequirementGroup.findAllByAttribute('project_id', @parent.project.id),
             {'type': 'front_end'}
           ), 'index'
+          emptyText = "front-end views"
         when 'back'
           records = _.sortBy _.where(
             RequirementGroup.findAllByAttribute('project_id', @parent.project.id),
             {'type': 'back_end'}
           ), 'index'
+          emptyText = "API endpoints"
         when 'assets'
           records = _.sortBy ProjectAsset.findAllByAttribute('project_id', @parent.project.id), 'index'
+          emptyText = @key
         when 'files'
           records = _.sortBy ProjectFile.findAllByAttribute('project_id', @parent.project.id), (file) -> -file.unix_updated
+          emptyText = @key
       
       for record in records
         if @key in ['front', 'back']
@@ -66,6 +70,9 @@ define [
             item: record
         
         @$sectionGroupList.append controller.render().el
+      
+      if records.length is 0
+        @$sectionGroupList.append $("<li class='no-groups'><span>No #{emptyText} yet.</span></li>")
       
       @
     

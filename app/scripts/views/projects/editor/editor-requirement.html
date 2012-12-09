@@ -2,10 +2,10 @@
 <div class='item-display'>
   <div class='action-block pull-right'>
     <div class='btn-group'>
-      <a href='#' class='btn btn-mini btn-info item-work-button'>Start</a>
       <a href='#' class='btn btn-mini item-edit-button'>
-        <i class='caret'></i>
+        <i class='icon-pencil'></i>
       </a>
+      <a href='#' class='btn btn-mini btn-info item-work-button'>Start</a>
     </div>
 
   </div>
@@ -15,7 +15,9 @@
 <div class='item-edit-form'>
   <div class='item-form-row'>
     <label class='full-row-label'><%= key === 'front' ? 'User Story' : 'API Story' %></label>
-    <textarea class='item-title'><%= item.title %></textarea>
+    <div class='input-wrapper'>
+      <textarea class='item-title'><%= item.title %></textarea>
+    </div>
   </div>
   <div class='item-form-row'>
     <label class='inline-label'>Estimated Hours</label>
@@ -23,7 +25,7 @@
   </div>
   <div class='item-form-row'>
     <label class='inline-label'>Hours Worked</label>
-    <span class='item-hours-worked'><%= item.hours_worked %></span>
+    <input type='text' class='item-hours-input' readonly='readonly' value="<%= item.hours_worked %>" />
   </div>
   <div class='item-form-row'>
     <label class='inline-label'>Notify</label>
@@ -34,6 +36,7 @@
     </select>
   </div>
   <div class='item-form-row'>
+    <a href='#' class='btn btn-mini btn-danger item-delete-button pull-left'>Delete</a>
     <a href='#' class='btn btn-mini btn-success item-save-button pull-right'>Save</a>
     <a href='#' class='btn btn-mini item-cancel-button pull-right'>Cancel</a>
   </div>

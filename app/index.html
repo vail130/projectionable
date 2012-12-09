@@ -95,7 +95,9 @@
       }
     ];
     
-    window.localStorage.setItem('RequirementGroup', JSON.stringify(reqGroupData));
+    if (typeof window.localStorage.getItem('RequirementGroup') === 'undefined') {
+      window.localStorage.setItem('RequirementGroup', JSON.stringify(reqGroupData));
+    }
     
     var reqData = [
       {
@@ -115,7 +117,10 @@
       }
     ];
     
-    window.localStorage.setItem('Requirement', JSON.stringify(reqData));
+    if (typeof window.localStorage.getItem('Requirement') === 'undefined') {
+      window.localStorage.setItem('Requirement', JSON.stringify(reqData));
+    }
+    
     window.localStorage.setItem('ProjectAsset', '[]');
     window.localStorage.setItem('ProjectFile', '[]');
   })(window);

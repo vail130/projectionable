@@ -122,7 +122,6 @@
               margin: 0 10px 0 0;
               @include border-radius(5px);
               background-color: #ddd;
-              @include box-shadow(0 0 5px -2px black inset);
               overflow: hidden;
               
               &:last-child {
@@ -136,7 +135,7 @@
               .section-header {
                 background-color: #222;
                 @include clearfix();
-                padding: 5px;
+                padding: 5px 5px 5px 10px;
                 
                 & > h5 {
                   float: left;
@@ -153,12 +152,24 @@
               .section-group-list {
                 list-style: none;
                 margin: 0;
+                @include border-bottom-radius(5px);
+                border: 1px solid #aaa;
+                border-top-width: 0;
                 
                 & > li {
                   display: block;
                   margin: 0;
                   padding: 5px;
-                  border-top: 1px solid #ccc;
+                  border-top: 1px solid #aaa;
+                      
+                  &.no-groups {
+                    text-align: center;
+                    
+                    & > span {
+                      font-size: 12px;
+                      font-style: italic;
+                    }
+                  }
                   
                   .group-title-row {
                     @include clearfix();
@@ -169,12 +180,47 @@
                     }
                     
                     span {
+                      display: inline-block;
+                      float: left;
+                      padding-right: 3px;
                       font-size: 12px;
                       line-height: 20px;
                     }
                     
-                    .group-edit-button {
-                      padding: 1px 4px;
+                    .btn-group {
+                      float: right;
+                      
+                      .btn-mini {
+                        padding: 1px 4px;
+                      }
+                    }
+
+                  }
+                  
+                  .item-form-row,
+                  .group-form-row {
+                    @include clearfix();
+                    
+                    input,
+                    textarea {
+                      width: 200px;
+                      font-size: 12px;
+                    }
+                    
+                    select {
+                      float: left;
+                      width: 104px;
+                      height: 26px;
+                      font-size: 14px;
+                    }
+                
+                    .inline-label {
+                      float: left;
+                      margin: 0 10px 0 5px;
+                      font-size: 12px;
+                      width: 95px;
+                      font-weight: bold;
+                      line-height: 28px;
                     }
                   }
                   
@@ -194,40 +240,29 @@
                     display: none;
                     
                     .group-form-row {
-                      @include clearfix();
                       
-                      textarea {
-                        display: block;
-                        margin: 0 0 5px 0;
-                        padding: 5px;
-                        border: 1px solid #aaa;
-                        width: 215px;
-                        max-width: 215px;
-                        min-width: 215px;
-                        font-size: 12px;
-                        line-height: 18px;
+                      input {
+                        width: 212px;
                       }
                       
-                      .group-cancel-button {
-                        margin-right: 5px;
+                      .group-method {
+                        width: 114px;
+                      }
+                      
+                      .group-cancel-button,
+                      .group-save-button {
+                        margin: 0 0 0 5px;
                       }
                     }
                   }
                   
-                  .section-item-wrapper {
+                  .section-item-list {
                     margin: 5px 0;
                     @include border-radius(5px);
                     background-color: #eee;
-                    @include box-shadow(0 0 5px -1px black inset);
                     @include clearfix();
-                  }
-                  
-                  .section-item-list {
-                    margin: 0;
                     list-style: none;
-                    @include border-radius(5px);
                     border: 1px solid #aaa;
-                    border-bottom: 1px solid #aaa;
                     
                     & > li {
                       display: block;
@@ -261,14 +296,30 @@
                           padding-left: 10px;
                           
                           .btn-mini {
-                            padding: 1px 6px;
+                            padding: 1px 5px;
                           }
                         }
                       }
                       
                       .item-edit-form {
                         display: none;
+                        padding: 0 0 3px 5px;
+                        background-color: #bbb;
                         
+                        .item-form-row {
+                          
+                          .item-hours-input {
+                            float: left;
+                            width: 90px;
+                            height: 18px;
+                            font-size: 14px;
+                          }
+                          
+                          .item-cancel-button,
+                          .item-save-button {
+                            margin: 0 5px 2px 0;
+                          }
+                        }
                       }
                     }
                   }
