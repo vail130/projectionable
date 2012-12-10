@@ -13,12 +13,18 @@ define [
   class ProjectSection extends Spine.Controller
     constructor: ->
       super
+      RequirementGroup.bind 'destroy', @render
+      ProjectAsset.bind 'destroy', @render
+      ProjectFile.bind 'destroy', @render
     
     className: 'project-editor-section'
     
     elements:
       '.section-group-list' : '$sectionGroupList'
       '.new-button' : '$newButton'
+    
+    isHidden: =>
+      not @$el.hasClass 'active'
     
     hide: =>
       @$el.removeClass 'active'
@@ -83,32 +89,42 @@ define [
       event.preventDefault()
       switch @key
         when 'front'
+          records = _.where RequirementGroup.findAllByAttribute('project_id', @parent.project.id), {'type': 'front_end'}
           record = RequirementGroup.create
             project_id: @parent.project.id
             type: 'front_end'
+            hours: 0
+            hours_worked: 0
           
           controller = new SectionGroup
             parent: @
             key: @key
             group: record
         when 'back'
+          records = _.where RequirementGroup.findAllByAttribute('project_id', @parent.project.id), {'type': 'back_end'}
           record = RequirementGroup.create
             project_id: @parent.project.id
             type: 'back_end'
+            hours: 0
+            hours_worked: 0
           
           controller = new SectionGroup
             parent: @
             key: @key
             group: record
         when 'assets'
+          records = ProjectAsset.findAllByAttribute('project_id', @parent.project.id)
           record = ProjectAsset.create
             project_id: @parent.project.id
+            hours: 0
+            hours_worked: 0
           
           controller = new SectionItem
             parent: @
             key: @key
             item: record
         when 'files'
+          records = ProjectFile.findAllByAttribute('project_id', @parent.project.id)
           record = ProjectFile.create
             project_id: @parent.project.id
           
@@ -117,6 +133,8 @@ define [
             key: @key
             item: record
       
+      if records.length is 0
+        @$sectionGroupList.empty()
       @$sectionGroupList.append controller.render().el
       
 

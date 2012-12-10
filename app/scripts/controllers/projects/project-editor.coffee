@@ -15,11 +15,13 @@ define [
       @sections = {}
       
       @bind('hide', (key) =>
-        @sections[key]?.hide()
-        
+        if @sections.hasOwnProperty key
+          @sections[key].hide()
+          @resetWidths()
       ).bind('show', (key) =>
-        @sections[key]?.show()
-        
+        if @sections.hasOwnProperty key
+          @sections[key].show()
+          @resetWidths()
       )
     
     className: 'project-editor'
@@ -40,6 +42,24 @@ define [
       '.collaborate-modal' : '$collaborateModal'
       '.reports-modal' : '$reportsModal'
     
+    resetWidths: =>
+      numActive = _.reduce(
+        _.values(@sections),
+        (memo, obj) -> memo + (if obj.isHidden() then 0 else 1),
+        0
+      )
+      
+      if 0 < numActive < 5
+        classes = ['whole', 'half', 'third', 'quarter']
+        first = false
+        _.each @sections, (obj) =>
+          _.each _.union(classes, ['first']), (cls) => obj.$el.removeClass cls
+          obj.$el.addClass classes[numActive-1]
+          if not first and not obj.isHidden()
+            obj.$el.addClass 'first'
+            first = true
+      @
+    
     addAllSections: =>
       # Use an array to ensure order
       for key in ['front', 'back', 'assets', 'files']
@@ -58,7 +78,7 @@ define [
           key: key
           textData: @textData[key]
           el: $sectionLI
-        @$sectionList.append @sections[key].render().$el.addClass('active').get(0)
+        @$sectionList.append @sections[key].render().$el.addClass('quarter active').get(0)
       @
     
     addAllModals: =>
@@ -74,8 +94,7 @@ define [
     
     render: =>
       @html _.template projectEditorTemplate, @getContext()
-      @addAllSections().addAllModals()
-      @
+      @addAllSections().addAllModals().resetWidths()
     
     events:
       'click .collaborate-button' : 'openCollaborateModal'

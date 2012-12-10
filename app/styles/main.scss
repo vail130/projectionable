@@ -118,20 +118,75 @@
             & > li {
               display: none;
               float: left;
-              width: 237px;
-              margin: 0 10px 0 0;
+              margin: 0 0 0 10px;
               @include border-radius(5px);
               background-color: #ddd;
               overflow: hidden;
               
-              &:last-child {
-                margin: 0;
-              }
-               
               &.active {
                 display: block;
+                
+                &.first {
+                  margin: 0;
+                }
               }
               
+              &.quarter {
+                width: 237px;
+                
+                .item-form-row, .group-form-row {
+                  input, textarea { width: 200px; }
+                  select { width: 104px; }
+                }
+                
+                .group-form-row {
+                  input { width: 212px; }
+                  .group-method { width: 114px; }
+                }
+              }
+              
+              &.third {
+                width: 319px;
+                
+                .item-form-row, .group-form-row {
+                  input, textarea { width: 282px; }
+                  select { width: 186px; }
+                }
+                
+                .group-form-row {
+                  input { width: 294px; }
+                  .group-method { width: 196px; }
+                }
+              }
+              
+              &.half {
+                width: 484px;
+                
+                .item-form-row, .group-form-row {
+                  input, textarea { width: 447px; }
+                  select { width: 351px; }
+                }
+                
+                .group-form-row {
+                  input { width: 459px; }
+                  .group-method { width: 361px; }
+                }
+              }
+              
+              &.whole {
+                width: 978px;
+                
+                .item-form-row, .group-form-row {
+                  input, textarea { width: 694px; }
+                  select { width: 598px; }
+                }
+                
+                .group-form-row {
+                  input { width: 706px; }
+                  .group-method { width: 598px; }
+                }
+              }
+               
               .section-header {
                 background-color: #222;
                 @include clearfix();
@@ -182,9 +237,9 @@
                     span {
                       display: inline-block;
                       float: left;
-                      padding-right: 3px;
+                      padding-right: 5px;
                       font-size: 12px;
-                      line-height: 20px;
+                      line-height: 22px;
                     }
                     
                     .btn-group {
@@ -203,22 +258,20 @@
                     
                     input,
                     textarea {
-                      width: 200px;
                       font-size: 12px;
                     }
                     
                     select {
                       float: left;
-                      width: 104px;
                       height: 26px;
                       font-size: 14px;
                     }
                 
                     .inline-label {
                       float: left;
+                      width: 95px;
                       margin: 0 10px 0 5px;
                       font-size: 12px;
-                      width: 95px;
                       font-weight: bold;
                       line-height: 28px;
                     }
@@ -241,14 +294,6 @@
                     
                     .group-form-row {
                       
-                      input {
-                        width: 212px;
-                      }
-                      
-                      .group-method {
-                        width: 114px;
-                      }
-                      
                       .group-cancel-button,
                       .group-save-button {
                         margin: 0 0 0 5px;
@@ -263,6 +308,7 @@
                     @include clearfix();
                     list-style: none;
                     border: 1px solid #aaa;
+                    overflow: hidden;
                     
                     & > li {
                       display: block;
@@ -284,6 +330,14 @@
                       
                       .item-display {
                         padding: 0 0 3px 5px;
+                        
+                        &.approved {
+                          background-color: #c1efbc;
+                        }
+                        
+                        &.rejected {
+                          background-color: #f3a398;
+                        }
                         
                         & > span {
                           padding: 3px 3px 0 0;

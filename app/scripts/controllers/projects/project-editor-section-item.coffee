@@ -20,6 +20,9 @@ define [
       '.item-edit-button' : '$itemEditButton'
       '.item-edit-form' : '$itemEditForm'
       '.item-title' : '$itemTitle'
+      '.item-status-select' : '$itemStatusSelect'
+      '.item-hours-input' : '$itemHoursInput'
+      '.item-requester-select' : '$itemRequesterSelect'
     
     getContext: =>
       item: @item
@@ -43,6 +46,12 @@ define [
       'click .item-delete-button' : 'deleteItem'
       'click .item-cancel-button' : 'cancelEditItem'
       'click .item-save-button' : 'saveItem'
+      'click .item-start-button' : 'startItem'
+      'click .item-pause-button' : 'pauseItem'
+      'click .item-finish-button' : 'finishItem'
+      'click .item-approve-button' : 'approveItem'
+      'click .item-reject-button' : 'rejectItem'
+      'click .item-revert-button' : 'revertItem'
     
     deleteItem: (event) =>
       event.preventDefault()
@@ -59,9 +68,42 @@ define [
       
     saveItem: (event) =>
       event.preventDefault()
+      hours = parseFloat(@$itemHoursInput.val())
       @item.updateAttributes
         title: (if @$itemTitle.length is 1 then @$itemTitle.val() else '')
+        status: @$itemStatusSelect.val()
+        hours: (if isNaN(hours) then 0 else hours)
+        requester: @$itemRequesterSelect.val()
       @render()
     
+    startItem: (event) =>
+      event.preventDefault()
+      @item.updateAttribute 'status', 'working'
+      @render()
+    
+    pauseItem: (event) =>
+      event.preventDefault()
+      @item.updateAttribute 'status', 'pending'
+      @render()
+
+    finishItem: (event) =>
+      event.preventDefault()
+      @item.updateAttribute 'status', 'complete'
+      @render()
+
+    rejectItem: (event) =>
+      event.preventDefault()
+      @item.updateAttribute 'status', 'rejected'
+      @render()
+
+    approveItem: (event) =>
+      event.preventDefault()
+      @item.updateAttribute 'status', 'approved'
+      @render()
+
+    revertItem: (event) =>
+      event.preventDefault()
+      @item.updateAttribute 'status', 'pending'
+      @render()
 
 

@@ -1,11 +1,33 @@
 
-<div class='item-display'>
+<div class="item-display <%= ['approved', 'rejected'].indexOf(item.status) > -1 ? item.status : '' %>">
   <div class='action-block pull-right'>
     <div class='btn-group'>
       <a href='#' class='btn btn-mini item-edit-button'>
         <i class='icon-pencil'></i>
       </a>
-      <a href='#' class='btn btn-mini btn-info item-work-button'>Start</a>
+      <% if (item.status === 'pending') { %>
+        <a href='#' class='btn btn-mini btn-info item-start-button'>
+          <i class='icon-play'></i>
+        </a>
+      <% } else if (item.status === 'working') { %>
+        <a href='#' class='btn btn-mini btn-info item-pause-button'>
+          <i class='icon-pause'></i>
+        </a>
+        <a href='#' class='btn btn-mini btn-success item-finish-button'>
+          <i class='icon-check'></i>
+        </a>
+      <% } else if (item.status === 'complete') { %>
+        <a href='#' class='btn btn-mini btn-danger item-reject-button'>
+          <i class='icon-thumbs-down'></i>
+        </a>
+        <a href='#' class='btn btn-mini btn-success item-approve-button'>
+          <i class='icon-thumbs-up'></i>
+        </a>
+      <% } else if (item.status === 'rejected') { %>
+        <a href='#' class='btn btn-mini btn-primary item-revert-button'>
+          <i class='icon-refresh'></i>
+        </a>
+      <% } %>
     </div>
 
   </div>
@@ -18,6 +40,14 @@
     <div class='input-wrapper'>
       <textarea class='item-title'><%= item.title %></textarea>
     </div>
+  </div>
+  <div class='item-form-row'>
+    <label class='inline-label'>Status</label>
+    <select class='item-status-select'>
+      <% _.each(['pending', 'working', 'complete', 'rejected', 'approved'], function (s) { %>
+        <option value="<%= s %>" <%= s === item.status ? "selected='selected'" : "" %>><%= s.substr(0, 1).toUpperCase() + s.substr(1, s.length) %></option>
+      <% }); %>
+    </select>
   </div>
   <div class='item-form-row'>
     <label class='inline-label'>Estimated Hours</label>

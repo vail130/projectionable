@@ -83,19 +83,21 @@
         project_id: 1,
         title: "Landing page",
         type: "front_end",
-        hours: 4,
-        hours_worked: 0
+        hours: 8,
+        hours_worked: 2,
+        index: 0
       }, {
         id: 2,
         project_id: 1,
         title: "Inventory page",
         type: "front_end",
         hours: 4,
-        hours_worked: 2
+        hours_worked: 0,
+        index: 0
       }
     ];
     
-    if (typeof window.localStorage.getItem('RequirementGroup') === 'undefined') {
+    if (true || typeof window.localStorage.getItem('RequirementGroup') === 'undefined') {
       window.localStorage.setItem('RequirementGroup', JSON.stringify(reqGroupData));
     }
     
@@ -106,18 +108,31 @@
         group_id: 1,
         title: "As a user, I should be able to sign up using a sign-up form.",
         hours: 4,
-        hours_worked: 0
+        hours_worked: 2,
+        index: 0,
+        status: 'pending'
       }, {
         id: 2,
         project_id: 1,
         group_id: 1,
         title: "As a user, I should be able to sign in using a sign-in form.",
         hours: 4,
-        hours_worked: 2
+        hours_worked: 0,
+        index: 1,
+        status: 'pending'
+      }, {
+        id: 3,
+        project_id: 1,
+        group_id: 2,
+        title: "As an admin, I should be able to add an item to the inventory.",
+        hours: 4,
+        hours_worked: 0,
+        index: 0,
+        status: 'pending'
       }
     ];
     
-    if (typeof window.localStorage.getItem('Requirement') === 'undefined') {
+    if (true || typeof window.localStorage.getItem('Requirement') === 'undefined') {
       window.localStorage.setItem('Requirement', JSON.stringify(reqData));
     }
     
