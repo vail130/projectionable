@@ -1,6 +1,11 @@
 
 <div class="item-display <%= ['approved', 'rejected'].indexOf(item.status) > -1 ? item.status : '' %>">
   <div class='action-block pull-right'>
+    <% var percent = parseInt(parseInt(item.hours_worked, 10) / parseInt(item.hours, 10) * 100); %>
+    <span class='label'>
+      <span class='text'><%= isNaN(percent) ? '0%' : percent + '%' %></span>
+      <span class='label-progress item-progress' data-percent="<%= percent %>"></span>
+    </span>
     <div class='btn-group'>
       <a href='#' class='btn btn-mini item-edit-button'>
         <i class='icon-pencil'></i>

@@ -17,6 +17,7 @@ define [
     
     elements:
       '.item-display' : '$itemDisplay'
+      '.item-progress' : '$itemProgress'
       '.item-edit-button' : '$itemEditButton'
       '.item-edit-form' : '$itemEditForm'
       '.item-title' : '$itemTitle'
@@ -39,6 +40,15 @@ define [
       
       if typeof @item.title is 'undefined' or @item.title is ''
         @$itemEditButton.trigger 'click'
+      
+      else if @key in ['front', 'back', 'assets']
+        @initLabelProgressBar()
+      
+      @
+    
+    initLabelProgressBar: =>
+      percent = parseInt(@$itemProgress.data 'percent')
+      @$itemProgress.css 'width', percent + '%'
       @
     
     events:

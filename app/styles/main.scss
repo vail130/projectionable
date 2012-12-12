@@ -119,7 +119,6 @@
               display: none;
               float: left;
               margin: 0 0 0 10px;
-              @include border-radius(5px);
               background-color: #ddd;
               overflow: hidden;
               
@@ -207,18 +206,17 @@
               .section-group-list {
                 list-style: none;
                 margin: 0;
-                @include border-bottom-radius(5px);
                 border: 1px solid #aaa;
                 border-top-width: 0;
                 
                 & > li {
                   display: block;
                   margin: 0;
-                  padding: 5px;
                   border-top: 1px solid #aaa;
                       
                   &.no-groups {
                     text-align: center;
+                    padding: 5px;
                     
                     & > span {
                       font-size: 12px;
@@ -226,30 +224,55 @@
                     }
                   }
                   
+                  .label {
+                    display: inline-block;
+                    position: relative;
+                    top: 1px;
+                    padding: 2px 4px;
+                    overflow: hidden;
+                    @include border-radius(0);
+                    
+                    .text {
+                      position: relative;
+                      font-size: 10px;
+                      font-weight: normal;
+                      z-index: 10;
+                    }
+                    
+                    .label-progress {
+                      display: block;
+                      position: absolute;
+                      top: 0;
+                      left: 0;
+                      height: 100%;
+                      width: 0;
+                      background-color: green;
+                      z-index: 9;
+                    }
+                  }
+                  
                   .group-title-row {
                     @include clearfix();
+                    padding: 5px 5px 0 5px;
                     
                     & > h5 {
                       float: left;
                       margin: 0;
+                      padding-top: 2px;
                     }
                     
-                    span {
-                      display: inline-block;
-                      float: left;
-                      padding-right: 5px;
-                      font-size: 12px;
-                      line-height: 22px;
-                    }
-                    
-                    .btn-group {
-                      float: right;
+                    .group-stats {
+                      padding-left: 10px;
                       
-                      .btn-mini {
-                        padding: 1px 4px;
+                      .btn-group {
+                        display: inline-block;
+                        
+                        .btn-mini {
+                          padding: 1px 4px;
+                        }
                       }
                     }
-
+                    
                   }
                   
                   .item-form-row,
@@ -291,6 +314,8 @@
                   
                   .group-edit-form {
                     display: none;
+                    padding: 5px;
+                    background-color: #bbb;
                     
                     .group-form-row {
                       
@@ -302,13 +327,11 @@
                   }
                   
                   .section-item-list {
-                    margin: 5px 0;
-                    @include border-radius(5px);
+                    margin: 5px 0 0 0;
                     background-color: #eee;
                     @include clearfix();
                     list-style: none;
-                    border: 1px solid #aaa;
-                    overflow: hidden;
+                    border-top: 1px solid #aaa;
                     
                     & > li {
                       display: block;
@@ -342,15 +365,18 @@
                         & > span {
                           padding: 3px 3px 0 0;
                           font-size: 12px;
-                          line-height: 27px;
+                          line-height: 28px;
                         }
                         
                         .action-block {
-                          padding: 3px 3px 0 0;
-                          padding-left: 10px;
+                          padding: 3px 5px 0 10px;
                           
-                          .btn-mini {
-                            padding: 1px 5px;
+                          .btn-group {
+                            display: inline-block;
+                            
+                            .btn-mini {
+                              padding: 1px 4px;
+                            }
                           }
                         }
                       }

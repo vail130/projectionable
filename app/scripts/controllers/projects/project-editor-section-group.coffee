@@ -18,6 +18,7 @@ define [
     
     elements:
       '.group-title-row' : '$groupTitleRow'
+      '.group-progress' : '$groupProgress'
       '.group-edit-button' : '$groupEditButton'
       '.section-item-list' : '$sectionItemList'
       '.group-edit-form' : '$groupEditForm'
@@ -55,6 +56,11 @@ define [
           triggerClick = false
       
       @$groupEditButton.trigger 'click'  if triggerClick
+      @initLabelProgressBar()
+    
+    initLabelProgressBar: =>
+      percent = parseInt(@$groupProgress.data 'percent')
+      @$groupProgress.css 'width', percent + '%'
       @
     
     events:
