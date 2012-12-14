@@ -1,4 +1,5 @@
 @import "compass_twitter_bootstrap_awesome";
+@import "jquery-ui.css";
 
 $lightGreen: #c1efbc;
 $lightRed: #f3a398;
@@ -472,9 +473,126 @@ $darkRed: #7e0000;
             }
           }
           
-          .collaborate-modal,
+          #collaborate-modal {
+            width: 700px;
+            margin-left: -350px;
+            
+            .modal-body {
+              
+              .half {
+                float: left;
+                width: 312px;
+                @include clearfix();
+                
+                &:first-child {
+                  border-right: 1px solid #eee;
+                  padding-right: 15px;
+                }
+                
+                &:last-child {
+                  box-shadow: 1px 0 2px -1px white inset;
+                  padding-left: 15px;
+                }
+                
+                h4 {
+                  margin: 0 0 10px 0;
+                }
+                
+                & > ul {
+                  list-style: none;
+                  margin: 0;
+                  height: 200px;
+                  overflow-x: hidden;
+                  overflow-y: scroll;
+                  border: 1px solid #aaa;
+                  background-color: #eee;
+                  box-shadow: 0 2px 7px -3px black inset;
+                  padding: 5px;
+                  @include clearfix();
+                  
+                  .permission {
+                    border: 1px solid #aaa;
+                    padding: 5px 5px 5px 10px;
+                    text-align: left;
+                    border-radius: 5px;
+                    margin: 0 0 5px 0;
+                    background-color: white;
+                    box-shadow: 0 2px 5px -3px black;
+                    @include clearfix();
+                    
+                    h5 {
+                      margin: 0;
+                      float: left;
+                      line-height: 26px;
+                      width: 221px;
+                    }
+                    
+                    .remove-link {
+                      float: right;
+                      padding: 1px 4px;
+                      margin-top: 2px;
+                    }
+                    
+                    &.empty {
+                      padding: 8px 10px;
+                      font-size: 12px;
+                    }
+                  }
+                }
+                
+                .new-permission-row {
+                  margin-top: 10px;
+                  text-align: right;
+                  
+                  input {
+                    float: left;
+                    font-size: 12px;
+                    line-height: 16px;
+                    width: 240px;
+                  }
+                  
+                  .invite-button {
+                    margin-top: 2px;
+                  }
+                }
+              }
+            }
+          }
+          
           .configure-modal {
-            display: none;
+            .modal-body {
+              .modal-row {
+                @include clearfix();
+                margin: 0;
+                padding: 10px 0;
+                
+                & > label {
+                  display: inline-block;
+                  float: left;
+                  width: 150px;
+                  font-size: 14px;
+                  line-height: 30px;
+                  font-weight: bold;
+                }
+                
+                & > .modal-input-wrapper {
+                  float: left;
+                  width: 350px;
+                  
+                  input {
+                    width: 270px;
+                  }
+                  
+                  .project-title-input {
+                    width: 327px;
+                  }
+                  
+                  .project-deadline-input {
+                    width: 200px;
+                  }
+                }
+              }
+            }
           }
           
         }

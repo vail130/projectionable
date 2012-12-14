@@ -13,14 +13,14 @@
     
     <% if (permission === 'owner') { %>
     <li>
-      <a href='#' class='btn btn-small editor-button collaborate-button'>
+      <a href='#collaborate-modal' class='btn btn-small editor-button collaborate-button' role='button' data-toggle='modal'>
         <i class='icon-group'></i>
         <span>Collaborate</span>
       </a>
     </li>
     
     <li>
-      <a href='#' class='btn btn-small editor-button configure-button'>
+      <a href='#configure-modal' class='btn btn-small editor-button configure-button' role='button' data-toggle='modal'>
         <i class='icon-cogs'></i>
         <span>Configure</span>
       </a>
@@ -45,6 +45,6 @@
 <div class='reports-modal'></div>
 
 <% if (permission === 'owner') { %>
-<div class='collaborate-modal'></div>
 <div class='configure-modal'></div>
+<div class='collaborate-modal'></div>
 <% } %>

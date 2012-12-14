@@ -5,16 +5,20 @@ define [
   'text!views/projects/editor/editor.html'
   'controllers/projects/project-editor-toggle-link'
   'controllers/projects/project-editor-section'
+  'controllers/projects/project-editor-configure-modal'
   'controllers/projects/project-editor-collaborate-modal'
   'models/permission'
   'models/session'
-], ($, _, Spine, projectEditorTemplate, ToggleLink, ProjectSection, CollaborateModal, Permission, Session) ->
+], ($, _, Spine, projectEditorTemplate, ToggleLink, ProjectSection,
+  ConfigureModal, CollaborateModal, Permission, Session) ->
 
   class ProjectEditor extends Spine.Controller
     constructor: ->
       super
       @toggleLinks = {}
       @sections = {}
+      
+      @project.bind 'update', @render
       
       @bind('hide', (key) =>
         if @sections.hasOwnProperty key
@@ -40,7 +44,7 @@ define [
       '.configure-button' : '$configureButton'
       '.collaborate-button' : '$collaborateButton'
       '.reports-button' : '$reportsButton'
-      '.configure-modal' : '$collaborateModal'
+      '.configure-modal' : '$configureModal'
       '.collaborate-modal' : '$collaborateModal'
       '.reports-modal' : '$reportsModal'
     
@@ -83,7 +87,13 @@ define [
         @$sectionList.append @sections[key].render().$el.addClass('quarter active').get(0)
       @
     
-    addAllModals: =>
+    addConfigureModal: =>
+      @configureModal = new ConfigureModal
+        parent: @
+      @$configureModal.html @configureModal.render().el
+      @
+    
+    addCollaborateModal: =>
       p = _.where Permission.all(),
         project_id: @project.id
         account_id: Session.first().id
@@ -102,12 +112,5 @@ define [
     
     render: =>
       @html _.template projectEditorTemplate, @getContext()
-      @addAllSections().addAllModals().resetWidths()
-    
-    events:
-      'click .collaborate-button' : 'openCollaborateModal'
-    
-    openCollaborateModal: (event) =>
-      event.preventDefault()
-      @collaborateModal.show()
+      @addAllSections().addConfigureModal().addCollaborateModal().resetWidths()
 

@@ -50,7 +50,6 @@ define [
         @html _.template fileTemplate, @getContext()
         @initFileUpload()
       
-      console.log @item.title
       if typeof @item.title is 'undefined' or @item.title is ''
         @$itemEditButton.trigger 'click'
       
@@ -67,7 +66,6 @@ define [
       @
     
     initFileUpload: =>
-      console.log @$itemDeliverableInput
       @$itemDeliverableInput.fileupload
         type: 'POST'
         url: "/api/#{@key}/#{@item.id}"
