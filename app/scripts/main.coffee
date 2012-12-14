@@ -31,10 +31,16 @@ require.config
     'iframe-transport': 'vendor/fileupload/jquery.iframe-transport'
  
 require [
-  'jquery',
-  'projectionable',
+  'underscore'
+  'jquery'
+  'jquery-ui'
+  'bootstrap'
+  'fileupload'
+  'iframe-transport'
+  'spine'
+  'projectionable'
   'controllers/stack'
-], ($, Projectionable, Stack) ->
+], (_, $, JUI, Bootstrap, Fileupload, IframeTransport, Spine, Projectionable, Stack) ->
   
   $ ->
     window.App = new Projectionable el: $('#projectionable')

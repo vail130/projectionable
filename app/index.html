@@ -64,18 +64,34 @@
       {
         id: 1,
         account_id: 1,
-        title: "Sample Project 1",
-        permission: "owner"
+        title: "Sample Project 1"
       }, {
         id: 2,
         account_id: 1,
-        title: "Sample Project 2",
-        permission: "collaborator",
+        title: "Sample Project 2"
       }
     ];
     
     window.localStorage.setItem('Project', JSON.stringify(projectData));
-    window.localStorage.setItem('Permission', '[]');
+    
+    var permissionData = [
+      {
+        id: 1,
+        project_id: 1,
+        account_id: 1,
+        email: 'vail130@gmail.com',
+        permission: 'owner'
+      }, {
+        id: 2,
+        project_id: 1,
+        account_id: 2,
+        email: 'user@email.com',
+        permission: 'coworker'
+      }
+    ];
+    
+    window.localStorage.setItem('Permission', JSON.stringify(permissionData));
+    window.localStorage.setItem('Worklog', '[]');
     
     var reqGroupData = [
       {
@@ -110,7 +126,8 @@
         hours: 4,
         hours_worked: 2,
         index: 0,
-        status: 'pending'
+        status: 'pending',
+        requester_id: 1
       }, {
         id: 2,
         project_id: 1,
@@ -136,7 +153,22 @@
       window.localStorage.setItem('Requirement', JSON.stringify(reqData));
     }
     
-    window.localStorage.setItem('ProjectAsset', '[]');
+    var assetData = [
+      {
+        id: 1,
+        project_id: 1,
+        title: "Logo",
+        hours: 3,
+        hours_worked: 1.25,
+        index: 0,
+        asset_url: 'http://projectionable.com/media/asdfasdfasdf.png',
+        file_size: 1024,
+        content_type: 'image/png',
+        status: 'pending'
+      }
+    ];
+    
+    window.localStorage.setItem('ProjectAsset', JSON.stringify(assetData));
     window.localStorage.setItem('ProjectFile', '[]');
   })(window);
   

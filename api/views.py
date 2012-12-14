@@ -1,7 +1,7 @@
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
-from api.models import Account, Contact, Project, RequirementGroup, Requirement, Permission, ProjectAsset, ProjectFile
+from api.models import *
 from django.conf import settings
 from django.contrib.auth import authenticate, login, logout
 
@@ -439,24 +439,12 @@ class PermissionManager(APIView):
     
     account = request.user.account
     
-    #try:
-    #  permissions = Permission.objects.filter(account=account, project__permissions__account=account)
-    #except Permission.DoesNotExist:
-    # permissions = []
-
     try:
-      permissions = Permission.objects.filter(account=account)
+      permissions = Permission.objects.filter(project__permissions__account=account)
     except Permission.DoesNotExist:
       permissions = []
-    else:
-      projects = [p.project for p in list(permissions)]
-      try:
-        permissions = Permission.objects.filter(project__in=projects)
-      except Permission.DoesNotExist:
-        permissions = []
-      else:
-        permission_list = [permission.read_record() for permission in permissions]
-      
+
+    permission_list = [permission.read_record() for permission in permissions]
     return Response(data=permission_list, status=status.HTTP_200_OK)
 
   def post(self, request):
@@ -574,6 +562,48 @@ class PermissionEditor(APIView):
       return Response(data=result, status=status.HTTP_400_BAD_REQUEST)
     
     return Response(data=result, status=status.HTTP_200_OK)
+
+
+class WorklogManager(APIView):
+  """
+  Handles HTTP requests to endpoint URL/api/worklogs/ with optional querystring
+  """
+  def get(self, request):
+    if not request.user.is_authenticated():
+      return Response(status=status.HTTP_401_UNAUTHORIZED)
+    
+    account = request.user.account
+    
+    try:
+      logs = list(Worklog.objects.filter(
+        Q(asset__project__permissions__account=account)
+        | Q(requirement__group__project__permissions__account=account)
+      ))
+    except Worklog.DoesNotExist:
+      logs = []
+    
+    log_list = [log.read_record() for log in logs]
+    return Response(data=log_list, status=status.HTTP_200_OK)
+
+class WorklogEditor(APIView):
+  """
+  Handles HTTP requests to endpoint URL/api/worklogs/:worklog_id/ with optional querystring
+  """
+  def get(self, request, worklog_id):
+    if not request.user.is_authenticated():
+      return Response(status=status.HTTP_401_UNAUTHORIZED)
+    
+    account = request.user.account
+
+    try:
+      log = Worklog.objects.get(
+        Q(id=int(worklog_id), asset__project__permissions__account=account)
+        | Q(id=int(worklog_id), requirement__group__project__permissions__account=account)
+      ))
+    except Worklog.DoesNotExist:
+      return Response(status=status.HTTP_404_NOT_FOUND)
+    
+    return Response(data=log.read_record(), status=status.HTTP_200_OK)
 
 
 class GroupManager(APIView):
@@ -940,6 +970,34 @@ class AssetEditor(APIView):
     
     return Response(data=result.read_record(), status=status.HTTP_200_OK)
 
+  def post(self, request, asset_id):
+    if not request.user.is_authenticated():
+      return Response(status=status.HTTP_401_UNAUTHORIZED)
+    
+    account = request.user.account
+
+    try:
+      asset = ProjectAsset.objects.get(id=int(asset_id))
+    except ProjectAsset.DoesNotExist:
+      errors = {"project_id": "Invalid project ID."}
+      return Response(data=errors, status=status.HTTP_404_NOT_FOUND)
+    
+    if asset.project.status == Project.statuses[2]:
+      errors = {"project": "Project is locked."}
+      return Response(data=errors, status=status.HTTP_400_BAD_REQUEST)
+    
+    try:
+      permission = Permission.objects.get(account=account, project=asset.project)
+    except Permission.DoesNotExist:
+      errors = {"permission": "Invalid permissions."}
+      return Response(data=errors, status=status.HTTP_400_BAD_REQUEST)
+
+    result = asset.update_asset(permission, request.FILES)
+    if isinstance(result, dict):
+      return Response(data=result, status=status.HTTP_400_BAD_REQUEST)
+    
+    return Response(data=result.read_record(), status=status.HTTP_201_CREATED)
+
 
 class FileManager(APIView):
   """
@@ -1062,6 +1120,35 @@ class FileEditor(APIView):
       return Response(data=result, status=status.HTTP_400_BAD_REQUEST)
     
     return Response(data=result.read_record(), status=status.HTTP_200_OK)
+  
+  def post(self, request, project_file_id):
+    if not request.user.is_authenticated():
+      return Response(status=status.HTTP_401_UNAUTHORIZED)
+    
+    account = request.user.account
+
+    try:
+      project_file = ProjectFile.objects.get(id=int(project_file_id))
+    except ProjectFile.DoesNotExist:
+      errors = {"project_id": "Invalid project ID."}
+      return Response(data=errors, status=status.HTTP_404_NOT_FOUND)
+    
+    if project_file.project.status == Project.statuses[2]:
+      errors = {"project": "Project is locked."}
+      return Response(data=errors, status=status.HTTP_400_BAD_REQUEST)
+    
+    try:
+      permission = Permission.objects.get(account=account, project=project_file.project)
+    except Permission.DoesNotExist:
+      errors = {"permission": "Invalid permissions."}
+      return Response(data=errors, status=status.HTTP_400_BAD_REQUEST)
+
+    result = project_file.update_asset(permission, request.FILES)
+    if isinstance(result, dict):
+      return Response(data=result, status=status.HTTP_400_BAD_REQUEST)
+    
+    return Response(data=result.read_record(), status=status.HTTP_201_CREATED)
+
 
 
 

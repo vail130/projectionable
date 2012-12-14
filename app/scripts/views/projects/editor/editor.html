@@ -1,6 +1,4 @@
 
-<% var owner = project.permission === 'owner'; %>
-
 <div class='title-row'>
   
   <h3 class='pull-left'><%= project.title %></h3>
@@ -13,7 +11,7 @@
       </a>
     </li>
     
-    <% if (owner) { %>
+    <% if (permission === 'owner') { %>
     <li>
       <a href='#' class='btn btn-small editor-button collaborate-button'>
         <i class='icon-group'></i>
@@ -46,7 +44,7 @@
 
 <div class='reports-modal'></div>
 
-<% if (owner) { %>
+<% if (permission === 'owner') { %>
 <div class='collaborate-modal'></div>
 <div class='configure-modal'></div>
 <% } %>

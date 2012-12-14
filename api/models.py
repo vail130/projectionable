@@ -620,25 +620,6 @@ class Project(models.Model):
         if result[field + "__sum"] is not None:
           asset_hours_data[field] = float(result[field + "__sum"])
     
-    collaborator_data = {}
-    for user_type in ['coworker', 'client']:
-      collaborator_data[user_type] = []
-      try:
-        perm = Permission.objects.filter(project=self, permission=user_type)
-      except Permission.DoesNotExist:
-        pass
-      else:
-        for p in list(perm):
-          collaborator_data[user_type].append({
-            "account_id": p.account.id,
-            "email": p.account.email
-          })
-    
-    try:
-      work_logs = WorkLog.objects.filter(project=self).order_by('-date_created')
-    except WorkLog.DoesNotExist:
-      work_logs = []
-    
     return {
       "id": self.id,
       "account_id": self.account.id,
@@ -653,13 +634,6 @@ class Project(models.Model):
       "back_end_hours_worked": req_hours_data['back_end_hours_worked'],
       "asset_hours": asset_hours_data['hours'],
       "asset_hours_worked": asset_hours_data['hours_worked'],
-      "owner": {
-        "account_id": permission.account.id,
-        "email": permission.account.email,
-      },
-      "coworkers": collaborator_data['coworker'],
-      "clients": collaborator_data['client'],
-      "logs": [wl.read_record() for wl in work_logs],
       "date_updated": self.date_updated,
       "date_created": self.date_created,
       "unix_updated": time.mktime(self.date_updated.timetuple()),
@@ -701,7 +675,7 @@ class Project(models.Model):
 
 class RequirementGroup(models.Model):
   project = models.ForeignKey(Project)
-  title = models.CharField(max_length=255)
+  title = models.TextField()
   uri = models.CharField(max_length=255)
   index = models.PositiveIntegerField()
   type = models.CharField(max_length=20)
@@ -814,8 +788,7 @@ class RequirementGroup(models.Model):
 
 class Requirement(models.Model):
   group = models.ForeignKey(RequirementGroup)
-  title = models.CharField(max_length=255)
-  description = models.TextField()
+  title = models.TextField()
   index = models.PositiveIntegerField()
   status = models.CharField(max_length=20)
   hours = models.FloatField(null=True, blank=True)
@@ -827,8 +800,7 @@ class Requirement(models.Model):
   statuses = ['pending', 'working', 'completed', 'approved', 'rejected']
   
   validation = {
-    'title': ('string', (0, 255)),
-    'description': 'string',
+    'title': 'string',
     'index': ('integer', (0, None)),
     'status': lambda x: x in Requirement.statuses,
     'hours': ('float', (0, None)),
@@ -839,7 +811,6 @@ class Requirement(models.Model):
   def get_dummy_schema():
     return {
       "title": '',
-      "description": '',
       "index": 0,
       "status": '',
       "hours": None,
@@ -868,7 +839,6 @@ class Requirement(models.Model):
     record = cls(
       group=group,
       title=schema['title'],
-      description=schema['description'],
       index=schema['index'],
       status=cls.statuses[0],
       hours=schema['hours'],
@@ -892,7 +862,6 @@ class Requirement(models.Model):
       "group_id": self.group.id,
       "index": self.index,
       "title": self.title,
-      "description": self.description,
       "status": self.status,
       "requester_id": requester_id,
       "hours": self.hours,
@@ -926,14 +895,16 @@ class Requirement(models.Model):
     if 'status' in schema and self.status != schema['status']:
       status_changed = True
       
-      if self.status == 'pending' and schema['status'] == 'working':
+      # Starting
+      if schema['status'] == 'working':
         WorkLog.create_record({
           "account": permission.account,
           "requirement": self,
           "action": "start",
         })
-        
-      elif self.status == 'working' and schema['status'] == 'pending':
+      
+      # Stopping
+      if self.status == 'working':
         WorkLog.create_record({
           "account": permission.account,
           "requirement": self,
@@ -942,13 +913,8 @@ class Requirement(models.Model):
         
         self.hours_worked = self.calculate_hours_worked()
       
-      elif self.status == 'working' and schema['status'] == 'completed':
-        WorkLog.create_record({
-          "account": permission.account,
-          "requirement": self,
-          "action": "stop",
-        })
-        
+      # Completing
+      if self.status in ['pending', 'working'] and schema['status'] == 'completed':
         WorkLog.create_record({
           "account": permission.account,
           "requirement": self,
@@ -984,43 +950,9 @@ class Requirement(models.Model):
               "hours_percent": str(round(self.hours_worked / float(self.hours) * 100, 1)) + '%'
             }
           })
-        
-      elif self.status == 'pending' and schema['status'] == 'completed':
-        WorkLog.create_record({
-          "account": permission.account,
-          "requirement": self,
-          "action": "complete",
-        })
-        
-        if self.requester is not None:
-          if self.type == 'front-end':
-            subject = "Front-End Story Completed"
-          else:
-            subject = "Back-End Story Completed"
-          
-          full_name = ''
-          if permission.account.first_name != '':
-            full_name += permission.account.first_name
-            if permission.account.last_name != '':
-              full_name += ' ' + permission.account.last_name
-          else:
-            full_name = permission.account.email
-          
-          AccountEmail.create_and_send({
-            "recipient": self.requester.email,
-            "subject": subject,
-            "template": "requirement-completed",
-            "context": {
-              "full_name": full_name,
-              "requirement_type": self.type,
-              "requirement_title": self.title,
-              "hours": self.hours,
-              "hours_worked": self.hours_worked,
-              "hours_percent": str(round(self.hours_worked / float(self.hours) * 100, 1)) + '%'
-            }
-          })
-        
-      elif self.status == 'completed' and schema['status'] == 'approved':
+      
+      # Approving
+      if schema['status'] == 'approved':
         WorkLog.create_record({
           "account": permission.account,
           "requirement": self,
@@ -1058,8 +990,9 @@ class Requirement(models.Model):
               "hours_percent": str(round(self.hours_worked / float(self.hours) * 100, 1)) + '%'
             }
           })
-        
-      elif self.status == 'completed' and schema['status'] == 'rejected':
+      
+      # Rejecting
+      elif schema['status'] == 'rejected':
         if 'note' in raw_schema:
           log_note = raw_schema['note']
         else:
@@ -1104,8 +1037,9 @@ class Requirement(models.Model):
               "hours_percent": str(round(self.hours_worked / float(self.hours) * 100, 1)) + '%'
             }
           })
-        
-      elif self.status in ['approved', 'rejected', 'completed'] and schema['status'] == 'pending':
+      
+      # Reverting
+      if self.status in ['approved', 'rejected', 'completed'] and schema['status'] in ['pending', 'working']:
         if 'note' in raw_schema:
           log_note = raw_schema['note']
         else:
@@ -1154,7 +1088,7 @@ class Requirement(models.Model):
         self.status = schema['status']
         changed = True
   
-    for prop in ['title', 'description', 'index', 'hours']:
+    for prop in ['title', 'index', 'hours']:
       if prop in schema and getattr(self, prop) != schema[prop]:
         setattr(self, prop, schema[prop])
         changed = True
@@ -1194,11 +1128,11 @@ class Requirement(models.Model):
 
 class ProjectAsset(models.Model):
   project = models.ForeignKey(RequirementGroup)
-  title = models.CharField(max_length=255)
-  description = models.TextField()
+  title = models.TextField()
   index = models.PositiveIntegerField()
   status = models.CharField(max_length=20)
   asset = models.FileField(upload_to='/', blank=True)
+  content_type = models.CharField(max_length=64, blank=True)
   hours = models.FloatField(null=True, blank=True)
   hours_worked = models.FloatField()
   requester = models.ForeignKey(Account, blank=True)
@@ -1208,8 +1142,7 @@ class ProjectAsset(models.Model):
   statuses = ['pending', 'working', 'completed', 'approved', 'rejected']
   
   validation = {
-    'title': ('string', (0, 255)),
-    'description': 'string',
+    'title': 'string',
     'index': ('integer', (0, None)),
     'status': lambda x: x in ProjectAsset.statuses,
     'hours': ('float', (0, None)),
@@ -1220,7 +1153,6 @@ class ProjectAsset(models.Model):
   def get_dummy_schema():
     return {
       "title": '',
-      "description": '',
       "index": 0,
       "status": '',
       "hours": None,
@@ -1249,7 +1181,6 @@ class ProjectAsset(models.Model):
     record = cls(
       project=project,
       title=schema['title'],
-      description=schema['description'],
       index=schema['index'],
       status=cls.statuses[0],
       hours=schema['hours'],
@@ -1272,8 +1203,9 @@ class ProjectAsset(models.Model):
       "project_id": self.project.id,
       "index": self.index,
       "title": self.title,
-      "description": self.description,
-      "asset": self.asset.url,
+      "asset_url": self.asset.url,
+      "file_size": self.asset.size,
+      "content_type": self.content_type,
       "status": self.status,
       "requester_id": requester_id,
       "hours": self.hours,
@@ -1307,14 +1239,16 @@ class ProjectAsset(models.Model):
     if 'status' in schema and self.status != schema['status']:
       status_changed = True
       
-      if self.status == 'pending' and schema['status'] == 'working':
+      # Starting
+      if schema['status'] == 'working':
         WorkLog.create_record({
           "account": permission.account,
           "asset": self,
           "action": "start",
         })
-        
-      elif self.status == 'working' and schema['status'] == 'pending':
+      
+      # Stopping
+      if self.status == 'working':
         WorkLog.create_record({
           "account": permission.account,
           "asset": self,
@@ -1322,14 +1256,9 @@ class ProjectAsset(models.Model):
         })
         
         self.hours_worked = self.calculate_hours_worked()
-        
-      elif self.status == 'working' and self.asset is not None and schema['status'] == 'completed':
-        WorkLog.create_record({
-          "account": permission.account,
-          "asset": self,
-          "action": "stop",
-        })
-        
+      
+      # Completing
+      if self.status in ['pending', 'working'] and schema['status'] == 'completed':
         WorkLog.create_record({
           "account": permission.account,
           "asset": self,
@@ -1360,38 +1289,9 @@ class ProjectAsset(models.Model):
               "hours_percent": str(round(self.hours_worked / float(self.hours) * 100, 1)) + '%'
             }
           })
-        
-      elif self.status == 'pending' and self.asset is not None and schema['status'] == 'completed':
-        WorkLog.create_record({
-          "account": permission.account,
-          "asset": self,
-          "action": "complete",
-        })
-        
-        if self.requester is not None:
-          full_name = ''
-          if permission.account.first_name != '':
-            full_name += permission.account.first_name
-            if permission.account.last_name != '':
-              full_name += ' ' + permission.account.last_name
-          else:
-            full_name = permission.account.email
-          
-          AccountEmail.create_and_send({
-            "recipient": self.requester.email,
-            "subject": "Project Asset Completed",
-            "template": "requirement-completed",
-            "context": {
-              "full_name": full_name,
-              "requirement_type": "project asset",
-              "requirement_title": self.title,
-              "hours": self.hours,
-              "hours_worked": self.hours_worked,
-              "hours_percent": str(round(self.hours_worked / float(self.hours) * 100, 1)) + '%'
-            }
-          })
-        
-      elif self.status == 'completed' and schema['status'] == 'approved':
+      
+      # Approving
+      if schema['status'] == 'approved':
         WorkLog.create_record({
           "account": permission.account,
           "asset": self,
@@ -1424,8 +1324,9 @@ class ProjectAsset(models.Model):
               "hours_percent": str(round(self.hours_worked / float(self.hours) * 100, 1)) + '%'
             }
           })
-        
-      elif self.status == 'completed' and schema['status'] == 'rejected':
+      
+      # Rejecting
+      elif schema['status'] == 'rejected':
         if 'note' in raw_schema:
           log_note = raw_schema['note']
         else:
@@ -1465,8 +1366,9 @@ class ProjectAsset(models.Model):
               "hours_percent": str(round(self.hours_worked / float(self.hours) * 100, 1)) + '%'
             }
           })
-        
-      elif self.status in ['approved', 'rejected', 'completed'] and schema['status'] == 'pending':
+      
+      # Reverting
+      if self.status in ['approved', 'rejected', 'completed'] and schema['status'] in ['pending', 'working']:
         if 'note' in raw_schema:
           log_note = raw_schema['note']
         else:
@@ -1510,7 +1412,7 @@ class ProjectAsset(models.Model):
         self.status = schema['status']
         changed = True
   
-    for prop in ['title', 'index', 'hours', 'description']:
+    for prop in ['title', 'index', 'hours']:
       if prop in schema and getattr(self, prop) != schema[prop]:
         setattr(self, prop, schema[prop])
         changed = True
@@ -1548,31 +1450,51 @@ class ProjectAsset(models.Model):
     
     return True
   
-  def update_asset(self, asset):
+  def update_asset(self, files):
     if permission.permission not in ['owner', 'coworker']:
       return {"permission": "Invalid permission."}
     
     if self.project.status == 'locked' and permission.permission != 'owner':
       return {"permission": "Invalid permission."}
     
-    if self.status in ['pending', 'working']:
-      self.asset = asset
-      self.save()
-    
+    if 'asset' not in dict(files):
+      return {"asset": "Missing asset."}
+
+    elif len(files) is not 1:
+      return {"asset": "Only one asset can be uploaded at once."}
+
+    asset = files['asset']
+    if not hasattr(asset, 'content_type'):
+      return {"asset": "Invalid asset content-type."}
+
+    # Get uploaded file data
+    for chunk in asset.chunks():
+      data = chunk
+
+    data_size = len(data)
+
+    # Make sure file attachment is there
+    if data_size is 0:
+      return {"asset": "No content found."}
+    elif data_size > 2097152*16:
+      return {"asset": "Asset size must be under 32MB."}
+
+    self.asset = asset
+    self.content_type = asset.content_type
+    self.save()
     return self
 
 class ProjectFile(models.Model):
   project = models.ForeignKey(RequirementGroup)
-  title = models.CharField(max_length=255)
-  description = models.TextField()
+  title = models.TextField()
   index = models.PositiveIntegerField()
   asset = models.FileField(upload_to='/', blank=True)
+  content_type = models.CharField(max_length=64, blank=True)
   date_updated = models.DateTimeField(auto_now=True)
   date_created = models.DateTimeField(auto_now_add=True)
   
   validation = {
-    'title': ('string', (0, 255)),
-    'description': 'string',
+    'title': 'string',
     'index': ('integer', (0, None)),
   }
   
@@ -1580,7 +1502,6 @@ class ProjectFile(models.Model):
   def get_dummy_schema():
     return {
       "title": '',
-      "description": '',
       "index": 0,
     }
   
@@ -1597,7 +1518,6 @@ class ProjectFile(models.Model):
     record = cls(
       project=project,
       title=schema['title'],
-      description=schema['description'],
       index=schema['index'],
     )
     
@@ -1611,8 +1531,9 @@ class ProjectFile(models.Model):
       "project_id": self.project.id,
       "index": self.index,
       "title": self.title,
-      "description": self.description,
-      "asset": self.asset.url,
+      "asset_url": self.asset.url,
+      "file_size": self.asset.size,
+      "content_type": self.content_type,
       "date_updated": self.date_updated,
       "date_created": self.date_created,
       "unix_updated": time.mktime(self.date_updated.timetuple()),
@@ -1629,7 +1550,7 @@ class ProjectFile(models.Model):
     schema = filter_valid(self.__class__, raw_schema)
     changed = False
     
-    for prop in ['title', 'index', 'description']:
+    for prop in ['title', 'index']:
       if prop in schema and getattr(self, prop) != schema[prop]:
         setattr(self, prop, schema[prop])
         changed = True
@@ -1649,15 +1570,38 @@ class ProjectFile(models.Model):
     self.delete()
     return True
   
-  def update_asset(self, asset):
+  def update_asset(self, files):
     if permission.permission not in ['owner', 'coworker']:
       return {"permission": "Invalid permission."}
     
     if self.project.status == 'locked' and permission.permission != 'owner':
       return {"permission": "Invalid permission."}
     
+    if 'asset' not in dict(files):
+      return {"asset": "Missing asset."}
+
+    elif len(files) is not 1:
+      return {"asset": "Only one asset can be uploaded at once."}
+
+    asset = files['asset']
+    if not hasattr(asset, 'content_type'):
+      return {"asset": "Invalid asset content-type."}
+
+    # Get uploaded file data
+    for chunk in asset.chunks():
+      data = chunk
+
+    data_size = len(data)
+
+    # Make sure file attachment is there
+    if data_size is 0:
+      return {"asset": "No content found."}
+    elif data_size > 2097152*16:
+      return {"asset": "Asset size must be under 32MB."}
+
     self.asset = asset
-    self.save
+    self.content_type = asset.content_type
+    self.save()
     return self
 
 class Permission(models.Model):

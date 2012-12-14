@@ -19,13 +19,22 @@ define [
     elements:
       '.group-title-row' : '$groupTitleRow'
       '.group-progress' : '$groupProgress'
+      '.group-danger' : '$groupDanger'
       '.group-edit-button' : '$groupEditButton'
+      '.group-save-button' : '$groupSaveButton'
       '.section-item-list' : '$sectionItemList'
       '.group-edit-form' : '$groupEditForm'
       '.group-title' : '$groupTitle'
       '.group-uri' : '$groupURI'
       '.group-method' : '$groupMethod'
       '.new-item-button' : '$newItemButton'
+    
+    initLabelProgressBar: =>
+      percent = parseInt(@$groupProgress.data 'percent')
+      @$groupProgress.css 'width', percent + '%'
+      if percent > 100
+        @$groupDanger.css 'width', (percent - 100) + '%'
+      @
     
     addAllItems: =>
       @$sectionItemList.empty()
@@ -48,19 +57,16 @@ define [
     
     render: =>
       @html _.template groupTemplate, @getContext()
-      @addAllItems()
+      @initLabelProgressBar().addAllItems()
       
       triggerClick = true
       for p in ['title', 'uri', 'method']
         if typeof @group[p] isnt 'undefined' and @group[p] isnt ''
           triggerClick = false
       
-      @$groupEditButton.trigger 'click'  if triggerClick
-      @initLabelProgressBar()
-    
-    initLabelProgressBar: =>
-      percent = parseInt(@$groupProgress.data 'percent')
-      @$groupProgress.css 'width', percent + '%'
+      if triggerClick
+        @$groupEditButton.trigger 'click'
+      
       @
     
     events:
@@ -69,11 +75,14 @@ define [
       'click .group-cancel-button' : 'cancelEditGroup'
       'click .group-save-button' : 'saveGroup'
       'click .new-item-button' : 'addNewStory'
+      'keypress .group-title' : 'enterSubmit'
+      'keypress .group-uri' : 'enterSubmit'
     
     editGroup: (event) =>
       event.preventDefault()
       @$groupTitleRow.add(@$sectionItemList).hide()
-      @$groupEditForm.show().find('input').first().get(0).focus()
+      $input = @$groupEditForm.show().find('input').first()
+      setTimeout (-> $input.get(0).focus()), 1
     
     cancelEditGroup: (event) =>
       event.preventDefault()
@@ -109,4 +118,8 @@ define [
       if records.length is 0
         @$sectionItemList.empty()
       @$sectionItemList.append controller.render().el
+    
+    enterSubmit: (event) =>
+      event.preventDefault()
+      @$groupSaveButton.trigger 'click'
 

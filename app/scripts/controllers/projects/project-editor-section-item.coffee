@@ -18,26 +18,39 @@ define [
     elements:
       '.item-display' : '$itemDisplay'
       '.item-progress' : '$itemProgress'
+      '.item-danger' : '$itemDanger'
       '.item-edit-button' : '$itemEditButton'
       '.item-edit-form' : '$itemEditForm'
       '.item-title' : '$itemTitle'
       '.item-status-select' : '$itemStatusSelect'
       '.item-hours-input' : '$itemHoursInput'
       '.item-requester-select' : '$itemRequesterSelect'
+      '.item-deliverable-input' : '$itemDeliverableInput'
     
     getContext: =>
+      if @key in ['assets', 'files'] and @item.asset_url isnt ''
+        asset_url_parts = @item.asset_url.split('/')
+        filename = asset_url_parts[asset_url_parts.length-1]
+      else
+        filename = ''
+      
       item: @item
       key: @key
       permissions: _.sortBy Permission.findAllByAttribute('project_id', @item.project_id), 'email'
+      filename: filename
     
     render: =>
+      @$el.addClass @key
       if @key in ['front', 'back']
         @html _.template requirementTemplate, @getContext()
       else if @key is 'assets'
         @html _.template assetTemplate, @getContext()
+        @initFileUpload()
       else if @key is 'files'
         @html _.template fileTemplate, @getContext()
+        @initFileUpload()
       
+      console.log @item.title
       if typeof @item.title is 'undefined' or @item.title is ''
         @$itemEditButton.trigger 'click'
       
@@ -49,6 +62,29 @@ define [
     initLabelProgressBar: =>
       percent = parseInt(@$itemProgress.data 'percent')
       @$itemProgress.css 'width', percent + '%'
+      if percent > 100
+        @$itemDanger.css 'width', (percent - 100) + '%'
+      @
+    
+    initFileUpload: =>
+      console.log @$itemDeliverableInput
+      @$itemDeliverableInput.fileupload
+        type: 'POST'
+        url: "/api/#{@key}/#{@item.id}"
+        dataType: 'json'
+        paramName: 'asset'
+        dropZone: @$itemDeliverableInput.parent()
+        drop: (event, data) =>
+          true
+        submit: (e, data) =>
+          if data.files[0].type not in ['image/png', 'image/gif', 'image/jpeg']
+            false
+
+          else if data.files[0].size > 33554432
+            false
+
+        send: =>
+        done: =>
       @
     
     events:
@@ -56,6 +92,7 @@ define [
       'click .item-delete-button' : 'deleteItem'
       'click .item-cancel-button' : 'cancelEditItem'
       'click .item-save-button' : 'saveItem'
+      'click .asset-upload-button' : 'triggerFileInput'
       'click .item-start-button' : 'startItem'
       'click .item-pause-button' : 'pauseItem'
       'click .item-finish-button' : 'finishItem'
@@ -85,6 +122,10 @@ define [
         hours: (if isNaN(hours) then 0 else hours)
         requester: @$itemRequesterSelect.val()
       @render()
+    
+    triggerFileInput: (event) =>
+      event.preventDefault()
+      @$itemDeliverableInput.trigger 'click'
     
     startItem: (event) =>
       event.preventDefault()

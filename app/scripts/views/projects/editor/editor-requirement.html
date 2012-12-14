@@ -5,6 +5,7 @@
     <span class='label'>
       <span class='text'><%= isNaN(percent) ? '0%' : percent + '%' %></span>
       <span class='label-progress item-progress' data-percent="<%= percent %>"></span>
+      <span class='label-danger item-danger' data-percent="<%= percent %>"></span>
     </span>
     <div class='btn-group'>
       <a href='#' class='btn btn-mini item-edit-button'>
@@ -55,18 +56,16 @@
     </select>
   </div>
   <div class='item-form-row'>
-    <label class='inline-label'>Estimated Hours</label>
+    <label class='inline-label'>Hours</label>
+    <span class='item-hours-worked-display'><b><%= item.hours_worked %>h</b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/</span>
     <input type='text' class='item-hours-input' value="<%= item.hours %>" />
-  </div>
-  <div class='item-form-row'>
-    <label class='inline-label'>Hours Worked</label>
-    <input type='text' class='item-hours-input' readonly='readonly' value="<%= item.hours_worked %>" />
   </div>
   <div class='item-form-row'>
     <label class='inline-label'>Notify</label>
     <select class='item-requester-select'>
+        <option value=''>-- No one --</option>
       <% _.each(permissions, function (p) { %>
-        <option value="<%= p.account_id %>" ><%= p.email %></option>
+        <option value="<%= p.account_id %>" <%= item.requester_id === p.account_id ? "selected='selected'" : "" %>><%= p.email %></option>
       <% }); %>
     </select>
   </div>

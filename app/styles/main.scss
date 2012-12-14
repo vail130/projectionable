@@ -1,5 +1,10 @@
 @import "compass_twitter_bootstrap_awesome";
 
+$lightGreen: #c1efbc;
+$lightRed: #f3a398;
+$darkGreen: #007e00;
+$darkRed: #7e0000;
+
 #projectionable {
   //background: url(/images/low-contrast-linen-65.png) top left repeat;
   background-color: #eee;
@@ -130,12 +135,28 @@
                 }
               }
               
+              input,
+              select {
+                float: right;
+              }
+              
+              .item-hours-worked-display {
+                font-size: 12px;
+                line-height: 30px;
+                padding-left: 40px;
+              }
+              
               &.quarter {
                 width: 237px;
                 
-                .item-form-row, .group-form-row {
-                  input, textarea { width: 200px; }
-                  select { width: 104px; }
+                .item-form-row {
+                  textarea { width: 210px; }
+                  select { width: 155px; }
+                  input { width: 50px; }
+                  
+                  .item-hours-worked-display {
+                    padding-left: 30px;
+                  }
                 }
                 
                 .group-form-row {
@@ -147,9 +168,10 @@
               &.third {
                 width: 319px;
                 
-                .item-form-row, .group-form-row {
-                  input, textarea { width: 282px; }
-                  select { width: 186px; }
+                .item-form-row {
+                  textarea { width: 292px; }
+                  select { width: 237px; }
+                  input { width: 142px; }
                 }
                 
                 .group-form-row {
@@ -161,9 +183,10 @@
               &.half {
                 width: 484px;
                 
-                .item-form-row, .group-form-row {
-                  input, textarea { width: 447px; }
-                  select { width: 351px; }
+                .item-form-row {
+                  textarea { width: 457px; }
+                  select { width: 402px; }
+                  input { width: 307px; }
                 }
                 
                 .group-form-row {
@@ -175,9 +198,10 @@
               &.whole {
                 width: 978px;
                 
-                .item-form-row, .group-form-row {
-                  input, textarea { width: 694px; }
-                  select { width: 598px; }
+                .item-form-row {
+                  textarea { width: 950px; }
+                  select { width: 870px; }
+                  input { width: 750px; }
                 }
                 
                 .group-form-row {
@@ -236,7 +260,7 @@
                       position: relative;
                       font-size: 10px;
                       font-weight: normal;
-                      z-index: 10;
+                      z-index: 11;
                     }
                     
                     .label-progress {
@@ -246,8 +270,19 @@
                       left: 0;
                       height: 100%;
                       width: 0;
-                      background-color: green;
+                      background-color: $darkGreen;
                       z-index: 9;
+                    }
+                    
+                    .label-danger {
+                      display: block;
+                      position: absolute;
+                      top: 0;
+                      left: 0;
+                      height: 100%;
+                      width: 0;
+                      background-color: $darkRed;
+                      z-index: 10;
                     }
                   }
                   
@@ -280,23 +315,41 @@
                     @include clearfix();
                     
                     input,
-                    textarea {
+                    textarea,
+                    select {
                       font-size: 12px;
                     }
                     
                     select {
-                      float: left;
                       height: 26px;
-                      font-size: 14px;
                     }
                 
                     .inline-label {
                       float: left;
-                      width: 95px;
-                      margin: 0 10px 0 5px;
+                      width: 55px;
+                      margin: 0 10px 0 0;
                       font-size: 12px;
                       font-weight: bold;
                       line-height: 28px;
+                    }
+                    
+                    .item-deliverable-input {
+                      display: block;
+                      position: fixed;
+                      width: 1px;
+                      height: 1px;
+                      top: -100px;
+                      left: -100px;
+                    }
+                    
+                    .asset-upload-button {
+                      margin: 1px 0 10px;
+                      width: 91px;
+                    }
+                    
+                    .item-cancel-button,
+                    .item-save-button {
+                      margin: 0 0 2px 5px;
                     }
                   }
                   
@@ -333,72 +386,83 @@
                     list-style: none;
                     border-top: 1px solid #aaa;
                     
-                    & > li {
-                      display: block;
-                      margin: 0;
-                      border-bottom: 1px solid #aaa;
+                  }
+                }
+                
+                .section-item {
+                  display: block;
+                  margin: 0;
+                  border-bottom: 1px solid #aaa;
+                  
+                  &:last-child {
+                    border: none;
+                  }
+                  
+                  &.no-items {
+                    text-align: center;
+                    
+                    & > span {
+                      font-size: 12px;
+                      font-style: italic;
+                    }
+                  }
+                  
+                  .item-display {
+                    padding: 0 0 3px 5px;
+                    
+                    &.approved {
+                      background-color: $lightGreen;
+                    }
+                    
+                    &.rejected {
+                      background-color: $lightRed;
+                    }
+                    
+                    & > span {
+                      padding: 3px 3px 0 0;
+                      font-size: 12px;
+                      line-height: 28px;
+                    }
+                    
+                    .action-block {
+                      padding: 3px 5px 0 10px;
                       
-                      &:last-child {
-                        border: none;
+                      .btn-group {
+                        display: inline-block;
+                        
+                        .btn-mini {
+                          padding: 1px 4px;
+                        }
+                      }
+                    }
+                  }
+                  
+                  .item-edit-form {
+                    display: none;
+                    padding: 0 0 3px 5px;
+                    background-color: #bbb;
+                    
+                    .item-form-row {
+                      
+                      select,
+                      input,
+                      .item-save-button {
+                        margin-right: 5px;
                       }
                       
-                      &.no-items {
-                        text-align: center;
+                      .item-hours-input {
+                        height: 18px;
+                      }
+                      
+                      .item-file-row {
+                        @include clearfix();
+                        margin: 0 5px 5px 0;
+                        padding: 5px;
+                        border: 1px solid #ddd;
                         
-                        & > span {
+                        .item-file-link {
                           font-size: 12px;
-                          font-style: italic;
-                        }
-                      }
-                      
-                      .item-display {
-                        padding: 0 0 3px 5px;
-                        
-                        &.approved {
-                          background-color: #c1efbc;
-                        }
-                        
-                        &.rejected {
-                          background-color: #f3a398;
-                        }
-                        
-                        & > span {
-                          padding: 3px 3px 0 0;
-                          font-size: 12px;
-                          line-height: 28px;
-                        }
-                        
-                        .action-block {
-                          padding: 3px 5px 0 10px;
                           
-                          .btn-group {
-                            display: inline-block;
-                            
-                            .btn-mini {
-                              padding: 1px 4px;
-                            }
-                          }
-                        }
-                      }
-                      
-                      .item-edit-form {
-                        display: none;
-                        padding: 0 0 3px 5px;
-                        background-color: #bbb;
-                        
-                        .item-form-row {
-                          
-                          .item-hours-input {
-                            float: left;
-                            width: 90px;
-                            height: 18px;
-                            font-size: 14px;
-                          }
-                          
-                          .item-cancel-button,
-                          .item-save-button {
-                            margin: 0 5px 2px 0;
-                          }
                         }
                       }
                     }

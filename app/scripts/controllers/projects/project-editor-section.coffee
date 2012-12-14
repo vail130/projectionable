@@ -93,6 +93,10 @@ define [
           record = RequirementGroup.create
             project_id: @parent.project.id
             type: 'front_end'
+            title: ''
+            method: ''
+            uri: ''
+            requester_id: ''
             hours: 0
             hours_worked: 0
           
@@ -105,6 +109,10 @@ define [
           record = RequirementGroup.create
             project_id: @parent.project.id
             type: 'back_end'
+            title: ''
+            method: ''
+            uri: ''
+            requester_id: ''
             hours: 0
             hours_worked: 0
           
@@ -116,6 +124,11 @@ define [
           records = ProjectAsset.findAllByAttribute('project_id', @parent.project.id)
           record = ProjectAsset.create
             project_id: @parent.project.id
+            title: ''
+            requester_id: ''
+            asset_url: ''
+            content_type: ''
+            file_size: ''
             hours: 0
             hours_worked: 0
           
@@ -127,6 +140,9 @@ define [
           records = ProjectFile.findAllByAttribute('project_id', @parent.project.id)
           record = ProjectFile.create
             project_id: @parent.project.id
+            asset_url: ''
+            content_type: ''
+            file_size: ''
           
           controller = new SectionItem
             parent: @

@@ -19,10 +19,6 @@ define [
       "back_end_hours_worked"
       "asset_hours"
       "asset_hours_worked"
-      "owner"
-      "clients"
-      "coworkers"
-      "logs"
       "date_created"
       "date_updated"
       "unix_created"
@@ -32,5 +28,5 @@ define [
       @extend Spine.Model.Local
     else
       @extend Spine.Model.Ajax
-      @extend url: "#{Host}/api/projects"
+      @extend url: "/api/projects"
     

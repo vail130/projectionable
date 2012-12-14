@@ -20,6 +20,9 @@ urlpatterns = patterns('',
     url(r'^api/permissions/(?P<permission_id>[^/\?]+)/?(?:\?.*)?$', apiviews.PermissionEditor.as_view(), name='permissioneditor'),
     url(r'^api/permissions/?(?:\?.*)?$', apiviews.PermissionManager.as_view(), name='permissionmanager'),
     
+    url(r'^api/worklogs/(?P<worklog_id>[^/\?]+)/?(?:\?.*)?$', apiviews.WorklogEditor.as_view(), name='worklogeditor'),
+    url(r'^api/worklogs/?(?:\?.*)?$', apiviews.WorklogManager.as_view(), name='worklogmanager'),
+    
     url(r'^api/projects/(?P<project_id>[^/\?]+)/?(?:\?.*)?$', apiviews.ProjectEditor.as_view(), name='projecteditor'),
     url(r'^api/projects/?(?:\?.*)?$', apiviews.ProjectManager.as_view(), name='projectmanager'),
     

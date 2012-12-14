@@ -21,5 +21,5 @@ define [
       @extend Spine.Model.Local
     else
       @extend Spine.Model.Ajax
-      @extend url: "#{Host}/api/accounts"
+      @extend url: "/api/accounts"
 

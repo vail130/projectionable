@@ -11,7 +11,6 @@ define [
       "project_id"
       "group_id"
       "title"
-      "description"
       "index"
       "status"
       "requester_id"
@@ -26,5 +25,5 @@ define [
       @extend Spine.Model.Local
     else
       @extend Spine.Model.Ajax
-      @extend url: "#{Host}/api/requirements"
+      @extend url: "/api/requirements"
     

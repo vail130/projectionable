@@ -10,8 +10,9 @@ define [
       "account_id"
       "project_id"
       "title"
-      "description"
-      "asset"
+      "asset_url"
+      "file_size"
+      "content_type"
       "index"
       "status"
       "requester_id"
@@ -26,5 +27,5 @@ define [
       @extend Spine.Model.Local
     else
       @extend Spine.Model.Ajax
-      @extend url: "#{Host}/api/assets"
+      @extend url: "/api/assets"
     

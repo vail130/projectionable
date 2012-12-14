@@ -6,7 +6,9 @@ define [
   'controllers/projects/project-editor-toggle-link'
   'controllers/projects/project-editor-section'
   'controllers/projects/project-editor-collaborate-modal'
-], ($, _, Spine, projectEditorTemplate, ToggleLink, ProjectSection, CollaborateModal) ->
+  'models/permission'
+  'models/session'
+], ($, _, Spine, projectEditorTemplate, ToggleLink, ProjectSection, CollaborateModal, Permission, Session) ->
 
   class ProjectEditor extends Spine.Controller
     constructor: ->
@@ -82,7 +84,12 @@ define [
       @
     
     addAllModals: =>
-      if @project.permission is 'owner'
+      p = _.where Permission.all(),
+        project_id: @project.id
+        account_id: Session.first().id
+        permission: 'owner'
+      
+      if p.length > 0
         @collaborateModal = new CollaborateModal
           parent: @
         @$collaborateModal.html @collaborateModal.render().el
@@ -91,6 +98,7 @@ define [
     
     getContext: =>
       project: @project
+      permission: _.where(Permission.all(), {project_id: @project.id, account_id: Session.first().id})[0].permission
     
     render: =>
       @html _.template projectEditorTemplate, @getContext()
