@@ -8,20 +8,32 @@ define [
   class ConfigureModal extends Spine.Controller
     constructor: ->
       super
-    
+      @$ConfigureModal.on 'hidden', @render
+      
     elements:
+      '#configure-modal' : '$ConfigureModal'
       '.project-title-input' : '$projectTitleInput'
       '.project-rate-input' : '$projectRateInput'
       '.project-budget-input' : '$projectBudgetInput'
+      '.project-start-input' : '$projectStartInput'
       '.project-deadline-input' : '$projectDeadlineInput'
+      '.configure-save-button' : '$configureSaveButton'
     
-    initDeadlineDatepicker: =>
+    initDatepickers: =>
       if @parent.project.deadline not in [undefined, '']
         @$projectDeadlineInput.val(
           moment(@parent.project.deadline.split('.')[0], 'YYYY-MM-DD HH:mm:ss').format('MM/DD/YYYY')
         )
       
       @$projectDeadlineInput.datepicker
+        showButtonPanel: true
+      
+      if @parent.project.start not in [undefined, '']
+        @$projectStartInput.val(
+          moment(@parent.project.start.split('.')[0], 'YYYY-MM-DD HH:mm:ss').format('MM/DD/YYYY')
+        )
+      
+      @$projectStartInput.datepicker
         showButtonPanel: true
       
       @
@@ -31,23 +43,24 @@ define [
     
     render: =>
       @html _.template configureModalTemplate, @getContext()
-      @initDeadlineDatepicker()
+      @initDatepickers()
     
     events:
-      'click configure-save-button' : 'saveConfiguration'
+      'click .configure-save-button' : 'saveConfiguration'
     
     saveConfiguration: (event) =>
       event.preventDefault()
+      return if @$configureSaveButton.hasClass 'disabled'
+      @$configureSaveButton.addClass 'disabled'
       
-      rate = parseFloat @$projectRateInput.val()
-      budget = parseFloat @$projectBudgetInput.val()
-      try
-        deadline = moment(@$projectDeadlineInput.val()).unix()
-      catch error
-        deadline = null
+      rate = parseInt @$projectRateInput.val()
+      budget = parseInt @$projectBudgetInput.val()
+      
+      console.log budget, rate
       
       @parent.project.updateAttributes
         title: @$projectTitleInput.val()
         rate: (if isNaN rate then null else rate)
         budget: (if isNaN budget then null else budget)
-        deadline: deadline
+        deadline: @$projectDeadlineInput.val()
+        start: @$projectStartInput.val()

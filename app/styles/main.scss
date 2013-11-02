@@ -85,6 +85,30 @@ $darkRed: #7e0000;
               .btn {
                 margin: 5px 0 5px 10px;
               }
+              
+              .data-section {
+                display: inline-block;
+                width: 28%;
+                margin: 0 2.5%;
+                padding-top: 10px;
+                
+                &:first-child {
+                  margin: 0 5% 0 0;
+                }
+                
+                &:last-child {
+                  margin: 0 0 0 5%;
+                }
+                
+                h6 {
+                  float: left;
+                  margin: 0;
+                }
+                
+                .percent {
+                  float: right;
+                }
+              }
             }
           }
         }
@@ -441,7 +465,6 @@ $darkRed: #7e0000;
                   .item-edit-form {
                     display: none;
                     padding: 0 0 3px 5px;
-                    background-color: #bbb;
                     
                     .item-form-row {
                       
@@ -458,7 +481,7 @@ $darkRed: #7e0000;
                       .item-file-row {
                         @include clearfix();
                         margin: 0 5px 5px 0;
-                        padding: 5px;
+                        padding: 5px 0;
                         border: 1px solid #ddd;
                         
                         .item-file-link {
@@ -471,6 +494,11 @@ $darkRed: #7e0000;
                 }
               }
             }
+          }
+          
+          #reports-modal {
+            width: 800px;
+            margin-left: -400px;
           }
           
           #collaborate-modal {
@@ -587,9 +615,18 @@ $darkRed: #7e0000;
                     width: 327px;
                   }
                   
-                  .project-deadline-input {
-                    width: 200px;
+                  .add-on-text {
+                    font-size: 11px;
                   }
+                  
+                  .project-start-input,
+                  .project-deadline-input {
+                    width: 90px;
+                  }
+                }
+                
+                &.timeline-row  > .modal-input-wrapper {
+                  width: 180px;
                 }
               }
             }

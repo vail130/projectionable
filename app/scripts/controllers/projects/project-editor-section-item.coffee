@@ -31,6 +31,23 @@ define [
       if @key in ['assets', 'files'] and @item.asset_url isnt ''
         asset_url_parts = @item.asset_url.split('/')
         filename = asset_url_parts[asset_url_parts.length-1]
+        
+        fileNameData = filename.split '.'
+        ext = fileNameData[fileNameData.length - 1]
+        basename = filename.substr(0, filename.length - (ext.length + 1))
+        
+        if basename.length > 20 and @key is 'assets'
+          basename = basename.substr(0, 10) + '...' + basename.substr(basename.length - 5)
+        
+        file_size = @item.file_size
+        if file_size > 1000000000
+          file_size = Math.round(file_size/1000000000) + 'gb'
+        else if file_size > 1000000
+          file_size = Math.round(file_size/1000000) + 'mb'
+        else if file_size > 1000
+          file_size = Math.round(file_size/1000) + 'kb'
+        
+        filename = "#{basename}.#{ext} (#{file_size})" 
       else
         filename = ''
       
@@ -105,7 +122,7 @@ define [
     editItem: (event) =>
       event.preventDefault()
       @$itemDisplay.hide()
-      @$itemEditForm.show().find('textarea').first().get(0).focus()
+      @$itemEditForm.show().find('textarea').first().get(0)?.focus()
     
     cancelEditItem: (event) =>
       event.preventDefault()
@@ -114,11 +131,12 @@ define [
     saveItem: (event) =>
       event.preventDefault()
       hours = parseFloat(@$itemHoursInput.val())
+      requester_id = parseInt(@$itemRequesterSelect.val())
       @item.updateAttributes
         title: (if @$itemTitle.length is 1 then @$itemTitle.val() else '')
         status: @$itemStatusSelect.val()
         hours: (if isNaN(hours) then 0 else hours)
-        requester: @$itemRequesterSelect.val()
+        requester_id: (if isNaN(requester_id) then null else requester_id)
       @render()
     
     triggerFileInput: (event) =>

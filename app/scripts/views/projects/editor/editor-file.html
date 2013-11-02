@@ -1,114 +1,46 @@
 
-<% var saved = req.__proto__.hasOwnProperty('id') %>
-<% var agent = ['owner', 'coworker'].indexOf(project.permission) > -1; %>
-<% var owner = project.permission === 'owner'; %>
-<% var coworker = project.permission === 'coworker'; %>
-<% var client = project.permission === 'client'; %>
-<% var locked = project.status === 'locked'; %>
-<% var pending = req.status === 'pending'; %>
-<% var approved = req.status === 'approved'; %>
-<% var rejected = req.status === 'rejected'; %>
-<% var requested = req.status === 'requested'; %>
-    
-<div class="edit-requirement-form <%= req.status %>">
-  
-  <div class='clearfix'>
-    <div class='requirement-title-wrapper'>
-      <span class='input-label'>Requirement Title</span>
-      <% if (!locked && (!saved || (agent && pending) || (client && requested))) { %>
-        <div class='edit-block'>
-          <input class="edit-input requirement-title-input" type='text' value="<%= req.title %>" />
-          <i class='edit-icon icon-pencil'></i>
-        </div>
-      <% } else { %>
-        <h2 class='data-display'><%= req.title %></h2>
-      <% } %>
-    </div>
-    
-    <div class='requirement-hours-wrapper requirement-data-wrapper'>
-      <span class='input-label'>Hours</span>
-      <% var hours = isNaN(parseFloat(req.hours)) ? '' : parseFloat(req.hours); %>
-      <% if (!locked && ((!saved && agent) || (agent && (pending || requested)))) { %>
-       <div class='edit-block'>
-          <input class="edit-input requirement-hours-input" type='text' value="<%= hours %>" />
-          <i class='edit-icon icon-pencil'></i>
-        </div>
-      <% } else { %>
-        <h2 class='data-display'><%= isNaN(parseFloat(req.hours)) ? '--' : req.hours %></h2>
-      <% } %>
-    </div>
-    
-    <div class='data-wrapper requirement-data-wrapper requirement-dollars-wrapper'>
-      <span class='input-label'>Cost</span>
-      <% var dollars = req.status === 'rejected' || isNaN(parseFloat(project.rate)) || isNaN(parseFloat(hours)) ? ' --' : parseFloat(project.rate) * hours; %>
-      <h2 class='data-display requirement-dollars'>$<%= App.formatNumber(Math.round(dollars)) %></h2>
-    </div>
-    
-    <div class="status-wrapper requirement-status-wrapper <%= saved ? 'active' : '' %>">
-      <% if (locked) { %>
-        <div class='label-wrapper'><span class="label <%= req.status === 'approved' ? 'label-success' : 'label-important' %>"><%= req.status.substr(0, 1).toUpperCase() + req.status.substr(1) %></span></div>
-      <% } else if (!saved) { %>
-        <% if (agent) { %>
-          <div class='label-wrapper'><span class='label'>Waiting for client</span></div>
-        <% } else if (client) { %>
-          <div class='label-wrapper'><span class='label'>Requested</span></div>
-        <% } %>
-      <% } else if (agent) { %>
-        <% if (pending) { %>
-          <div class='label-wrapper'><span class='label'>Waiting for client</span></div>
-        <% } else if (approved || rejected) { %>
-          <div class='label-wrapper'><span class="label <%= req.status === 'approved' ? 'label-success' : 'label-important' %>"><%= req.status.substr(0, 1).toUpperCase() + req.status.substr(1) %></span></div>
-        <% } else if (requested) { %>
-          <div class='btn-group'>
-            <a href='#' tabindex='-1' class="btn btn-success <%= isNaN(parseFloat(req.hours)) ? 'disabled' : '' %> status-button requirement-approve-button">Approve</a>
-            <a href='#' tabindex='-1' class="btn btn-danger status-button requirement-reject-button">Reject</a>
-          </div>
-        <% } %>
-      <% } else if (client) { %>
-        <% if (pending) { %>
-          <div class='btn-group'>
-            <a href='#' tabindex='-1' class="btn btn-success status-button requirement-approve-button">Approve</a>
-            <a href='#' tabindex='-1' class="btn btn-danger status-button requirement-reject-button">Reject</a>
-          </div>
-        <% } else if (approved || rejected) { %>
-          <div class='label-wrapper'>
-            <span class="label <%= req.status === 'approved' ? 'label-success' : 'label-important' %>"><%= req.status.substr(0, 1).toUpperCase() + req.status.substr(1) %></span>
-          </div>
-        <% } else if (requested) { %>
-          <div class='label-wrapper'><span class='label'>Requested</span></div>
-        <% } %>
-      <% } %>
-    </div>
-    
-    <% if (!locked && (owner || client) && (approved || rejected)) { %>
-    <div class='dropdown requirement-dropdown pull-right'>
-      <a href='#' class='btn btn-small' data-toggle='dropdown'>
+<div class="item-display">
+  <div class='action-block pull-right'>
+    <div class='btn-group'>
+      <a href='#' class='btn btn-mini item-edit-button'>
         <i class='icon-pencil'></i>
-        <i class='caret'></i>
       </a>
-      <ul class='dropdown-menu' role='menu'>
-        <% if (owner) { %>
-        <li><a href='#' tabindex='-1' class='owner-revert-requirement'>Revert to pending</a></li>
-        <li><a href='#' tabindex='-1' class='owner-delete-requirement'>Delete this requirement</a></li>
-        <% } else if (client) { %>
-          <% if (approved) { %>
-          <li><a href='#' tabindex='-1' class='client-reject-requirement'>Change to rejected</a></li>
-          <% } else if (rejected) { %>
-          <li><a href='#' tabindex='-1' class='client-approve-requirement'>Change to approved</a></li>
-          <% } %>
-          <li><a href='#' tabindex='-1' class='client-revert-requirement'>Revert to request</a></li>
-        <% } %>
-      </ul>
     </div>
-    <% } %>
-    
-    <% if (!locked && (!saved || (agent && pending) || (client && requested))) { %>
-    <div class="delete-wrapper requirement-delete-wrapper <%= saved ? 'active' : '' %>">
-      <a href='#' tabindex='-1' class='btn btn-small btn-danger delete-link requirement-delete-link'>Delete</a>
-    </div>
-    <% } %>
-    
+
   </div>
-  
+  <span>
+    <a href="<%= item.asset_url %>" target='_blank' class='item-file-link pull-left'><%= filename %></a>
+  </span>
 </div>
 
+<div class='item-edit-form'>
+  <div class='item-form-row'>
+    <label class='full-row-label'>File</label>
+    <input type='file' class='item-deliverable-input' />
+    <% if (filename !== '') { %>
+    <div class='item-file-row'>
+      <a href="<%= item.asset_url %>" target='_blank' class='item-file-link pull-left'><%= filename %></a>
+      <div class='dropdown pull-right'>
+        <a href='#' class='btn btn-mini btn-primary' data-toggle='dropdown'>
+          <i class='icon-wrench'></i>
+        </a>
+        <ul class='dropdown-menu' role="menu">
+          <li><a href="<%= item.asset_url %>" target='_blank' tabindex="-1">Download file</a></li>
+          <li class="divider"></li>
+          <li><a href='#' tabindex="-1" class='asset-replace-link'>Upload new file</a></li>
+          <li><a href='#' tabindex="-1" class='asset-delete-link'>Delete file</a></li>
+        </ul>
+      </div>
+    </div>
+    <% } else { %>
+    <div class='clearfix' style='text-align: center;'>
+      <a href='#' class='btn btn-small btn-primary asset-upload-button'>Upload File</a>
+    </div>
+    <% } %>
+  </div>
+  <div class='item-form-row'>
+    <a href='#' class='btn btn-mini btn-danger item-delete-button pull-left'>Delete</a>
+    <a href='#' class='btn btn-mini btn-success item-save-button pull-right'>Save</a>
+    <a href='#' class='btn btn-mini item-cancel-button pull-right'>Cancel</a>
+  </div>
+</div>

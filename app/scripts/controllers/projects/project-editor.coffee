@@ -5,12 +5,13 @@ define [
   'text!views/projects/editor/editor.html'
   'controllers/projects/project-editor-toggle-link'
   'controllers/projects/project-editor-section'
+  'controllers/projects/project-editor-reports-modal'
   'controllers/projects/project-editor-configure-modal'
   'controllers/projects/project-editor-collaborate-modal'
   'models/permission'
   'models/session'
 ], ($, _, Spine, projectEditorTemplate, ToggleLink, ProjectSection,
-  ConfigureModal, CollaborateModal, Permission, Session) ->
+  ReportsModal, ConfigureModal, CollaborateModal, Permission, Session) ->
 
   class ProjectEditor extends Spine.Controller
     constructor: ->
@@ -87,6 +88,12 @@ define [
         @$sectionList.append @sections[key].render().$el.addClass('quarter active').get(0)
       @
     
+    addReportsModal: =>
+      @reportsModal = new ReportsModal
+        parent: @
+      @$reportsModal.html @reportsModal.render().el
+      @
+    
     addConfigureModal: =>
       @configureModal = new ConfigureModal
         parent: @
@@ -112,5 +119,5 @@ define [
     
     render: =>
       @html _.template projectEditorTemplate, @getContext()
-      @addAllSections().addConfigureModal().addCollaborateModal().resetWidths()
+      @addAllSections().addReportsModal().addConfigureModal().addCollaborateModal().resetWidths()
 

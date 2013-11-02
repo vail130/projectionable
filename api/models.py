@@ -549,6 +549,7 @@ class Subscription(models.Model):
 class Project(models.Model):
   account = models.ForeignKey(Account)
   title = models.CharField(max_length=100)
+  start = models.DateTimeField(blank=True)
   deadline = models.DateTimeField(blank=True)
   rate = models.PositiveIntegerField(blank=True)
   budget = models.PositiveIntegerField(blank=True)
@@ -562,6 +563,7 @@ class Project(models.Model):
     'title': ('string', (0, 100)),
     'rate': ('integer', (0, None)),
     'budget': ('integer', (0, None)),
+    'start': 'string',
     'deadline': 'string',
     'status': lambda x: x in Project.statuses,
   }
@@ -573,6 +575,7 @@ class Project(models.Model):
       "status": '',
       'rate': 0,
       'budget': 0,
+      'start': '',
       'deadline': '',
     }
   
@@ -586,10 +589,6 @@ class Project(models.Model):
       "status": cls.statuses[0]
     }
     
-    for field in ['rate', 'deadline', 'budget']:
-      if field in schema:
-        project_dict[field] = schema[field]
-        
     project = cls(**project_dict)
     project.save()
     perm = Permission.create_record(account, project, account, {"permission": "owner"})
@@ -597,43 +596,15 @@ class Project(models.Model):
     return project
   
   def read_record(self, permission):
-    req_hours_data = {}
-    for field_type in ['front-end', 'back-end']:
-      for field in ['hours', 'hours_worked']:
-        req_hours_data['_'.join(field_type.split('-')) + '_' + field] = 0
-        try:
-          result = Requirement.objects.filter(group__project=self, group__type=field_type).aggregate(Sum(field))
-        except Requirement.DoesNotExist:
-          pass
-        else:
-          if result[field + "__sum"] is not None:
-            req_hours_data['_'.join(field_type.split('-')) + '_' + field] = float(result[field + "__sum"])
-    
-    asset_hours_data = {}
-    for field in ['hours', 'hours_worked']:
-      asset_hours_data[field] = 0
-      try:
-        result = ProjectAsset.objects.filter(project=self).aggregate(Sum(field))
-      except ProjectAsset.DoesNotExist:
-        pass
-      else:
-        if result[field + "__sum"] is not None:
-          asset_hours_data[field] = float(result[field + "__sum"])
-    
     return {
       "id": self.id,
       "account_id": self.account.id,
       "title": self.title,
       "rate": self.rate,
       "budget": self.budget,
-      "deadline": self.deadline,
+      "start": datetime.strptime(self.start, '%m-%d-%Y'),
+      "deadline": datetime.strptime(self.deadline, '%m-%d-%Y'),
       "status": self.status,
-      "front_end_hours": req_hours_data['front_end_hours'],
-      "front_end_hours_worked": req_hours_data['front_end_hours_worked'],
-      "back_end_hours": req_hours_data['back_end_hours'],
-      "back_end_hours_worked": req_hours_data['back_end_hours_worked'],
-      "asset_hours": asset_hours_data['hours'],
-      "asset_hours_worked": asset_hours_data['hours_worked'],
       "date_updated": self.date_updated,
       "date_created": self.date_created,
       "unix_updated": time.mktime(self.date_updated.timetuple()),
@@ -647,10 +618,20 @@ class Project(models.Model):
     schema = filter_valid(self.__class__, raw_schema)
     changed = False
     
-    for prop in ['title', 'rate', 'budget', 'deadline']:
+    for prop in ['title', 'rate', 'budget', 'start', 'deadline']:
       if prop in schema and getattr(self, prop) != schema[prop]:
-        setattr(self, prop, schema[prop])
-        changed = True
+        if prop in ['start', 'deadline']:
+          try:
+            valid_datetime = datetime.strptime(schema[prop], '%d-%m-%Y')
+          except ValueError:
+            pass
+          else:
+            setattr(self, prop, valid_datetime)
+            changed = True
+          
+        else:
+          setattr(self, prop, schema[prop])
+          changed = True
     
     if 'status' in schema and self.status != schema['status'] and schema['status'] in self.__class__.statuses:
       self.status = schema['status']

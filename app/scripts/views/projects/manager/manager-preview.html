@@ -10,7 +10,6 @@
   <div class='dropdown options-dropdown pull-right'>
     <a href='#' class='btn options-button dropdown-toggle' data-toggle='dropdown'>
       <i class='icon-wrench'></i>
-      <i class='caret'></i>
     </a>
     
     <ul class='dropdown-menu options-menu' role="menu">
@@ -24,6 +23,16 @@
   
 <div class='clearfix'>
   
-  <h6>Data goes here</h6>
+  <% for (var i = 0; sections[i]; i++) { %>
+  <div class='data-section'>
+    <div class='clearfix'>
+      <h6><%= sections[i].label %></h6>
+      <div class='percent'><%= sections[i].note %></div>
+    </div>
+    <div class='progress progress-striped'>
+      <div class='bar' style="width: <%= sections[i].percent %>%;"></div>
+    </div>
+  </div>
+  <% } %>
   
 </div>

@@ -48,17 +48,17 @@
     </div>
   </div>
   <div class='item-form-row'>
+    <label class='inline-label'>Hours</label>
+    <span class='item-hours-worked-display'><b><%= item.hours_worked %>h</b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/</span>
+    <input type='text' class='item-hours-input' value="<%= item.hours %>" />
+  </div>
+  <div class='item-form-row'>
     <label class='inline-label'>Status</label>
     <select class='item-status-select'>
       <% _.each(['pending', 'working', 'complete', 'rejected', 'approved'], function (s) { %>
         <option value="<%= s %>" <%= s === item.status ? "selected='selected'" : "" %>><%= s.substr(0, 1).toUpperCase() + s.substr(1, s.length) %></option>
       <% }); %>
     </select>
-  </div>
-  <div class='item-form-row'>
-    <label class='inline-label'>Hours</label>
-    <span class='item-hours-worked-display'><b><%= item.hours_worked %>h</b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/</span>
-    <input type='text' class='item-hours-input' value="<%= item.hours %>" />
   </div>
   <div class='item-form-row'>
     <label class='inline-label'>Notify</label>

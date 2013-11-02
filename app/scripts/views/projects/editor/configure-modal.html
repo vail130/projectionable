@@ -23,13 +23,23 @@
       <label>Budget</label>
       <div class="input-prepend input-append modal-input-wrapper">
         <span class="add-on">$</span>
-        <input type="text" class="project-rate-input" value="<%= project.budget %>" />
+        <input type="text" class="project-budget-input" value="<%= project.budget %>" />
         <span class="add-on">.00</span>
       </div>
     </div>
-    <div class='modal-row'>
-      <label>Deadline</label>
-      <div class='input-append modal-input-wrapper'>
+    <div class='modal-row timeline-row'>
+      <label>Timeline</label>
+      
+      <div class='input-append input-prepend modal-input-wrapper pull-left'>
+        <span class="add-on add-on-text">Start</span>
+        <input type='text' class='project-start-input' />
+        <span class="add-on">
+          <i class='icon-calendar'></i>
+        </span>
+      </div>
+
+      <div class='input-append input-prepend modal-input-wrapper pull-left'>
+        <span class="add-on add-on-text">End</span>
         <input type='text' class='project-deadline-input' />
         <span class="add-on">
           <i class='icon-calendar'></i>
@@ -39,6 +49,6 @@
   </div>
   <div class="modal-footer">
     <button class="btn" data-dismiss="modal" aria-hidden="true">Close</button>
-    <button class="btn btn-primary configure-save-button">Save changes</button>
+    <button class="btn btn-primary configure-save-button" data-dismiss="modal" aria-hidden="true">Save changes</button>
   </div>
 </div>
