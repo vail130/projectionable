@@ -5,6 +5,8 @@ static/
 
 bin/
 include/
+.sass-cache/
+temp/
 
 lib/
 !app/static/js/app/lib
